@@ -111,6 +111,17 @@ export const toMin = (t: string): number => {
   return h * 60 + m;
 };
 
+export const SCHOOL = {
+  place: "смт Великодолинське",
+  name: "Великодолинська школа №2",
+  year: "2026 / 27",
+};
+
+/** Розклад по класах: додай "5: { bells, week }" тощо — сайт сам почне його показувати */
+export const scheduleByClass: Record<number, { bells: Bell[]; week: DaySchedule[] }> = {
+  11: { bells, week },
+};
+
 /** 0 = Понеділок … 4 = П'ятниця; null — вихідні (субота/неділя) */
 export const dayIndexOf = (d: Date): number | null => {
   const g = d.getDay();

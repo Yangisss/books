@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, BookMarked, ListFilter, MousePointerClick, Quote } from "lucide-react";
 import { categories, categoryLabel, subjects, type CategoryId, type Subject } from "../data/subjects";
-import { getCounts, plural } from "../lib/storage";
+import { getCounts, plural, probeShared } from "../lib/storage";
+import { useClass } from "../lib/cls";
 import { useInView } from "../hooks/useInView";
 import SubjectModal from "./SubjectModal";
 
@@ -118,18 +119,24 @@ function SubjectCard({
 }
 
 export default function SubjectsSection() {
+  const cls = useClass();
   const [filter, setFilter] = useState<Filter>("all");
   const [openSubject, setOpenSubject] = useState<Subject | null>(null);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const { ref: headRef, inView: headIn } = useInView<HTMLDivElement>();
 
   const refreshCounts = useCallback(async () => {
-    setCounts(await getCounts());
-  }, []);
+    try {
+      setCounts(await getCounts(cls));
+    } catch {
+      setCounts({});
+    }
+  }, [cls]);
 
   useEffect(() => {
+    probeShared(cls);
     refreshCounts();
-  }, [refreshCounts]);
+  }, [cls, refreshCounts]);
 
   const visible = useMemo(
     () => subjects.filter((s) => filter === "all" || s.category === filter),

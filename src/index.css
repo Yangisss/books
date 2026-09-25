@@ -106,6 +106,14 @@ body {
   border-radius: 9999px;
 }
 
+/* hide horizontal scrollbar (day chips on mobile) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
 /* custom scrollbar */
 ::-webkit-scrollbar {
   width: 10px;

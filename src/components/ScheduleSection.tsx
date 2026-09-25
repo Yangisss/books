@@ -3,12 +3,12 @@ import {
   ArrowUpRight,
   BookMarked,
   CalendarDays,
-  MapPin,
   MousePointerClick,
 } from "lucide-react";
 import { categoryLabel, subjects, type Subject } from "../data/subjects";
-import { bells, dayIndexOf, toMin, week } from "../data/schedule";
-import { getCounts, plural } from "../lib/storage";
+import { dayIndexOf, scheduleByClass, toMin, week as week11, bells as bells11 } from "../data/schedule";
+import { getCounts, plural, probeShared } from "../lib/storage";
+import { useClass } from "../lib/cls";
 import { useInView } from "../hooks/useInView";
 import SubjectModal from "./SubjectModal";
 import { cn } from "../utils/cn";
@@ -20,6 +20,11 @@ type LessonStatus = "done" | "now" | "next" | "later";
 const weekendName = (d: Date) => (d.getDay() === 6 ? "Субота" : "Неділя");
 
 export default function ScheduleSection() {
+  const cls = useClass();
+  const sc = scheduleByClass[cls];
+  const bells = sc?.bells ?? bells11;
+  const week = sc?.week ?? week11;
+
   const [now, setNow] = useState(() => new Date());
   const [selected, setSelected] = useState<number>(() => dayIndexOf(new Date()) ?? 0);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -38,8 +43,13 @@ export default function ScheduleSection() {
   }, []);
 
   const refreshCounts = useCallback(async () => {
-    setCounts(await getCounts());
-  }, []);
+    await probeShared(cls);
+    try {
+      setCounts(await getCounts(cls));
+    } catch {
+      setCounts({});
+    }
+  }, [cls]);
 
   useEffect(() => {
     refreshCounts();
@@ -59,14 +69,14 @@ export default function ScheduleSection() {
   const daySubjectIds = [...new Set(day.lessons.map((l) => l.subjectId))];
   const booksInDay = daySubjectIds.reduce((acc, id) => acc + (counts[id] ?? 0), 0);
 
-  /* ------- заголовок-сводка (нижняя «мозоль» сайта — тот же язык, что и плитка-цитата) ------- */
+  /* ------- заголовок-сводка (тот же визуальный язык, что и плитка-цитата) ------- */
   let summaryTitle: string;
   let summarySub: string;
   let summaryAction: { label: string; kind: "open"; subjectId: string } | { label: string; kind: "day"; day: number } | null = null;
 
   if (todayIdx === null) {
     summaryTitle = `Сьогодні ${weekendName(now).toLowerCase()} — вихідний`;
-    summarySub = `Наступні уроки — ${week[0].name.toLowerCase()} · ${week[0].lessons.length} уроків`;
+    summarySub = `Наступні уроки — ${week[0].name.toLowerCase()} (${week[0].lessons.length} уроків)`;
     summaryAction = { label: `Розклад на ${week[0].short}`, kind: "day", day: 0 };
   } else if (isToday && ongoingIdx >= 0) {
     const l = day.lessons[ongoingIdx];
@@ -114,7 +124,7 @@ export default function ScheduleSection() {
         key={d.id}
         onClick={() => setSelected(i)}
         className={cn(
-          "flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300",
+          "flex shrink-0 items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300",
           on
             ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]"
             : "border border-ink/10 bg-white/70 text-ink-soft backdrop-blur hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink"
@@ -134,6 +144,49 @@ export default function ScheduleSection() {
     );
   };
 
+  /* ------- порожній стан: для цього класу розкладу ще немає ------- */
+  if (!sc) {
+    return (
+      <section id="rozklad" className="relative mx-auto max-w-7xl px-6 pb-10 pt-20">
+        <div className={cn("reveal", headIn && "is-visible", "flex flex-wrap items-end justify-between gap-6")}>
+          <div>
+            <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-cobalt">
+              <CalendarDays className="h-4 w-4" />
+              {cls} клас · автоматично за днем тижня
+            </p>
+            <h2 className="mt-3 font-display text-4xl font-extrabold uppercase tracking-tight sm:text-5xl">
+              Розклад <span className="font-accent normal-case italic tracking-normal text-ink/70">· {cls} клас</span>
+            </h2>
+          </div>
+        </div>
+        <div
+          ref={headRef}
+          className="anim-fade-up relative mt-8 flex flex-col justify-between gap-5 overflow-hidden rounded-[1.75rem] bg-ink p-6 text-cream shadow-[0_30px_60px_-25px_rgba(23,20,12,0.6)]"
+        >
+          <div className="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-sun/20 blur-2xl" />
+          <div className="relative flex items-start gap-4">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-sun backdrop-blur-sm">
+              <CalendarDays className="h-6 w-6" />
+            </span>
+            <div>
+              <p className="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">
+                Розклад · {cls} клас
+              </p>
+              <p className="mt-1.5 font-display text-lg font-bold leading-snug">Для {cls} класу розклад ще не додано</p>
+              <p className="mt-1 max-w-xl text-sm leading-relaxed text-cream/60">
+                Щойно розклад з'явиться у файлі <span className="font-bold text-cream/80">src/data/schedule.ts</span>
+                {" "}(об'єкт scheduleByClass[{cls}]) — сайт сам почне показувати уроки та підручники за днем тижня.
+                Полиці предметів нижче працюють уже зараз.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {openSubject && <SubjectModal subject={openSubject} onClose={() => setOpenSubject(null)} onChanged={refreshCounts} />}
+      </section>
+    );
+  }
+
   return (
     <section id="rozklad" className="relative mx-auto max-w-7xl px-6 pb-10 pt-20">
       <div
@@ -143,7 +196,7 @@ export default function ScheduleSection() {
         <div>
           <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-cobalt">
             <CalendarDays className="h-4 w-4" />
-            11 клас · автоматично за днем тижня
+            {cls} клас · автоматично за днем тижня
           </p>
           <h2 className="mt-3 font-display text-4xl font-extrabold uppercase tracking-tight sm:text-5xl">
             Розклад{" "}
@@ -154,19 +207,18 @@ export default function ScheduleSection() {
         </div>
         <p className="flex max-w-xs items-start gap-2.5 text-sm leading-relaxed text-ink-soft">
           <MousePointerClick className="mt-0.5 h-5 w-5 shrink-0 text-cobalt" />
-          Сайт сам визначає день і показує уроки цього дня. Натисни на урок —
-          відкриєш свої підручники з ним.
+          Сайт сам визначає день тижня та показує уроки цього дня. Натисни на урок — відкриєш свої підручники до нього.
         </p>
       </div>
 
       <div
-        className={cn("reveal", headIn && "is-visible", "mt-8 flex flex-wrap gap-2.5")}
+        className={cn("reveal", headIn && "is-visible", "no-scrollbar mt-8 flex gap-2.5 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible")}
         style={{ transitionDelay: "120ms" }}
       >
         {week.map((_, i) => dayChip(i))}
       </div>
 
-      {/* свідка: що зараз / що далі + книжки */}
+      {/* смужка: що зараз / що далі + книжки */}
       <div
         className="anim-fade-up relative mt-8 flex flex-col justify-between gap-5 overflow-hidden rounded-[1.75rem] bg-ink p-6 text-cream shadow-[0_30px_60px_-25px_rgba(23,20,12,0.6)] sm:flex-row sm:items-center"
         style={{ animationDelay: "160ms" }}
@@ -174,7 +226,7 @@ export default function ScheduleSection() {
         <div className="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-sun/20 blur-2xl" />
         <div className="relative flex items-start gap-4">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-sun backdrop-blur-sm">
-            {todayIdx === null ? <MapPin className="h-6 w-6" /> : <CalendarDays className="h-6 w-6" />}
+            <CalendarDays className="h-6 w-6" />
           </span>
           <div>
             <p className="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">
@@ -203,7 +255,7 @@ export default function ScheduleSection() {
       </div>
 
       {/* уроки дня */}
-      <div key={selected} className="mt-6 space-y-3">
+      <div key={`${selected}-${cls}`} className="mt-6 space-y-3">
         {day.lessons.map((l, i) => {
           const sub = subjectById.get(l.subjectId);
           if (!sub) return null;
@@ -214,7 +266,7 @@ export default function ScheduleSection() {
 
           return (
             <article
-              key={`${selected}-${i}`}
+              key={i}
               onClick={() => setOpenSubject(sub)}
               className={cn(
                 "anim-fade-up group relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-3xl border p-4 pl-5 transition-all duration-300 sm:flex-row sm:items-center sm:gap-4",
@@ -228,7 +280,7 @@ export default function ScheduleSection() {
             >
               <span
                 className="absolute inset-y-0 left-0 w-1.5"
-                style={{ backgroundColor: status === "now" ? "#f2b705" : `${sub.accent}` }}
+                style={{ backgroundColor: status === "now" ? "#f2b705" : sub.accent }}
               />
 
               {/* час */}
@@ -237,9 +289,7 @@ export default function ScheduleSection() {
                   {i + 1}
                 </span>
                 <span className="font-display text-sm font-bold tabular-nums">{bell.start}</span>
-                <span className="hidden text-[11px] font-semibold tabular-nums text-ink-soft sm:inline">
-                  до {bell.end}
-                </span>
+                <span className="hidden text-[11px] font-semibold tabular-nums text-ink-soft sm:inline">до {bell.end}</span>
               </div>
 
               <span className="hidden h-10 w-px bg-ink/10 sm:block" />
@@ -255,7 +305,10 @@ export default function ScheduleSection() {
                 <p className="font-display text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
                   {categoryLabel(sub.category)}
                   {l.room ? ` · ${l.room}` : ""}
-                  <span className="sm:hidden"> · {bell.start}–{bell.end}</span>
+                  <span className="sm:hidden">
+                    {" "}
+                    · {bell.start}–{bell.end}
+                  </span>
                 </p>
                 <h3 className="mt-1 font-display text-base font-bold leading-snug sm:text-lg">{sub.name}</h3>
               </div>
@@ -276,9 +329,7 @@ export default function ScheduleSection() {
                   </span>
                 )}
                 {status === "done" && (
-                  <span className="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">
-                    завершено
-                  </span>
+                  <span className="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">завершено</span>
                 )}
                 {count > 0 ? (
                   <span
@@ -294,16 +345,14 @@ export default function ScheduleSection() {
                     додати книгу
                   </span>
                 )}
-                <ArrowUpRight className="hidden h-4.5 w-4.5 text-ink/40 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:block" />
+                <ArrowUpRight className="hidden h-[18px] w-[18px] text-ink/40 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:block" />
               </div>
             </article>
           );
         })}
       </div>
 
-      {openSubject && (
-        <SubjectModal subject={openSubject} onClose={() => setOpenSubject(null)} onChanged={refreshCounts} />
-      )}
+      {openSubject && <SubjectModal subject={openSubject} onClose={() => setOpenSubject(null)} onChanged={refreshCounts} />}
     </section>
   );
 }

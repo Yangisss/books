@@ -1,6 +1,38 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { ArrowDown, Atom, BookOpen, Clock3, MapPin, Palette, Sigma, Sparkles, Telescope } from "lucide-react";
+import { ArrowDown, Atom, BookOpen, CalendarDays, Clock3, MapPin, Palette, Sigma, Sparkles, Telescope } from "lucide-react";
 import { subjects } from "../data/subjects";
+import { setClass, useClass } from "../lib/cls";
+
+function ClassSelect({ dark = false }: { dark?: boolean }) {
+  const cls = useClass();
+  return (
+    <label
+      className={`flex items-center gap-2 rounded-full border border-ink/10 px-4 py-2 shadow-sm backdrop-blur transition-colors ${
+        dark ? "bg-white/10 text-cream" : "bg-white/70"
+      }`}
+      title="Обери свій клас"
+    >
+      <span className={`font-display text-[11px] font-bold uppercase tracking-widest ${dark ? "text-cream/60" : "text-ink-soft"}`}>
+        Клас
+      </span>
+      <select
+        value={cls}
+        onChange={(e) => setClass(Number(e.target.value))}
+        aria-label="Обрати клас"
+        className={`cursor-pointer appearance-none bg-transparent pr-1 font-display text-[13px] font-extrabold tabular-nums tracking-wide outline-none ${dark ? "text-cream" : "text-ink"}`}
+      >
+        {Array.from({ length: 11 }, (_, i) => i + 1).map((n) => (
+          <option key={n} value={n} className="text-ink">
+            {n}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+const todayShort = () =>
+  ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота"][new Date().getDay()];
 
 const getGreeting = (h: number) => {
   if (h >= 5 && h < 11) return "Доброго ранку";
@@ -78,6 +110,7 @@ function Marquee() {
 }
 
 export default function Hero() {
+  const cls = useClass();
   const greeting = getGreeting(new Date().getHours());
 
   return (
@@ -96,19 +129,24 @@ export default function Hero() {
 
       <div className="relative mx-auto flex min-h-svh max-w-7xl flex-col px-6 pb-16 pt-6">
         {/* top bar */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-ink shadow-lg">
               <span className="absolute left-0 top-0 h-1/2 w-full bg-cobalt/90" />
               <span className="absolute bottom-0 left-0 h-1/2 w-full bg-sun/90" />
-              <span className="relative font-display text-sm font-bold text-white mix-blend-difference">11</span>
+              <span className="relative font-display text-sm font-bold text-white mix-blend-difference">{cls}</span>
             </div>
             <div className="leading-tight">
               <p className="font-display text-xs font-bold uppercase tracking-widest">Мої предмети</p>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-ink-soft">Навчальний рік</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-ink-soft">
+                Великодолинська школа №2 · 2026/27
+              </p>
             </div>
           </div>
-          <LiveClock />
+          <div className="flex items-center gap-2">
+            <ClassSelect />
+            <LiveClock />
+          </div>
         </div>
 
         {/* main */}
@@ -117,10 +155,10 @@ export default function Hero() {
             <div className="anim-fade-up flex flex-wrap items-center gap-2.5" style={{ animationDelay: "0.05s" }}>
               <span className="flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur">
                 <MapPin className="h-3.5 w-3.5 text-cobalt" />
-                Українська школа
+                Великодолинська школа №2
               </span>
               <span className="rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur">
-                2025 / 26
+                2026 / 27
               </span>
             </div>
 
@@ -153,7 +191,7 @@ export default function Hero() {
             </h1>
 
             <p className="anim-fade-up mt-9 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg" style={{ animationDelay: "0.3s" }}>
-              Усі дисципліни 11 класу в одному затишному місці — від математики,
+              Усі дисципліни {cls} класу в одному затишному місці — від математики,
               де <span className="font-bold text-ink underline decoration-sun decoration-4 underline-offset-4">алгебра й геометрія живуть в одному підручнику</span>,
               до астрономії та мистецтва.
             </p>
@@ -166,9 +204,16 @@ export default function Hero() {
                 Дивитися всі {subjects.length}
                 <ArrowDown className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
               </a>
+              <a
+                href="#rozklad"
+                className="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt"
+              >
+                <CalendarDays className="h-4 w-4 text-cobalt" />
+                Розклад на {todayShort()}
+              </a>
               <div className="flex items-center gap-2 text-sm font-semibold text-ink-soft">
                 <Sparkles className="h-4 w-4 text-sun" />
-                14 предметів · завантаж свої підручники
+                {cls} клас · 14 предметів · завантаж свої підручники
               </div>
             </div>
           </div>

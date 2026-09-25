@@ -1,8 +1,33 @@
+/**
+ * Сховище підручників: спільний сервер школи (/api/books) →
+ * фолбек на IndexedDB (локальний режим, коли статичного хостингу вистачає).
+ * Ключ полиці в локальному режимі: `${cls}/${subjectId}` (старі записи без префікса — 11 клас).
+ */
+
+export interface StoredFile {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  addedAt: number;
+  /** лише для локальних файлів */
+  blob?: Blob;
+  /** лише для спільних файлів */
+  url?: string;
+  subject?: string;
+  shared?: boolean;
+}
+
+export type SharedStatus = "unknown" | "on" | "off";
+
+let sharedState: SharedStatus = "unknown";
+export const isShared = () => sharedState === "on";
+
 const DB_NAME = "moi-pidruchnyky";
 const STORE = "textbooks";
 const VERSION = 1;
 
-export interface StoredFile {
+interface LocalRecord {
   id: string;
   subjectId: string;
   name: string;
@@ -27,38 +52,41 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-export async function addFiles(subjectId: string, files: File[]): Promise<void> {
-  const db = await openDB();
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const tx = db.transaction(STORE, "readwrite");
-      const store = tx.objectStore(STORE);
-      files.forEach((f) => {
-        store.put({
-          id: crypto.randomUUID(),
-          subjectId,
-          name: f.name,
-          type: f.type || "application/octet-stream",
-          size: f.size,
-          addedAt: Date.now(),
-          blob: f,
-        } satisfies StoredFile);
-      });
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  } finally {
-    db.close();
+export async function probeShared(cls: number): Promise<boolean> {
+  if (typeof location === "undefined" || !(location.protocol === "http:" || location.protocol === "https:")) {
+    sharedState = "off";
+    return false;
   }
+  try {
+    const r = await fetch(`/api/books?cls=${cls}`, { signal: AbortSignal.timeout(2500) });
+    sharedState = r.ok ? "on" : "off";
+  } catch {
+    sharedState = "off";
+  }
+  return sharedState === "on";
 }
 
-export async function getFiles(subjectId: string): Promise<StoredFile[]> {
+async function sharedList(cls: number): Promise<StoredFile[]> {
+  const r = await fetch(`/api/books?cls=${cls}`, { cache: "no-store" });
+  if (!r.ok) throw new Error("shared list failed");
+  return (await r.json()) as StoredFile[];
+}
+
+/* ---------------- public API (усе — в межах класу) ---------------- */
+
+export async function listFiles(cls: number, subjectId: string): Promise<StoredFile[]> {
+  if (sharedState === "on") {
+    try {
+      const all = await sharedList(cls);
+      return all.filter((f) => f.subject === subjectId);
+    } catch {
+      sharedState = "off";
+    }
+  }
   const db = await openDB();
   try {
     const out = await new Promise<StoredFile[]>((resolve, reject) => {
-      const tx = db.transaction(STORE, "readonly");
-      const idx = tx.objectStore(STORE).index("bySubject");
-      const req = idx.getAll(subjectId);
+      const req = db.transaction(STORE, "readonly").objectStore(STORE).index("bySubject").getAll(`${cls}/${subjectId}`);
       req.onsuccess = () => resolve(req.result as StoredFile[]);
       req.onerror = () => reject(req.error);
     });
@@ -68,20 +96,35 @@ export async function getFiles(subjectId: string): Promise<StoredFile[]> {
   }
 }
 
-export async function getCounts(): Promise<Record<string, number>> {
+export async function addFiles(cls: number, subjectId: string, files: File[]): Promise<void> {
+  if (sharedState === "on") {
+    const fd = new FormData();
+    fd.append("cls", String(cls));
+    fd.append("subject", subjectId);
+    files.forEach((f) => fd.append("file", f));
+    const r = await fetch("/api/books", { method: "POST", body: fd });
+    if (!r.ok) throw new Error(await r.text().catch(() => "upload failed"));
+    return;
+  }
   const db = await openDB();
   try {
-    return await new Promise<Record<string, number>>((resolve, reject) => {
-      const tx = db.transaction(STORE, "readonly");
-      const req = tx.objectStore(STORE).getAll();
-      req.onsuccess = () => {
-        const counts: Record<string, number> = {};
-        (req.result as StoredFile[]).forEach((f) => {
-          counts[f.subjectId] = (counts[f.subjectId] ?? 0) + 1;
-        });
-        resolve(counts);
-      };
-      req.onerror = () => reject(req.error);
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE, "readwrite");
+      const store = tx.objectStore(STORE);
+      files.forEach((f) => {
+        const rec: LocalRecord = {
+          id: crypto.randomUUID(),
+          subjectId: `${cls}/${subjectId}`,
+          name: f.name,
+          type: f.type || "application/octet-stream",
+          size: f.size,
+          addedAt: Date.now(),
+          blob: f,
+        };
+        store.put(rec);
+      });
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
     });
   } finally {
     db.close();
@@ -89,6 +132,11 @@ export async function getCounts(): Promise<Record<string, number>> {
 }
 
 export async function removeFile(id: string): Promise<void> {
+  if (sharedState === "on") {
+    const r = await fetch(`/api/books/${id}`, { method: "DELETE" });
+    if (!r.ok) throw new Error("delete failed");
+    return;
+  }
   const db = await openDB();
   try {
     await new Promise<void>((resolve, reject) => {
@@ -100,6 +148,61 @@ export async function removeFile(id: string): Promise<void> {
   } finally {
     db.close();
   }
+}
+
+export async function getCounts(cls: number): Promise<Record<string, number>> {
+  if (sharedState === "on") {
+    try {
+      const all = await sharedList(cls);
+      const counts: Record<string, number> = {};
+      all.forEach((f) => {
+        if (!f.subject) return;
+        counts[f.subject] = (counts[f.subject] ?? 0) + 1;
+      });
+      return counts;
+    } catch {
+      sharedState = "off";
+    }
+  }
+  const db = await openDB();
+  try {
+    return await new Promise<Record<string, number>>((resolve, reject) => {
+      const req = db.transaction(STORE, "readonly").objectStore(STORE).getAll();
+      req.onsuccess = () => {
+        const counts: Record<string, number> = {};
+        (req.result as LocalRecord[]).forEach((f) => {
+          const key = String(f.subjectId ?? "");
+          const slash = key.indexOf("/");
+          let c: number;
+          let subj: string;
+          if (slash === -1) {
+            c = 11;
+            subj = key;
+          } else {
+            c = Number(key.slice(0, slash));
+            subj = key.slice(slash + 1);
+          }
+          if (c === cls && subj) counts[subj] = (counts[subj] ?? 0) + 1;
+        });
+        resolve(counts);
+      };
+      req.onerror = () => reject(req.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
+export function fileURL(f: StoredFile): string {
+  return f.url ?? URL.createObjectURL(f.blob as Blob);
+}
+
+export function isViewable(f: StoredFile): boolean {
+  return (
+    f.type === "application/pdf" ||
+    f.type.startsWith("image/") ||
+    f.type.startsWith("text/")
+  );
 }
 
 export function formatSize(bytes: number): string {
