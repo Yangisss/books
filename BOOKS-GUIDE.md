@@ -23,6 +23,27 @@
    gh auth login
    ```
 
+## Windows: по крокам (командна рядок = cmd)
+
+```bat
+:: 1. Зклонувати сайт у "Документи" (одного разу)
+cd %%USERPROFILE%%\Documents
+git clone -b arena/01a0da47-books https://github.com/Yangisss/books.git
+cd books
+
+:: 2. Додати книгу з теки "Завантаження" (файл можна покласти в any папку)
+node tools/publish-library.mjs add 11a math "%%USERPROFILE%%\Downloads\Algebra_11.pdf" --git
+
+:: 3. Перевірити, що опубліковано
+node tools/publish-library.mjs list
+```
+
+Якщо папка `books` уже клонована — пропусти крок 1 і замість clone зроби `git pull` у ній.
+Після кроку 2 зачекай 1–2 хвилини (GitHub перебудовує сайт) — і книгу видно з усіх пристроїв.
+Клас — як папка: `11a`. Предмет — id: `math`, `physics`, `chemistry`, `biology`, `geography`,
+`astronomy`, `ukr-lang`, `ukr-lit`, `english`, `history-ua`, `world-history`, `informatics`,
+`world-lit`, `art`.
+
 ## Добавить книгу
 
 ```bash
