@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { ArrowDown, Atom, BookOpen, CalendarDays, Clock3, Lock, MapPin, Palette, Sigma, Sparkles, Telescope } from "lucide-react";
-import { subjects } from "../data/subjects";
+import { bookSubjects, subjects } from "../data/subjects";
 import { CLASSES, getAdminKey, setAdminKey, setClass, useClassInfo } from "../lib/cls";
 import { checkAdminKey, isShared } from "../lib/storage";
 
@@ -24,6 +24,11 @@ function ClassSelect() {
           </option>
         ))}
       </select>
+      {CLASSES.length === 1 && (
+        <span className="text-[10px] font-bold uppercase tracking-wider text-ink-soft/70">
+          поки що лише {CLASSES[0].label}
+        </span>
+      )}
     </label>
   );
 }
@@ -73,6 +78,12 @@ function AdminButton() {
 
 const todayShort = () =>
   ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота"][new Date().getDay()];
+
+/* субота/неділя — уроків немає, тому кнопки «Розклад на …» не існує */
+const isWeekend = () => {
+  const g = new Date().getDay();
+  return g === 0 || g === 6;
+};
 
 const getGreeting = (h: number) => {
   if (h >= 5 && h < 11) return "Доброго ранку";
@@ -244,19 +255,21 @@ export default function Hero() {
                 href="#predmety"
                 className="group flex items-center gap-3 rounded-full bg-ink px-7 py-4 font-display text-xs font-bold uppercase tracking-widest text-cream shadow-[0_20px_40px_-15px_rgba(23,20,12,0.6)] transition-all duration-300 hover:-translate-y-1 hover:bg-cobalt hover:shadow-[0_24px_45px_-15px_rgba(39,67,217,0.6)]"
               >
-                Дивитися всі {subjects.length}
+                Дивитися всі {bookSubjects.length}
                 <ArrowDown className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
               </a>
-              <a
-                href="#rozklad"
-                className="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt"
-              >
-                <CalendarDays className="h-4 w-4 text-cobalt" />
-                Розклад на {todayShort()}
-              </a>
+              {!isWeekend() && (
+                <a
+                  href="#rozklad"
+                  className="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt"
+                >
+                  <CalendarDays className="h-4 w-4 text-cobalt" />
+                  Розклад на {todayShort()}
+                </a>
+              )}
               <div className="flex items-center gap-2 text-sm font-semibold text-ink-soft">
                 <Sparkles className="h-4 w-4 text-sun" />
-                {clsLabel} клас · 14 предметів · спільна поличка підручників
+                {clsLabel} клас · {bookSubjects.length} предметів · спільна поличка підручників
               </div>
             </div>
           </div>

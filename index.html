@@ -146,8 +146,11 @@
               </div>
             </div>
             <div class="flex items-center gap-2">
-              <select id="class-select" aria-label="Обрати клас"
-                class="cls-select rounded-full border border-ink/10 bg-white/70 py-2 pl-4 pr-8 font-display text-[11px] font-bold uppercase tracking-widest text-ink shadow-sm backdrop-blur transition-all hover:border-ink/30 focus:outline-none focus:ring-2 focus:ring-cobalt/40"></select>
+              <span class="relative flex items-center gap-2">
+                <select id="class-select" aria-label="Обрати клас" title="Поки що тільки 11-А клас"
+                  class="cls-select rounded-full border border-ink/10 bg-white/70 py-2 pl-4 pr-8 font-display text-[11px] font-bold uppercase tracking-widest text-ink shadow-sm backdrop-blur transition-all hover:border-ink/30 focus:outline-none focus:ring-2 focus:ring-cobalt/40"></select>
+                <span id="cls-hint" class="hidden text-[10px] font-bold uppercase tracking-wider text-ink-soft/70 md:inline"></span>
+              </span>
               <button id="admin-btn" title="" class="flex items-center gap-1 rounded-full border border-ink/10 bg-white/70 px-3.5 py-2 font-display text-[10px] font-bold uppercase tracking-widest text-ink-soft shadow-sm backdrop-blur transition-all hover:border-ink/30 hover:text-ink focus:outline-none focus:ring-2 focus:ring-cobalt/40"></button>
               <div id="live-clock" class="hidden items-center gap-2.5 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur lg:flex"></div>
             </div>
@@ -184,13 +187,13 @@
                   Дивитися всі <span id="subject-count">14</span>
                   <svg class="icon h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5"><use href="#i-arrow-down"></use></svg>
                 </a>
-                <a href="#rozklad" class="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt">
+                <a id="today-sched-btn" href="#rozklad" class="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt">
                   <svg class="icon h-4 w-4 text-cobalt"><use href="#i-calendar"></use></svg>
                   Розклад на <span id="today-word">сьогодні</span>
                 </a>
                 <div class="flex items-center gap-2 text-sm font-semibold text-ink-soft">
                   <svg class="icon h-4 w-4 text-sun"><use href="#i-sparkles"></use></svg>
-                  <span data-cls-num>11</span> клас · 14 предметів · завантаж свої підручники
+                  <span data-cls-num>11</span> клас · <span id="subject-count2">14</span> предметів · завантаж свої підручники
                 </div>
               </div>
             </div>
@@ -1210,10 +1213,19 @@
       }
 
       document.getElementById("greeting").innerHTML = greeting(new Date().getHours()) + " —<br class=\"sm:hidden\" /> ось мої";
-      document.getElementById("subject-count").textContent = subjects.length;
+      document.getElementById("subject-count").textContent = bookSubjects.length;
+      document.getElementById("subject-count2").textContent = bookSubjects.length;
       buildClassSelect();
       renderClassBits();
-      document.getElementById("today-word").textContent = ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота"][new Date().getDay()];
+      if (CLASSES.length === 1) document.getElementById("cls-hint").textContent = `поки що лише ${CLASSES[0].label}`;
+      const _wd = new Date().getDay();
+      if (_wd === 0 || _wd === 6) {
+        /* субота/неділя — уроків немає, кнопки «Розклад на …» не показуємо */
+        const b = document.getElementById("today-sched-btn");
+        if (b) b.remove();
+      } else {
+        document.getElementById("today-word").textContent = ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота"][_wd];
+      }
       document.getElementById("admin-btn").onclick = toggleAdmin;
       tickClock();
       setInterval(tickClock, 1000);
