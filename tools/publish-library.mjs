@@ -134,6 +134,22 @@ if (withGit && cmd !== "list") {
     const r = spawnSync("git", a, { cwd: ROOT, stdio: "inherit" });
     if (r.status !== 0) process.exit(r.status ?? 1);
   };
+  const gitCfg = (k) => {
+    const r = spawnSync("git", ["config", "--get", k], { cwd: ROOT, encoding: "utf8" });
+    return r.status === 0 ? String(r.stdout || "").trim() : "";
+  };
+  /* автор коміту обов'язковий — інакше git відмовиться (Author identity unknown) */
+  if (!gitCfg("user.name") || !gitCfg("user.email")) {
+    let login = "";
+    try {
+      const gh = spawnSync("gh", ["api", "user", "--jq", ".login"], { encoding: "utf8" });
+      if (gh.status === 0) login = String(gh.stdout || "").trim();
+    } catch {}
+    if (!login) die("git не знає, хто ти. Виконай один раз: git config --global user.name <Ім'я> та git config --global user.email <пошта>");
+    run(["config", "user.name", login]);
+    run(["config", "user.email", `${login}@users.noreply.github.com`]);
+    ok(`автограф у цьому репозиторії: ${login} <${login}@users.noreply.github.com>`);
+  }
   run(["add", "library"]);
   run(["commit", "-m", `Спільна полиця: оновлено ${new Date().toLocaleDateString("uk")}`]);
   run(["push"]);
