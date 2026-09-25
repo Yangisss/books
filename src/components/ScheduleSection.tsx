@@ -56,16 +56,19 @@ export default function ScheduleSection() {
     refreshCounts();
   }, [refreshCounts]);
 
+  const slotOf = (i: number) => day.lessons[i].n ?? i + 1;
+  const bellOf = (i: number) => bells[slotOf(i) - 1];
+
   const ongoingIdx = isToday
-    ? day.lessons.findIndex((_, i) => nowMin >= toMin(bells[i].start) && nowMin < toMin(bells[i].end))
+    ? day.lessons.findIndex((_, i) => nowMin >= toMin(bellOf(i).start) && nowMin < toMin(bellOf(i).end))
     : -1;
-  const nextIdx = isToday ? day.lessons.findIndex((_, i) => nowMin < toMin(bells[i].start)) : -1;
+  const nextIdx = isToday ? day.lessons.findIndex((_, i) => nowMin < toMin(bellOf(i).start)) : -1;
 
   const statusOf = (i: number): LessonStatus => {
     if (!isToday) return "later";
     if (i === ongoingIdx) return "now";
     if (i === nextIdx) return "next";
-    return nowMin >= toMin(bells[i].end) ? "done" : "later";
+    return nowMin >= toMin(bellOf(i).end) ? "done" : "later";
   };
 
   // сколько учебников загружено к урокам выбранного дня
@@ -84,19 +87,19 @@ export default function ScheduleSection() {
   } else if (isToday && ongoingIdx >= 0) {
     const l = day.lessons[ongoingIdx];
     const sub = subjectById.get(l.subjectId);
-    summaryTitle = `Триває ${ongoingIdx + 1}-й урок — ${sub?.name ?? ""}`;
-    summarySub = `до ${bells[ongoingIdx].end} · залишилось ${toMin(bells[ongoingIdx].end) - nowMin} хв`;
+    summaryTitle = `Триває ${slotOf(ongoingIdx)}-й урок — ${l.label ?? sub?.name ?? ""}`;
+    summarySub = `до ${bellOf(ongoingIdx).end} · залишилось ${toMin(bellOf(ongoingIdx).end) - nowMin} хв`;
     summaryAction = { label: "Книги до уроку", kind: "open", subjectId: l.subjectId };
   } else if (isToday && nextIdx >= 0) {
     const first = nextIdx === 0;
     const l = day.lessons[nextIdx];
     const sub = subjectById.get(l.subjectId);
     summaryTitle = first
-      ? `Перший урок о ${bells[0].start} — ${sub?.name ?? ""}`
-      : `Наступний урок — ${sub?.name ?? ""}`;
+      ? `Перший урок о ${bells[0].start} — ${l.label ?? sub?.name ?? ""}`
+      : `Наступний урок — ${l.label ?? sub?.name ?? ""}`;
     summarySub = first
       ? `До дзвінка ${toMin(bells[0].start) - nowMin} хв · у розкладі ${day.lessons.length} уроків`
-      : `${nextIdx + 1}-й урок · ${bells[nextIdx].start} · через ${toMin(bells[nextIdx].start) - nowMin} хв`;
+      : `${slotOf(nextIdx)}-й урок · ${bellOf(nextIdx).start} · через ${toMin(bellOf(nextIdx).start) - nowMin} хв`;
     summaryAction = { label: first ? "Книги до першого уроку" : "Готуємо підручник", kind: "open", subjectId: l.subjectId };
   } else if (isToday) {
     summaryTitle = "Уроки на сьогодні завершено";
@@ -255,7 +258,7 @@ export default function ScheduleSection() {
           const sub = subjectById.get(l.subjectId);
           if (!sub) return null;
           const status = statusOf(i);
-          const bell = bells[i];
+          const bell = bellOf(i);
           const Icon = sub.icon;
           const count = counts[sub.id] ?? 0;
 
@@ -281,7 +284,7 @@ export default function ScheduleSection() {
               {/* час */}
               <div className="flex items-center gap-3 sm:w-[8.5rem] sm:shrink-0 sm:flex-col sm:items-start sm:gap-0.5">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ink/5 font-display text-[11px] font-bold tabular-nums text-ink-soft">
-                  {i + 1}
+                  {slotOf(i)}
                 </span>
                 <span className="font-display text-sm font-bold tabular-nums">{bell.start}</span>
                 <span className="hidden text-[11px] font-semibold tabular-nums text-ink-soft sm:inline">до {bell.end}</span>
@@ -299,12 +302,13 @@ export default function ScheduleSection() {
               <div className="min-w-0 flex-1">
                 <p className="font-display text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
                   {categoryLabel(sub.category)}
+                  {l.label ? ` · поличка «${sub.name}»` : ""}
                   <span className="sm:hidden">
                     {" "}
                     · {bell.start}–{bell.end}
                   </span>
                 </p>
-                <h3 className="mt-1 font-display text-base font-bold leading-snug sm:text-lg">{sub.name}</h3>
+                <h3 className="mt-1 font-display text-base font-bold leading-snug sm:text-lg">{l.label ?? sub.name}</h3>
               </div>
 
               <div className="flex flex-wrap items-center gap-2.5">
