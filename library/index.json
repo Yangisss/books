@@ -1,5 +1,5 @@
 {
-  "updated": 1790375460798,
+  "updated": 1790375506045,
   "files": [
     {
       "id": "50636bee-2dde-466c-b410-243c4ed3a3f9",
@@ -50,6 +50,16 @@
       "size": 4438836,
       "addedAt": 1790375460795,
       "path": "11a/chemistry/f474fdbb-80e6-46a7-816e-b5f95b302897.pdf"
+    },
+    {
+      "id": "4e38f9da-e180-47a3-a823-ecba459581e5",
+      "cls": "11a",
+      "subject": "ukr-lit",
+      "name": "11-klas-ukrajinska-literatura-avramenko-2019.pdf",
+      "type": "application/pdf",
+      "size": 9890112,
+      "addedAt": 1790375506042,
+      "path": "11a/ukr-lit/4e38f9da-e180-47a3-a823-ecba459581e5.pdf"
     }
   ]
 }
