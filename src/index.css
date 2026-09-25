@@ -160,6 +160,19 @@ body {
 .pdf-scroll-zone {
   touch-action: pan-x pan-y;
 }
+.pdf-bar {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.pdf-bar-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(16px);
+}
+.pdf-zoom-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateX(12px);
+}
 .pdf-page-canvas.slide {
   animation: pdf-slide 0.26s cubic-bezier(0.22, 0.8, 0.3, 1);
 }

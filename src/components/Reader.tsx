@@ -79,6 +79,11 @@ export default function Reader({
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<"loading" | "ready" | "fallback">("loading");
   const [note, setNote] = useState("");
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const controlsVisibleRef = useRef(true);
+  useEffect(() => {
+    controlsVisibleRef.current = controlsVisible;
+  }, [controlsVisible]);
 
   const toast = (msg: string) => {
     setNote(msg);
@@ -91,7 +96,7 @@ export default function Reader({
     const canvas = canvasRef.current;
     if (!scroll || !canvas) return;
     scroll.scrollLeft = Math.max(0, rx * canvas.clientWidth - scroll.clientWidth / 2);
-    scroll.scrollTop = Math.max(0, fy * canvas.clientHeight - scroll.clientHeight / 2 - 110);
+    scroll.scrollTop = Math.max(0, fy * canvas.clientHeight - scroll.clientHeight / 2);
   };
 
   /* бітмапи сторінок: рендер один раз, далі — бліт без мерехтіння */
@@ -225,7 +230,7 @@ export default function Reader({
             toast(`Продовжуємо зі сторінки ${saved}`);
           } else if (!localStorage.getItem(PDF_HINT)) {
             localStorage.setItem(PDF_HINT, "1");
-            toast("Свайп чи тап по краю — гортати · пінч або подвійний тап — зум");
+            toast("Свайп чи тап по краю — гортати · пінч або подвійний тап — зум · тап у центрі — панель");
           }
         } catch {
           /* без сховища — стартуємо з першої */
@@ -257,14 +262,24 @@ export default function Reader({
     return () => document.removeEventListener("keydown", h);
   }, [isPdf, status, renderPage, zoomTo]);
 
-  /* жести: свайп (обидва боки), тап по краю, подвійний тап-зум, пінч */
+  /* жести: свайп (обидва боки), тап по краю, подвійний тап-зум, пінч з якорем, приховування панелі */
   useEffect(() => {
     if (!isPdf || status !== "ready") return;
     const el = scrollRef.current;
     if (!el) return;
     let tx = 0, ty = 0, tt = 0, lastTap = 0, lastTapX = 0.5;
+    let lastTouchEnd = 0;
     let tapT: number | null = null;
-    let pinch: { d0: number; z0: number; k: number; moved: boolean } | null = null;
+    let pinch: {
+      d0: number;
+      z0: number;
+      k: number;
+      moved: boolean;
+      midX: number;
+      midY: number;
+      rx: number;
+      ry: number;
+    } | null = null;
     const tapCancel = () => {
       if (tapT) {
         window.clearTimeout(tapT);
@@ -275,7 +290,27 @@ export default function Reader({
       if (e.touches.length === 2) {
         tapCancel();
         const a = e.touches[0], b = e.touches[1];
-        pinch = { d0: Math.max(24, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)), z0: zoomRef.current, k: 1, moved: false };
+        const midX = (a.clientX + b.clientX) / 2;
+        const midY = (a.clientY + b.clientY) / 2;
+        const c = canvasRef.current;
+        let rx = 0.5, ry = 0.5;
+        if (c) {
+          const cr = c.getBoundingClientRect();
+          if (cr.width > 0 && cr.height > 0) {
+            rx = Math.max(0, Math.min(1, (midX - cr.left) / cr.width));
+            ry = Math.max(0, Math.min(1, (midY - cr.top) / cr.height));
+          }
+        }
+        pinch = {
+          d0: Math.max(24, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)),
+          z0: zoomRef.current,
+          k: 1,
+          moved: false,
+          midX,
+          midY,
+          rx,
+          ry,
+        };
       } else if (e.touches.length === 1) {
         const t = e.touches[0];
         tx = t.clientX;
@@ -291,15 +326,16 @@ export default function Reader({
       const zt = Math.min(5, Math.max(0.6, (pinch.z0 * d) / pinch.d0));
       pinch.k = zt / pinch.z0;
       pinch.moved = true;
+      pinch.midX = (a.clientX + b.clientX) / 2;
+      pinch.midY = (a.clientY + b.clientY) / 2;
       const c = canvasRef.current;
-      const scroll = scrollRef.current;
-      if (c && scroll) {
-        const r = scroll.getBoundingClientRect();
-        c.style.transformOrigin = `${(a.clientX + b.clientX) / 2 - r.left}px ${(a.clientY + b.clientY) / 2 - r.top}px`;
+      if (c) {
+        c.style.transformOrigin = `${pinch.rx * c.clientWidth}px ${pinch.ry * c.clientHeight}px`;
         c.style.transform = `scale(${pinch.k.toFixed(3)})`;
       }
     };
     const onEnd = (e: TouchEvent) => {
+      lastTouchEnd = Date.now();
       if (pinch) {
         if (e.touches.length > 0) return;
         const pz = pinch;
@@ -308,7 +344,18 @@ export default function Reader({
           if (canvasRef.current) canvasRef.current.style.transform = "";
         };
         if (pz.moved && Math.abs(pz.z0 * pz.k - zoomRef.current) > 0.02) {
-          zoomTo(pz.z0 * pz.k).then(clear);
+          zoomTo(pz.z0 * pz.k).then(() => {
+            clear();
+            const scroll = scrollRef.current;
+            const c = canvasRef.current;
+            if (scroll && c) {
+              const sr = scroll.getBoundingClientRect();
+              const targetVx = pz.midX - sr.left;
+              const targetVy = pz.midY - sr.top;
+              scroll.scrollLeft = Math.max(0, pz.rx * c.clientWidth - targetVx);
+              scroll.scrollTop = Math.max(0, pz.ry * c.clientHeight - targetVy);
+            }
+          });
           window.setTimeout(clear, 700);
         } else clear();
         return;
@@ -329,20 +376,33 @@ export default function Reader({
         const target = e.target as HTMLElement | null;
         if (target && target.closest && target.closest("button,input")) return;
         const rect = el.getBoundingClientRect();
-        if (t.clientY > rect.bottom - 84 || (t.clientX > rect.right - 58 && t.clientY < rect.top + 205)) return;
+        if (controlsVisibleRef.current) {
+          if (t.clientY > rect.bottom - 84 || (t.clientX > rect.right - 58 && t.clientY < rect.top + 205)) return;
+        }
+        const c = canvasRef.current;
+        const cr = c ? c.getBoundingClientRect() : rect;
         const rx = (t.clientX - rect.left) / Math.max(rect.width, 1);
-        const fy = (t.clientY - rect.top) / Math.max(rect.height, 1);
+        const crx = cr.width > 0 ? (t.clientX - cr.left) / cr.width : rx;
+        const cry = cr.height > 0 ? (t.clientY - cr.top) / cr.height : 0.5;
         const now = Date.now();
         if (now - lastTap < 330 && Math.abs(rx - lastTapX) < 0.16) {
           tapCancel();
           lastTap = 0;
           if (zoomed) zoomTo(1);
-          else zoomTo(2.2).then(() => centerOn(rx, fy));
+          else zoomTo(2.2).then(() => centerOn(crx, cry));
           return;
         }
         lastTap = now;
         lastTapX = rx;
-        if (zoomed || Math.abs(rx - 0.5) < 0.26) return;
+        const isCenter = Math.abs(rx - 0.5) < 0.26;
+        if (isCenter) {
+          tapT = window.setTimeout(() => {
+            tapT = null;
+            setControlsVisible((v) => !v);
+          }, 290);
+          return;
+        }
+        if (zoomed) return;
         const dir = rx > 0.5 ? 1 : -1;
         tapT = window.setTimeout(() => {
           tapT = null;
@@ -354,16 +414,36 @@ export default function Reader({
       pinch = null;
       if (canvasRef.current) canvasRef.current.style.transform = "";
     };
+    const onClick = (e: MouseEvent) => {
+      if (Date.now() - lastTouchEnd < 500) return;
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest && target.closest("button,input,a")) return;
+      const rect = el.getBoundingClientRect();
+      if (controlsVisibleRef.current) {
+        if (e.clientY > rect.bottom - 84 || (e.clientX > rect.right - 58 && e.clientY < rect.top + 205)) return;
+      }
+      const rx = (e.clientX - rect.left) / Math.max(rect.width, 1);
+      const isCenter = Math.abs(rx - 0.5) < 0.26;
+      if (isCenter) {
+        setControlsVisible((v) => !v);
+        return;
+      }
+      if (zoomRef.current > 1.05) return;
+      const dir = rx > 0.5 ? 1 : -1;
+      renderPage(pageRef.current + dir, dir);
+    };
     el.addEventListener("touchstart", onStart, { passive: true });
     el.addEventListener("touchmove", onMove, { passive: false });
     el.addEventListener("touchend", onEnd, { passive: true });
     el.addEventListener("touchcancel", onCancel);
+    el.addEventListener("click", onClick);
     return () => {
       tapCancel();
       el.removeEventListener("touchstart", onStart);
       el.removeEventListener("touchmove", onMove);
       el.removeEventListener("touchend", onEnd);
       el.removeEventListener("touchcancel", onCancel);
+      el.removeEventListener("click", onClick);
     };
   }, [isPdf, status, renderPage, zoomTo]);
 
@@ -441,7 +521,11 @@ export default function Reader({
             {status === "fallback" && <iframe src={url} title={file.name} className="h-full w-full bg-white" />}
             {status === "ready" && (
               <>
-                <div className="absolute right-2.5 top-2.5 z-10 flex flex-col gap-1.5">
+                <div
+                  className={`pdf-bar absolute right-2.5 top-2.5 z-10 flex flex-col gap-1.5 ${
+                    !controlsVisible ? "pdf-zoom-hidden" : ""
+                  }`}
+                >
                   <button onClick={() => zoom(1.25)} aria-label="Наблизити" className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-ink/70 text-lg font-bold text-cream backdrop-blur-sm transition hover:bg-white/15 active:scale-95">
                     +
                   </button>
@@ -456,7 +540,11 @@ export default function Reader({
                     1:1
                   </button>
                 </div>
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center p-3 sm:p-4">
+                <div
+                  className={`pdf-bar pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center p-3 sm:p-4 ${
+                    !controlsVisible ? "pdf-bar-hidden" : ""
+                  }`}
+                >
                   <div className="pointer-events-auto flex w-full max-w-md items-center gap-2.5 rounded-full border border-white/10 bg-ink/85 px-3 py-2 text-cream shadow-2xl backdrop-blur-sm">
                     <button
                       onClick={() => renderPage(pageRef.current - 1, -1)}

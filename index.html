@@ -58,6 +58,9 @@
       [data-cls-num] { white-space: nowrap; }
       /* читалка: м'яке перелистування та підказки */
       #pdf-scroll { touch-action: pan-x pan-y; }
+      .pdf-bar { transition: opacity 0.22s ease, transform 0.22s ease; }
+      .pdf-bar-hidden { opacity: 0 !important; pointer-events: none !important; transform: translateY(16px); }
+      .pdf-zoom-hidden { opacity: 0 !important; pointer-events: none !important; transform: translateX(12px); }
       #pdf-canvas.slide { animation: pdf-slide 0.26s cubic-bezier(0.22, 0.8, 0.3, 1); }
       @keyframes pdf-slide {
         from { opacity: 0.25; transform: translateX(var(--turn-dir, 18px)) scale(0.985); }
@@ -1119,7 +1122,7 @@
         const canvas = document.getElementById("pdf-canvas");
         if (!scroll || !canvas) return;
         scroll.scrollLeft = Math.max(0, rx * canvas.clientWidth - scroll.clientWidth / 2);
-        scroll.scrollTop = Math.max(0, fy * canvas.clientHeight - scroll.clientHeight / 2 - 110);
+        scroll.scrollTop = Math.max(0, fy * canvas.clientHeight - scroll.clientHeight / 2);
       }
       function pdfZoomTo(st, z) {
         st.zoom = Math.min(5, Math.max(0.6, z));
@@ -1146,12 +1149,12 @@
                 ${svg("i-loader", "icon h-7 w-7 animate-spin text-sun")}
                 <p class="font-display text-[10px] font-bold uppercase tracking-[0.25em]">Готую книгу…</p>
               </div>
-              <div class="absolute right-2.5 top-2.5 z-10 flex flex-col gap-1.5">
+              <div id="pdf-zoom-bar" class="pdf-bar absolute right-2.5 top-2.5 z-10 flex flex-col gap-1.5">
                 <button data-pdf="in" aria-label="Наблизити" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-ink/70 text-lg font-bold text-cream backdrop-blur transition hover:bg-white/15 active:scale-95">+</button>
                 <button data-pdf="out" aria-label="Віддалити" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-ink/70 text-lg font-bold text-cream backdrop-blur transition hover:bg-white/15 active:scale-95">−</button>
                 <button data-pdf="fit" aria-label="По ширині" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-ink/70 text-[10px] font-bold text-cream backdrop-blur transition hover:bg-white/15 active:scale-95">1:1</button>
               </div>
-              <div class="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center p-3 sm:p-4">
+              <div id="pdf-controls" class="pdf-bar pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center p-3 sm:p-4">
                 <div class="pointer-events-auto flex w-full max-w-md items-center gap-2.5 rounded-full border border-white/10 bg-ink/85 px-3 py-2 text-cream shadow-2xl backdrop-blur">
                   <button data-pdf="prev" aria-label="Попередня сторінка" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm transition hover:bg-white/20 active:scale-95">◀</button>
                   <input id="pdf-slider" type="range" min="1" max="1" value="1" class="h-1.5 min-w-0 flex-1 accent-sun" aria-label="Прогрес читання" />
@@ -1279,7 +1282,7 @@
               pdfToast(`Продовжуємо зі сторінки ${saved}`);
             } else if (!localStorage.getItem("vdsh2-read-hint")) {
               localStorage.setItem("vdsh2-read-hint", "1");
-              pdfToast("Свайп чи тап по краю — гортати · пінч або подвійний тап — зум");
+              pdfToast("Свайп чи тап по краю — гортати · пінч або подвійний тап — зум · тап у центрі — панель");
             }
           } catch (e) {}
           renderPdfPage(start);
@@ -1291,6 +1294,14 @@
       function wirePdfReader(url) {
         const stage = document.getElementById("pdf-stage");
         if (!stage) return;
+        let controlsVisible = true;
+        const toggleControls = (show) => {
+          controlsVisible = typeof show === "boolean" ? show : !controlsVisible;
+          const bar = document.getElementById("pdf-controls");
+          const zbar = document.getElementById("pdf-zoom-bar");
+          if (bar) bar.classList.toggle("pdf-bar-hidden", !controlsVisible);
+          if (zbar) zbar.classList.toggle("pdf-zoom-hidden", !controlsVisible);
+        };
         document.getElementById("reader").querySelectorAll("[data-pdf]").forEach((b) => {
           b.addEventListener("click", () => {
             const a = b.getAttribute("data-pdf");
@@ -1311,13 +1322,34 @@
           jump.addEventListener("keydown", (e) => { if (e.key === "Enter") { renderPdfPage(Number(jump.value) || 1); jump.blur(); } });
         }
         let tx = 0, ty = 0, tt = 0, lastTap = 0, lastTapX = 0.5, tapT = null, pinch = null;
+        let lastTouchEnd = 0;
         const tapCancel = () => { if (tapT) { clearTimeout(tapT); tapT = null; } };
         const cv = () => document.getElementById("pdf-canvas");
         stage.addEventListener("touchstart", (e) => {
           if (e.touches.length === 2) {
             tapCancel();
             const a = e.touches[0], b = e.touches[1];
-            pinch = pdfState ? { d0: Math.max(24, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)), z0: pdfState.zoom, k: 1, moved: false } : null;
+            const midX = (a.clientX + b.clientX) / 2;
+            const midY = (a.clientY + b.clientY) / 2;
+            const c = cv();
+            let rx = 0.5, ry = 0.5;
+            if (c) {
+              const cr = c.getBoundingClientRect();
+              if (cr.width > 0 && cr.height > 0) {
+                rx = Math.max(0, Math.min(1, (midX - cr.left) / cr.width));
+                ry = Math.max(0, Math.min(1, (midY - cr.top) / cr.height));
+              }
+            }
+            pinch = pdfState ? {
+              d0: Math.max(24, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)),
+              z0: pdfState.zoom,
+              k: 1,
+              moved: false,
+              midX,
+              midY,
+              rx,
+              ry,
+            } : null;
           } else if (e.touches.length === 1) {
             const t = e.touches[0];
             tx = t.clientX; ty = t.clientY; tt = Date.now();
@@ -1331,25 +1363,38 @@
           const zt = Math.min(5, Math.max(0.6, (pinch.z0 * d) / pinch.d0));
           pinch.k = zt / pinch.z0;
           pinch.moved = true;
+          pinch.midX = (a.clientX + b.clientX) / 2;
+          pinch.midY = (a.clientY + b.clientY) / 2;
           const c = cv();
           if (c) {
-            const r = stage.getBoundingClientRect();
-            c.style.transformOrigin = (a.clientX + b.clientX) / 2 - r.left + "px " + ((a.clientY + b.clientY) / 2 - r.top) + "px";
+            c.style.transformOrigin = (pinch.rx * c.clientWidth) + "px " + (pinch.ry * c.clientHeight) + "px";
             c.style.transform = "scale(" + pinch.k.toFixed(3) + ")";
           }
         }, { passive: false });
         stage.addEventListener("touchend", (e) => {
+          lastTouchEnd = Date.now();
           if (pinch) {
             if (e.touches.length > 0) return;
             const pz = pinch;
             pinch = null;
             const st = pdfState;
+            const c = cv();
+            const clear = () => { if (c) c.style.transform = ""; };
             if (st && pz.moved && Math.abs(pz.z0 * pz.k - st.zoom) > 0.02) {
-              pdfZoomTo(st, pz.z0 * pz.k).then(() => { const c = cv(); if (c) c.style.transform = ""; });
-              setTimeout(() => { const c = cv(); if (c) c.style.transform = ""; }, 700);
+              pdfZoomTo(st, pz.z0 * pz.k).then(() => {
+                clear();
+                const scroll = document.getElementById("pdf-scroll");
+                if (scroll && c) {
+                  const sr = scroll.getBoundingClientRect();
+                  const targetVx = pz.midX - sr.left;
+                  const targetVy = pz.midY - sr.top;
+                  scroll.scrollLeft = Math.max(0, pz.rx * c.clientWidth - targetVx);
+                  scroll.scrollTop = Math.max(0, pz.ry * c.clientHeight - targetVy);
+                }
+              });
+              setTimeout(clear, 700);
             } else {
-              const c = cv();
-              if (c) c.style.transform = "";
+              clear();
             }
             return;
           }
@@ -1370,20 +1415,30 @@
             const el = document.elementFromPoint(t.clientX, t.clientY);
             if (el && el.closest("button,input")) return;
             const rect = stage.getBoundingClientRect();
-            if (t.clientY > rect.bottom - 84 || (t.clientX > rect.right - 58 && t.clientY < rect.top + 205)) return;
+            if (controlsVisible) {
+              if (t.clientY > rect.bottom - 84 || (t.clientX > rect.right - 58 && t.clientY < rect.top + 205)) return;
+            }
+            const c = cv();
+            const cr = c ? c.getBoundingClientRect() : rect;
             const rx = (t.clientX - rect.left) / Math.max(rect.width, 1);
-            const fy = (t.clientY - rect.top) / Math.max(rect.height, 1);
+            const crx = cr.width > 0 ? (t.clientX - cr.left) / cr.width : rx;
+            const cry = cr.height > 0 ? (t.clientY - cr.top) / cr.height : 0.5;
             const now = Date.now();
             if (now - lastTap < 330 && Math.abs(rx - lastTapX) < 0.16) {
               tapCancel();
               lastTap = 0;
               if (zoomed) pdfZoomTo(st, 1);
-              else pdfZoomTo(st, 2.2).then(() => pdfCenter(rx, fy));
+              else pdfZoomTo(st, 2.2).then(() => pdfCenter(crx, cry));
               return;
             }
             lastTap = now;
             lastTapX = rx;
-            if (zoomed || Math.abs(rx - 0.5) < 0.26) return;
+            const isCenter = Math.abs(rx - 0.5) < 0.26;
+            if (isCenter) {
+              tapT = setTimeout(() => { tapT = null; toggleControls(); }, 290);
+              return;
+            }
+            if (zoomed) return;
             const dir = rx > 0.5 ? 1 : -1;
             tapT = setTimeout(() => { tapT = null; if (pdfState) renderPdfPage(pdfState.page + dir, dir); }, 290);
           }
@@ -1392,6 +1447,25 @@
           pinch = null;
           const c = cv();
           if (c) c.style.transform = "";
+        });
+        stage.addEventListener("click", (e) => {
+          if (Date.now() - lastTouchEnd < 500) return;
+          const target = e.target;
+          if (target && target.closest && target.closest("button,input,a")) return;
+          const rect = stage.getBoundingClientRect();
+          if (controlsVisible) {
+            if (e.clientY > rect.bottom - 84 || (e.clientX > rect.right - 58 && e.clientY < rect.top + 205)) return;
+          }
+          const rx = (e.clientX - rect.left) / Math.max(rect.width, 1);
+          const isCenter = Math.abs(rx - 0.5) < 0.26;
+          if (isCenter) {
+            toggleControls();
+            return;
+          }
+          const zoomed = pdfState && pdfState.zoom > 1.05;
+          if (zoomed) return;
+          const dir = rx > 0.5 ? 1 : -1;
+          if (pdfState) renderPdfPage(pdfState.page + dir, dir);
         });
         initPdfReader(url);
       }
