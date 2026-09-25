@@ -142,6 +142,16 @@ export default function SubjectModal({
 
         {/* body */}
         <div className="flex-1 overflow-y-auto p-6 pt-5">
+          {editable && !isShared() && (
+            <div className="mb-3 flex items-start gap-2.5 rounded-2xl border border-sun bg-sun/20 px-4 py-3 text-left text-[11px] font-bold leading-snug text-ink">
+              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+              <span>
+                Увага: сайт відкрито без сервера (наприклад, GitHub Pages). Книга збережеться <u>лише в цьому браузері</u> — з
+                іншого пристрою її не буде видно. Спільна база працює тільки на адресі запущеного{" "}
+                <span className="font-mono">node server.mjs</span>.
+              </span>
+            </div>
+          )}
           {/* dropzone — лише для власника сайту */}
           {editable ? (
           <button
@@ -291,7 +301,7 @@ export default function SubjectModal({
           ) : (
             <>
               <Lock className="h-3 w-3" />
-              Файли зберігаються лише у твоєму браузері · {clsLabel} клас
+              <span className="text-amber-600">Локальний режим: файли лише у твоєму браузері — з іншого пристрою їх не видно</span>
             </>
           )}
         </div>

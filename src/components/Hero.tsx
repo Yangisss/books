@@ -8,7 +8,7 @@ function ClassSelect() {
   const { id: cls } = useClassInfo();
   return (
     <label
-      className="flex items-center gap-2 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur transition-colors"
+      className="flex items-center gap-2 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur-none sm:backdrop-blur transition-colors"
       title="Обери свій клас"
     >
       <span className="font-display text-[11px] font-bold uppercase tracking-widest text-ink-soft">Клас</span>
@@ -64,7 +64,7 @@ function AdminButton() {
     <button
       onClick={toggle}
       title={on ? "Книги можна додавати та видаляти" : "Книги бачать усі, але додає їх лише власник сайту"}
-      className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 font-display text-[10px] font-bold uppercase tracking-widest shadow-sm backdrop-blur transition-all ${
+      className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 font-display text-[10px] font-bold uppercase tracking-widest shadow-sm backdrop-blur-none sm:backdrop-blur transition-all ${
         on
           ? "border-transparent bg-sun text-ink"
           : "border-ink/10 bg-white/70 text-ink-soft hover:border-ink/30 hover:text-ink"
@@ -103,7 +103,7 @@ function LiveClock() {
   const date = now.toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <div className="flex items-center gap-2.5 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur">
+    <div className="flex items-center gap-2.5 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur-none sm:backdrop-blur">
       <Clock3 className="h-4 w-4 text-cobalt" />
       <span className="font-display text-[11px] font-semibold tracking-widest tabular-nums">{time}</span>
       <span className="h-3 w-px bg-ink/15" />
@@ -143,7 +143,7 @@ function FloatCard({
 function Marquee() {
   const row = [...subjects, ...subjects];
   return (
-    <div className="relative -mx-6 rotate-[-1.4deg] overflow-hidden bg-ink py-3.5 shadow-[0_20px_50px_-20px_rgba(23,20,12,0.5)] sm:scale-[1.01]">
+    <div className="relative -mx-6 overflow-hidden bg-ink py-3.5 shadow-[0_20px_50px_-20px_rgba(23,20,12,0.5)] sm:rotate-[-1.4deg]">
       <div className="flex w-max animate-marquee items-center gap-8 whitespace-nowrap">
         {row.map((s, i) => (
           <span key={`${s.id}-${i}`} className="flex items-center gap-8">
@@ -207,11 +207,11 @@ export default function Hero() {
         <div className="grid flex-1 items-center gap-14 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:py-8">
           <div>
             <div className="anim-fade-up flex flex-wrap items-center gap-2.5" style={{ animationDelay: "0.05s" }}>
-              <span className="flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur">
+              <span className="flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur-none sm:backdrop-blur">
                 <MapPin className="h-3.5 w-3.5 text-cobalt" />
                 Великодолинська школа №2
               </span>
-              <span className="rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur">
+              <span className="rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur-none sm:backdrop-blur">
                 2026 / 27
               </span>
             </div>
@@ -261,7 +261,7 @@ export default function Hero() {
               {!isWeekend() && (
                 <a
                   href="#rozklad"
-                  className="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt"
+                  className="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur-none sm:backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt"
                 >
                   <CalendarDays className="h-4 w-4 text-cobalt" />
                   Розклад на {todayShort()}

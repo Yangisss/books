@@ -44,15 +44,20 @@
       };
     </script>
     <style>
-      html { scroll-behavior: smooth; }
+      html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       body {
         font-family: Manrope, system-ui, sans-serif;
         background: #f6f3ea;
         color: #17140c;
         -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
         overflow-x: hidden;
       }
       ::selection { background: #f2b705; color: #17140c; }
+      @media (max-width: 639px) {
+        /* на телефонах зерно робить текст «мильним» — вимикаємо разом з анімацією */
+        .grain::after { display: none; }
+      }
       .grain::after {
         content: "";
         position: fixed;
@@ -148,22 +153,22 @@
             <div class="flex items-center gap-2">
               <span class="relative flex items-center gap-2">
                 <select id="class-select" aria-label="Обрати клас" title="Поки що тільки 11-А клас"
-                  class="cls-select rounded-full border border-ink/10 bg-white/70 py-2 pl-4 pr-8 font-display text-[11px] font-bold uppercase tracking-widest text-ink shadow-sm backdrop-blur transition-all hover:border-ink/30 focus:outline-none focus:ring-2 focus:ring-cobalt/40"></select>
+                  class="cls-select rounded-full border border-ink/10 bg-white/70 py-2 pl-4 pr-8 font-display text-[11px] font-bold uppercase tracking-widest text-ink shadow-sm backdrop-blur-none sm:backdrop-blur transition-all hover:border-ink/30 focus:outline-none focus:ring-2 focus:ring-cobalt/40"></select>
                 <span id="cls-hint" class="hidden text-[10px] font-bold uppercase tracking-wider text-ink-soft/70 md:inline"></span>
               </span>
-              <button id="admin-btn" title="" class="flex items-center gap-1 rounded-full border border-ink/10 bg-white/70 px-3.5 py-2 font-display text-[10px] font-bold uppercase tracking-widest text-ink-soft shadow-sm backdrop-blur transition-all hover:border-ink/30 hover:text-ink focus:outline-none focus:ring-2 focus:ring-cobalt/40"></button>
-              <div id="live-clock" class="hidden items-center gap-2.5 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur lg:flex"></div>
+              <button id="admin-btn" title="" class="flex items-center gap-1 rounded-full border border-ink/10 bg-white/70 px-3.5 py-2 font-display text-[10px] font-bold uppercase tracking-widest text-ink-soft shadow-sm backdrop-blur-none sm:backdrop-blur transition-all hover:border-ink/30 hover:text-ink focus:outline-none focus:ring-2 focus:ring-cobalt/40"></button>
+              <div id="live-clock" class="hidden items-center gap-2.5 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur-none sm:backdrop-blur lg:flex"></div>
             </div>
           </div>
 
           <div class="grid flex-1 items-center gap-14 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:py-8">
             <div>
               <div class="anim-fade-up flex flex-wrap items-center gap-2.5" style="animation-delay: 0.05s">
-                <span class="flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur">
+                <span class="flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur-none sm:backdrop-blur">
                   <svg class="icon h-3.5 w-3.5 text-cobalt"><use href="#i-map-pin"></use></svg>
                   <span id="chip-school">Великодолинська школа №2</span>
                 </span>
-                <span id="chip-year" class="rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur">2026 / 27</span>
+                <span id="chip-year" class="rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur-none sm:backdrop-blur">2026 / 27</span>
               </div>
 
               <h1 class="mt-7">
@@ -187,7 +192,7 @@
                   Дивитися всі <span id="subject-count">14</span>
                   <svg class="icon h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5"><use href="#i-arrow-down"></use></svg>
                 </a>
-                <a id="today-sched-btn" href="#rozklad" class="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt">
+                <a id="today-sched-btn" href="#rozklad" class="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur-none sm:backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt">
                   <svg class="icon h-4 w-4 text-cobalt"><use href="#i-calendar"></use></svg>
                   Розклад на <span id="today-word">сьогодні</span>
                 </a>
@@ -226,7 +231,7 @@
             </div>
           </div>
 
-          <div class="relative -mx-6 rotate-[-1.4deg] overflow-hidden bg-ink py-3.5 shadow-[0_20px_50px_-20px_rgba(23,20,12,0.5)] sm:scale-[1.01]">
+          <div class="relative -mx-6 overflow-hidden bg-ink py-3.5 shadow-[0_20px_50px_-20px_rgba(23,20,12,0.5)] sm:rotate-[-1.4deg]">
             <div id="marquee" class="flex w-max animate-marquee items-center gap-8 whitespace-nowrap"></div>
           </div>
         </div>
@@ -249,7 +254,7 @@
               Сайт сам визначає день і показує уроки класу. Дзвінки та перерви — окрема вкладка «Дзвінок». Розклад: 8 уроків, 08:30–15:25.
             </p>
           </div>
-          <div id="sched-tabs" class="reveal mt-8 inline-flex rounded-full border border-ink/10 bg-white/70 p-1 backdrop-blur"></div>
+          <div id="sched-tabs" class="reveal mt-8 inline-flex rounded-full border border-ink/10 bg-white/70 p-1 backdrop-blur-none sm:backdrop-blur"></div>
           <div id="day-chips" class="reveal mt-5 flex flex-wrap gap-2.5" style="transition-delay: 120ms"></div>
           <div id="schedule-body" class="mt-8 space-y-6"></div>
         </section>
@@ -749,7 +754,7 @@
         const chip = (id, label, count) => {
           const on = filter === id;
           return `<button data-filter="${id}" class="flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
-            on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "border border-ink/10 bg-white/70 text-ink-soft backdrop-blur hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink"
+            on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "border border-ink/10 bg-white/70 text-ink-soft backdrop-blur-none sm:backdrop-blur hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink"
           }">${label}<span class="rounded-full px-1.5 py-0.5 text-[10px] leading-none ${on ? "bg-sun text-ink" : "bg-ink/10 text-ink-soft"}">${count}</span></button>`;
         };
         document.getElementById("filters").innerHTML =
@@ -864,7 +869,7 @@
         }).join("");
 
         return `${head}
-          <div class="relative overflow-hidden rounded-[1.75rem] border border-ink/10 bg-cream/60 p-4 backdrop-blur sm:p-6">
+          <div class="relative overflow-hidden rounded-[1.75rem] border border-ink/10 bg-cream/60 p-4 backdrop-blur-none sm:backdrop-blur sm:p-6">
             <div class="space-y-1.5">${rows}</div>
             <p class="mt-4 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-ink-soft/60">${classLabel()} клас · Великодолинська школа №2 · після 8-го урока — до побачення завтра</p>
           </div>`;
@@ -899,7 +904,7 @@
           const on = i === selectedDay;
           const dot = i === todayIdx ? '<span class="h-1.5 w-1.5 rounded-full bg-sun" title="сьогодні"></span>' : "";
           return `<button data-day="${i}" class="flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
-            on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "border border-ink/10 bg-white/70 text-ink-soft backdrop-blur hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink"
+            on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "border border-ink/10 bg-white/70 text-ink-soft backdrop-blur-none sm:backdrop-blur hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink"
           }">${dot}${d.name}<span class="rounded-full px-1.5 py-0.5 text-[10px] leading-none ${on ? "bg-sun text-ink" : "bg-ink/10 text-ink-soft"}">${d.lessons.length}</span></button>`;
         }).join("");
 
@@ -1099,6 +1104,7 @@
             </div>
             <div class="flex-1 overflow-y-auto p-6 pt-5">
               ${canEdit() ? `
+              ${sharedOK ? "" : `<div class="mb-3 flex items-start gap-2.5 rounded-2xl border border-sun bg-sun/20 px-4 py-3 text-left text-[11px] font-bold leading-snug text-ink">${svg("i-lock", "icon mt-0.5 h-4 w-4 shrink-0 text-amber-600")}<span>Увага: сайт відкрито без сервера (наприклад, GitHub Pages). Книга збережеться <u>лише в цьому браузері</u> — з іншого пристрою її не буде видно. Спільна база працює тільки коли сайт відкрито з адреси запущеного <span class="font-mono">node server.mjs</span>.</span></div>`}
               <button id="dropzone" class="group flex w-full flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-ink/20 bg-white/60 px-6 py-8 text-center transition-all duration-300 hover:border-cobalt/50 hover:bg-white">
                 <span id="drop-icon" class="flex h-12 w-12 items-center justify-center rounded-2xl bg-ink/5 text-ink-soft transition-all duration-300 group-hover:bg-cobalt group-hover:text-white">${svg("i-upload", "icon h-6 w-6")}</span>
                 <span id="drop-title" class="text-sm font-bold">Перетягни підручник сюди</span>
@@ -1121,7 +1127,7 @@
             <div class="flex flex-wrap items-center justify-center gap-2 border-t border-ink/10 px-4 py-3.5 text-center text-[10px] font-bold uppercase tracking-widest text-ink-soft/70">
               ${sharedOK
                 ? `${svg("i-sparkles", "icon h-3 w-3 text-cobalt")} Спільна бібліотека · ${classLabel()} клас · ${SCHOOL.name} · ${canEdit() ? "ти у режимі власника" : "додає книжки лише власник"}`
-                : `${svg("i-lock", "icon h-3 w-3")} Файли зберігаються лише у твоєму браузері · ${classLabel()} клас`}
+                : `<span class="text-amber-600">${svg("i-lock", "icon h-3 w-3")} Локальний режим: файли лише у твоєму браузері — з іншого пристрою їх не видно</span>`}
             </div>
           </div>`;
 
