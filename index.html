@@ -243,10 +243,11 @@
             </div>
             <p class="flex max-w-xs items-start gap-2.5 text-sm leading-relaxed text-ink-soft">
               <svg class="icon mt-0.5 h-5 w-5 shrink-0 text-cobalt"><use href="#i-click"></use></svg>
-              Сайт сам визначає день і показує уроки класу. Дзвінки 08:30–15:25 · 8 уроків · перерви 15 хв (після 7-го — 5 хв).
+              Сайт сам визначає день і показує уроки класу. Дзвінки та перерви — окрема вкладка «Дзвінок». Розклад: 8 уроків, 08:30–15:25.
             </p>
           </div>
-          <div id="day-chips" class="reveal mt-8 flex flex-wrap gap-2.5" style="transition-delay: 120ms"></div>
+          <div id="sched-tabs" class="reveal mt-8 inline-flex rounded-full border border-ink/10 bg-white/70 p-1 backdrop-blur"></div>
+          <div id="day-chips" class="reveal mt-5 flex flex-wrap gap-2.5" style="transition-delay: 120ms"></div>
           <div id="schedule-body" class="mt-8 space-y-6"></div>
         </section>
 
@@ -321,7 +322,8 @@
       <symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></symbol>
       <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></symbol>
       <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></symbol>
-      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></symbol>
+      <symbol id="i-map" viewBox="0 0 24 24"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0l4.212 2.106a2 2 0 0 0 1.788 0Z"></path></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></symbol>
       <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M7 12h10"></path><path d="M10 18h4"></path></symbol>
       <symbol id="i-click" viewBox="0 0 24 24"><path d="M14 4.1 12 6"></path><path d="m5.1 8-2.9-.8"></path><path d="m6 12-1.9 2"></path><path d="M7.2 2.2 8 5.1"></path><path d="M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"></path></symbol>
       <symbol id="i-quote" viewBox="0 0 24 24"><path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path></symbol>
@@ -350,6 +352,7 @@
         { id: "math", name: "Математика", desc: "Алгебра і геометрія — один підручник на два предмети", category: "exact", icon: "i-sigma", accent: "#2743d9", span: "lg:col-span-3", variant: "cobalt" },
         { id: "physics", name: "Фізика", desc: "Закони руху, електрики та світла", category: "exact", icon: "i-atom", accent: "#0ea5e9", span: "lg:col-span-3" },
         { id: "chemistry", name: "Хімія", desc: "Реакції, елементи й формули", category: "natural", icon: "i-flask", accent: "#0d9488", span: "lg:col-span-2" },
+        { id: "geography", name: "Географія", desc: "Карти, країни та процеси на планеті", category: "natural", icon: "i-map", accent: "#15803d", span: "lg:col-span-2" },
         { id: "biology", name: "Біологія", desc: "Життя — від клітини до екосистеми", category: "natural", icon: "i-dna", accent: "#16a34a", span: "lg:col-span-2" },
         { id: "astronomy", name: "Астрономія", desc: "Зорі, планети та подорожі всесвітом", category: "exact", icon: "i-telescope", accent: "#8b7cf6", span: "lg:col-span-2", variant: "night" },
         { id: "ukr-lang", name: "Українська мова", desc: "Граматика, синтаксис і краса слова", category: "humanities", icon: "i-pen", accent: "#d99f0e", span: "lg:col-span-2", variant: "sun" },
@@ -360,8 +363,10 @@
         { id: "informatics", name: "Інформатика", desc: "Код, алгоритми та цифрові технології", category: "exact", icon: "i-binary", accent: "#4f46e5", span: "lg:col-span-2" },
         { id: "world-lit", name: "Зарубіжна література", desc: "Класика та шедеври країн світу", category: "humanities", icon: "i-book-marked", accent: "#be123c", span: "lg:col-span-2" },
         { id: "art", name: "Мистецтво", desc: "Музика, образи та творчість", category: "other", icon: "i-palette", accent: "#db2777", span: "lg:col-span-2" },
-        { id: "pe", name: "Фізична культура", desc: "Рух, спорт і здорова енергія", category: "other", icon: "i-dumbbell", accent: "#dc2626", span: "lg:col-span-4" },
+        { id: "pe", name: "Фізична культура", desc: "Рух, спорт і здорова енергія — підручника не передбачено", category: "other", icon: "i-dumbbell", accent: "#dc2626", span: "lg:col-span-4", noBooks: true },
       ];
+      /* предмети з поличкою книжок (фізкультура — урок є, книги немає) */
+      const bookSubjects = subjects.filter((s) => !s.noBooks);
 
       const categoryLabel = (id) => categories.find((c) => c.id === id)?.label ?? "";
       const svg = (id, cls = "icon") => `<svg class="${cls}"><use href="#${id}"></use></svg>`;
@@ -551,56 +556,30 @@
         { start: "14:45", end: "15:25" },
       ];
 
-      const CLASSES = [
-        { id: "11a", label: "11-А" },
-        { id: "11b", label: "11-Б" },
-      ];
+      const CLASSES = [{ id: "11a", label: "11-А" }];
 
-      /* Розклад за фото школи. n — номер уроку за дзвінком (gap-и збережено),
-         label — назва на картці, а поличка книжок усе одно по subject. */
-      const weekA = [
+      /* Розклад 11-А — зі слів учня (точна копія). n — номер уроку за дзвінком,
+         label — назва на картці; поличка книжок усе одно по subject. */
+      const week = [
         { name: "Понеділок", short: "Пн", lessons: [
-          { s: "physics" }, { s: "chemistry" }, { s: "ukr-lang" }, { s: "ukr-lit" },
-          { s: "history-ua" }, { s: "world-history" }, { s: "informatics", n: 8 },
+          { s: "physics" }, { s: "chemistry" }, { s: "ukr-lang" }, { s: "ukr-lang" },
+          { s: "history-ua" }, { s: "pe" }, { s: "world-history" },
         ] },
         { name: "Вівторок", short: "Вт", lessons: [
           { s: "english" }, { s: "ukr-lit" }, { s: "history-ua" }, { s: "biology" },
-          { s: "math", label: "Алгебра" }, { s: "physics" }, { s: "informatics", n: 8 },
+          { s: "math", label: "Алгебра" }, { s: "math", label: "Геометрія" },
         ] },
         { name: "Середа", short: "Ср", lessons: [
-          { s: "math", label: "Геометрія" }, { s: "informatics" }, { s: "pe" },
-          { s: "world-lit" }, { s: "math", label: "Алгебра" }, { s: "physics" },
+          { s: "geography" }, { s: "informatics" }, { s: "pe" },
+          { s: "world-lit" }, { s: "physics" },
         ] },
         { name: "Четвер", short: "Чт", lessons: [
-          { s: "english" }, { s: "math", label: "Геометрія" }, { s: "biology" },
-          { s: "ukr-lit" }, { s: "informatics" }, { s: "art" }, { s: "astronomy" },
+          { s: "english" }, { s: "math", label: "Геометрія" }, { s: "math", label: "Алгебра" },
+          { s: "biology" }, { s: "informatics" }, { s: "art" }, { s: "astronomy" },
         ] },
         { name: "П'ятниця", short: "Пт", lessons: [
-          { s: "ukr-lang" }, { s: "math", label: "Алгебра" }, { s: "pe" },
-          { s: "physics" }, { s: "ukr-lit" },
-        ] },
-      ];
-
-      const weekB = [
-        { name: "Понеділок", short: "Пн", lessons: [
-          { s: "ukr-lang" }, { s: "history-ua" }, { s: "world-history" }, { s: "pe" },
-          { s: "physics" }, { s: "math", label: "Алгебра" }, { s: "math", label: "Геометрія" },
-        ] },
-        { name: "Вівторок", short: "Вт", lessons: [
-          { s: "math", label: "Алгебра" }, { s: "english" }, { s: "ukr-lit" }, { s: "chemistry" },
-          { s: "math", label: "Геометрія" }, { s: "biology" }, { s: "informatics", label: "Інформатика (профіль)", n: 7 },
-        ] },
-        { name: "Середа", short: "Ср", lessons: [
-          { s: "math", label: "Алгебра" }, { s: "math", label: "Геометрія" }, { s: "world-lit" },
-          { s: "english" }, { s: "pe" }, { s: "physics" },
-        ] },
-        { name: "Четвер", short: "Чт", lessons: [
-          { s: "math", label: "Алгебра" }, { s: "english" }, { s: "ukr-lang" }, { s: "chemistry" },
-          { s: "math", label: "Геометрія" }, { s: "biology" }, { s: "informatics", label: "Інформатика (стандарт)" },
-        ] },
-        { name: "П'ятниця", short: "Пт", lessons: [
-          { s: "math", label: "Алгебра" }, { s: "chemistry" }, { s: "physics" },
-          { s: "ukr-lit" }, { s: "art" }, { s: "pe" },
+          { s: "ukr-lang" }, { s: "ukr-lang" }, { s: "pe" }, { s: "physics" },
+          { s: "ukr-lit" }, { s: "chemistry" },
         ] },
       ];
 
@@ -608,6 +587,7 @@
       const toMin = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
       const dayIndexOf = (d) => { const g = d.getDay(); return g >= 1 && g <= 5 ? g - 1 : null; };
       let selectedDay = dayIndexOf(new Date()) ?? 0;
+      let schedTab = "week";
       let summaryAction = null;
 
       /* ---------- Клас та школа ---------- */
@@ -618,7 +598,7 @@
       const classLabel = () => (CLASSES.find((c) => c.id === cls) || CLASSES[0]).label;
 
       /* Розклад по класах — правіть тут, коли прийде справжнє розкладення */
-      const scheduleByClass = { "11a": { bells, week: weekA }, "11b": { bells, week: weekB } };
+      const scheduleByClass = { "11a": { bells, week } };
 
       /* ---------- Режим власника: книги додає лише адмін ---------- */
       const ADMIN_KEY = "vdsh2-admin-key";
@@ -770,12 +750,12 @@
           }">${label}<span class="rounded-full px-1.5 py-0.5 text-[10px] leading-none ${on ? "bg-sun text-ink" : "bg-ink/10 text-ink-soft"}">${count}</span></button>`;
         };
         document.getElementById("filters").innerHTML =
-          chip("all", "Усі", subjects.length) +
-          categories.map((c) => chip(c.id, c.label, subjects.filter((s) => s.category === c.id).length)).join("");
+          chip("all", "Усі", bookSubjects.length) +
+          categories.map((c) => chip(c.id, c.label, bookSubjects.filter((s) => s.category === c.id).length)).join("");
       }
 
       function renderGrid() {
-        const visible = subjects.filter((s) => filter === "all" || s.category === filter);
+        const visible = bookSubjects.filter((s) => filter === "all" || s.category === filter);
         document.getElementById("grid").innerHTML =
           visible.map((s, i) => cardHTML(s, subjects.indexOf(s), i)).join("") + quoteTile();
       }
@@ -797,9 +777,108 @@
           </div>`;
       }
 
+      function renderSchedTabs() {
+        const tab = (id, label, icon) => {
+          const on = schedTab === id;
+          return `<button data-tab="${id}" class="flex items-center gap-2 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
+            on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "text-ink-soft hover:text-ink"
+          }">${svg(icon, "icon h-3.5 w-3.5")}${label}</button>`;
+        };
+        document.getElementById("sched-tabs").innerHTML =
+          tab("week", "Уроки дня", "i-calendar") + tab("bell", "Дзвінок", "i-clock");
+      }
+
+      function bellsHTML(animCls) {
+        const now = new Date();
+        const weekday = dayIndexOf(now) !== null;
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        const brkIdx = weekday ? bells.findIndex((b, i) => i < bells.length - 1 && nowMin >= toMin(b.end) && nowMin < toMin(bells[i + 1].start)) : -1;
+        const liveIdx = weekday ? bells.findIndex((b) => nowMin >= toMin(b.start) && nowMin < toMin(b.end)) : -1;
+
+        /* шапка-смужка: що триває зараз */
+        let t, sub;
+        if (!weekday) {
+          const wd = now.getDay() === 6 ? "субота" : "неділя";
+          t = `Сьогодні ${wd} — вихідний`;
+          sub = "Дзвінків немає, гарного відпочинку";
+        } else if (liveIdx >= 0) {
+          t = `Триває ${liveIdx + 1}-й урок`;
+          sub = `до ${bells[liveIdx].end} · залишилось ${toMin(bells[liveIdx].end) - nowMin} хв`;
+        } else if (brkIdx >= 0) {
+          const gap = toMin(bells[brkIdx + 1].start) - toMin(bells[brkIdx].end);
+          t = `Перерва ${gap} хв`;
+          sub = `${brkIdx + 1}-й урок завершився · ${brkIdx + 2}-й о ${bells[brkIdx + 1].start} — через ${toMin(bells[brkIdx + 1].start) - nowMin} хв`;
+        } else if (nowMin < toMin(bells[0].start)) {
+          t = "Ще до першого дзвінка";
+          sub = `перший урок о ${bells[0].start} · через ${toMin(bells[0].start) - nowMin} хв`;
+        } else {
+          t = "Уроки на сьогодні завершено";
+          sub = `останній дзвінок — ${bells[bells.length - 1].end}`;
+        }
+        const head = `
+          <div class="${animCls} relative flex flex-col justify-between gap-5 overflow-hidden rounded-[1.75rem] bg-ink p-6 text-cream shadow-[0_30px_60px_-25px_rgba(23,20,12,0.6)] sm:flex-row sm:items-center">
+            <div class="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-sun/20 blur-2xl"></div>
+            <div class="relative flex items-start gap-4">
+              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-sun backdrop-blur-sm">${svg("i-clock", "icon h-6 w-6")}</span>
+              <div>
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">Дзвінки · ${classLabel()} клас · 2026 / 27</p>
+                <p class="mt-1.5 font-display text-lg font-bold leading-snug">${t}</p>
+                <p class="mt-1 text-sm leading-relaxed text-cream/60">${sub}</p>
+              </div>
+            </div>
+            <div class="relative hidden items-center gap-1.5 rounded-full bg-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-cream/80 backdrop-blur-sm md:inline-flex">${svg("i-sigma", "icon h-3.5 w-3.5 text-sun")} 8 уроків · перерви 15 хв · після 7-го — 5 хв</div>
+          </div>`;
+
+        const rows = bells.map((b, i) => {
+          const st = toMin(b.start), en = toMin(b.end);
+          const status = !weekday ? "later" : nowMin >= st && nowMin < en ? "now" : nowMin >= en ? "done" : "later";
+          const rowCls = status === "now"
+            ? "border-sun/70 bg-sun/10 shadow-[0_18px_45px_-22px_rgba(242,183,5,0.75)]"
+            : status === "done" ? "border-ink/10 bg-paper opacity-55" : "border-ink/10 bg-paper";
+          const tag = status === "now"
+            ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-ink"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink"></span></span>триває · ${en - nowMin} хв</span>`
+            : status === "done" ? `<span class="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">дзвінок був</span>` : "";
+          return `
+            <div class="${animCls} flex items-center gap-3 rounded-3xl border p-3.5 sm:gap-4 sm:p-4 ${rowCls}" ${animCls ? `style="animation-delay:${i * 40}ms"` : ""}>
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink/5 font-display text-xs font-bold tabular-nums text-ink-soft">${i + 1}</span>
+              <p class="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5 font-display text-base font-bold tabular-nums sm:text-lg">
+                <span>${b.start}</span><span class="text-ink-soft/50">—</span><span>${b.end}</span>
+                <span class="ml-1 rounded-full border border-ink/10 bg-ink/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-ink-soft">40 хв</span>
+              </p>
+              ${tag}
+            </div>` + (i < bells.length - 1 ? (() => {
+              const gap = toMin(bells[i + 1].start) - en;
+              const onBreak = i === brkIdx;
+              return `
+            <div class="flex items-center gap-3 py-0.5 sm:pl-[3.4rem]">
+              <span class="h-px flex-1 border-t border-dashed border-ink/20"></span>
+              <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest ${
+                onBreak ? "border border-cobalt/40 bg-cobalt/10 text-cobalt" : "text-ink-soft/70"
+              }">перерва · ${gap} хв${onBreak ? ` · ${toMin(bells[i + 1].start) - nowMin} хв` : ""}</span>
+              <span class="h-px flex-1 border-t border-dashed border-ink/20"></span>
+            </div>`;
+            })() : "");
+        }).join("");
+
+        return `${head}
+          <div class="relative overflow-hidden rounded-[1.75rem] border border-ink/10 bg-cream/60 p-4 backdrop-blur sm:p-6">
+            <div class="space-y-1.5">${rows}</div>
+            <p class="mt-4 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-ink-soft/60">${classLabel()} клас · Великодолинська школа №2 · після 8-го урока — до побачення завтра</p>
+          </div>`;
+      }
+
       function renderSchedule(opts) {
         const animate = !!(opts && opts.animate);
         const animCls = animate ? "anim-fade-up" : "";
+        renderSchedTabs();
+        if (schedTab === "bell") {
+          document.getElementById("schedule-accent").textContent = "дзвінки та перерви";
+          const dc = document.getElementById("day-chips");
+          dc.innerHTML = ""; dc.classList.add("hidden");
+          document.getElementById("schedule-body").innerHTML = bellsHTML(animCls);
+          return;
+        }
+        document.getElementById("day-chips").classList.remove("hidden");
         const now = new Date();
         const todayIdx = dayIndexOf(now);
         const isToday = selectedDay === todayIdx;
@@ -840,20 +919,24 @@
         } else if (isToday && ongoingIdx >= 0) {
           const l = day.lessons[ongoingIdx];
           const s = subjectById[l.s];
-          sTitle = `Триває ${ongoingIdx + 1}-й урок — ${s ? s.name : ""}`;
+          sTitle = `Триває ${slotOf(l, ongoingIdx)}-й урок — ${s ? (l.label || s.name) : ""}`;
           sSub = `до ${bellOf(l, ongoingIdx).end} · залишилось ${toMin(bellOf(l, ongoingIdx).end) - nowMin} хв`;
-          sBtn = "Книги до уроку";
-          summaryAction = { kind: "open", id: l.s };
+          if (s && !s.noBooks) {
+            sBtn = "Книги до уроку";
+            summaryAction = { kind: "open", id: l.s };
+          }
         } else if (isToday && nextIdx >= 0) {
           const first = nextIdx === 0;
           const l = day.lessons[nextIdx];
           const s = subjectById[l.s];
-          sTitle = first ? `Перший урок о ${bells[0].start} — ${s.name}` : `Наступний урок — ${s.name}`;
+          sTitle = first ? `Перший урок о ${bells[0].start} — ${l.label || s.name}` : `Наступний урок — ${l.label || s.name}`;
           sSub = first
             ? `До дзвінка ${toMin(bells[0].start) - nowMin} хв · у розкладі ${day.lessons.length} уроків`
             : `${slotOf(l, nextIdx)}-й урок · ${bellOf(l, nextIdx).start} · через ${toMin(bellOf(l, nextIdx).start) - nowMin} хв`;
-          sBtn = first ? "Книги до першого уроку" : "Готуємо підручник";
-          summaryAction = { kind: "open", id: l.s };
+          if (!s.noBooks) {
+            sBtn = first ? "Книги до першого уроку" : "Готуємо підручник";
+            summaryAction = { kind: "open", id: l.s };
+          }
         } else if (isToday) {
           sTitle = "Уроки на сьогодні завершено";
           sSub = booksInDay > 0 ? `Твій день тримали ${bpl(booksInDay)} — гарного вечора!` : "Додай підручники — і вони завжди будуть під рукою.";
@@ -905,11 +988,13 @@
                 : status === "done"
                   ? `<span class="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">завершено</span>`
                   : "";
-          const books = count > 0
+          const books = s.noBooks
+            ? `<span class="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-ink/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-soft/70">${svg("i-dumbbell", "icon h-3.5 w-3.5")} без підручника</span>`
+            : count > 0
             ? `<span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider" style="border-color:${s.accent}55;color:${s.accent};background-color:${s.accent}12">${svg("i-book-marked", "icon h-3.5 w-3.5")} ${bpl(count)}</span>`
             : `<span class="inline-flex items-center gap-1.5 rounded-full border border-dashed border-ink/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-soft/70">${svg("i-book-marked", "icon h-3.5 w-3.5")} додати книгу</span>`;
           return `
-            <div data-open="${l.s}" ${animate ? `style="animation-delay:${i * 50}ms"` : ""} class="group ${animCls} relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-3xl border p-4 pl-5 transition-all duration-300 sm:flex-row sm:items-center sm:gap-4 ${rowCls}">
+            <div ${s.noBooks ? "" : `data-open="${l.s}"`} ${animate ? `style="animation-delay:${i * 50}ms"` : ""} class="group ${animCls} relative flex flex-col gap-3 overflow-hidden rounded-3xl border p-4 pl-5 transition-all duration-300 sm:flex-row sm:items-center sm:gap-4 ${rowCls}${s.noBooks ? "" : " cursor-pointer"}">
               <span class="absolute inset-y-0 left-0 w-1.5" style="background-color:${stripe}"></span>
               <div class="flex items-center gap-3 sm:w-[8.5rem] sm:shrink-0 sm:flex-col sm:items-start sm:gap-0.5">
                 <span class="flex h-6 w-6 items-center justify-center rounded-full bg-ink/5 font-display text-[11px] font-bold tabular-nums text-ink-soft">${slot}</span>
@@ -1145,6 +1230,13 @@
         const btn = e.target.closest("[data-day]");
         if (!btn) return;
         selectedDay = Number(btn.getAttribute("data-day"));
+        renderSchedule({ animate: true });
+      });
+
+      document.getElementById("sched-tabs").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-tab]");
+        if (!btn) return;
+        schedTab = btn.getAttribute("data-tab");
         renderSchedule({ animate: true });
       });
 

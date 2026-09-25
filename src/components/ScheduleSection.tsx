@@ -3,10 +3,13 @@ import {
   ArrowUpRight,
   BookMarked,
   CalendarDays,
+  Clock,
+  Dumbbell,
   MousePointerClick,
+  Sigma,
 } from "lucide-react";
 import { categoryLabel, subjects, type Subject } from "../data/subjects";
-import { dayIndexOf, scheduleByClass, toMin } from "../data/schedule";
+import { dayIndexOf, scheduleByClass, toMin, type Bell } from "../data/schedule";
 import { getCounts, plural, probeShared } from "../lib/storage";
 import { useClassInfo } from "../lib/cls";
 import { useInView } from "../hooks/useInView";
@@ -28,6 +31,7 @@ export default function ScheduleSection() {
 
   const [now, setNow] = useState(() => new Date());
   const [selected, setSelected] = useState<number>(() => dayIndexOf(new Date()) ?? 0);
+  const [tab, setTab] = useState<"week" | "bell">("week");
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [openSubject, setOpenSubject] = useState<Subject | null>(null);
   const { ref: headRef, inView: headIn } = useInView<HTMLDivElement>();
@@ -89,7 +93,7 @@ export default function ScheduleSection() {
     const sub = subjectById.get(l.subjectId);
     summaryTitle = `Триває ${slotOf(ongoingIdx)}-й урок — ${l.label ?? sub?.name ?? ""}`;
     summarySub = `до ${bellOf(ongoingIdx).end} · залишилось ${toMin(bellOf(ongoingIdx).end) - nowMin} хв`;
-    summaryAction = { label: "Книги до уроку", kind: "open", subjectId: l.subjectId };
+    if (!sub?.noBooks) summaryAction = { label: "Книги до уроку", kind: "open", subjectId: l.subjectId };
   } else if (isToday && nextIdx >= 0) {
     const first = nextIdx === 0;
     const l = day.lessons[nextIdx];
@@ -100,7 +104,8 @@ export default function ScheduleSection() {
     summarySub = first
       ? `До дзвінка ${toMin(bells[0].start) - nowMin} хв · у розкладі ${day.lessons.length} уроків`
       : `${slotOf(nextIdx)}-й урок · ${bellOf(nextIdx).start} · через ${toMin(bellOf(nextIdx).start) - nowMin} хв`;
-    summaryAction = { label: first ? "Книги до першого уроку" : "Готуємо підручник", kind: "open", subjectId: l.subjectId };
+    if (!sub?.noBooks)
+      summaryAction = { label: first ? "Книги до першого уроку" : "Готуємо підручник", kind: "open", subjectId: l.subjectId };
   } else if (isToday) {
     summaryTitle = "Уроки на сьогодні завершено";
     summarySub =
@@ -203,13 +208,28 @@ export default function ScheduleSection() {
 
   return (
     <section id="rozklad" className="relative mx-auto max-w-7xl px-6 pb-10 pt-20">
-      {head(isToday ? "на сьогодні" : day.name.toLowerCase())}
+      {head(tab === "bell" ? "дзвінки та перерви" : isToday ? "на сьогодні" : day.name.toLowerCase())}
 
       <div
         className={cn(
           "reveal",
           headIn && "is-visible",
-          "no-scrollbar mt-8 flex gap-2.5 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible"
+          "mt-8 inline-flex rounded-full border border-ink/10 bg-white/70 p-1 backdrop-blur"
+        )}
+      >
+        {tabBtn("week", "Уроки дня", CalendarDays)}
+        {tabBtn("bell", "Дзвінок", Clock)}
+      </div>
+
+      {tab === "bell" ? (
+        <BellBoard now={now} clsLabel={clsLabel} bells={bells} />
+      ) : (
+        <>
+      <div
+        className={cn(
+          "reveal",
+          headIn && "is-visible",
+          "no-scrollbar mt-5 flex gap-2.5 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible"
         )}
         style={{ transitionDelay: "120ms" }}
       >
@@ -261,13 +281,17 @@ export default function ScheduleSection() {
           const bell = bellOf(i);
           const Icon = sub.icon;
           const count = counts[sub.id] ?? 0;
+          const clickable = !sub.noBooks;
 
           return (
             <article
               key={i}
-              onClick={() => setOpenSubject(sub)}
+              onClick={() => {
+                if (clickable) setOpenSubject(sub);
+              }}
               className={cn(
-                "anim-fade-up group relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-3xl border p-4 pl-5 transition-all duration-300 sm:flex-row sm:items-center sm:gap-4",
+                "anim-fade-up group relative flex flex-col gap-3 overflow-hidden rounded-3xl border p-4 pl-5 transition-all duration-300 sm:flex-row sm:items-center sm:gap-4",
+                clickable && "cursor-pointer",
                 status === "now"
                   ? "border-sun/70 bg-sun/10 shadow-[0_18px_45px_-22px_rgba(242,183,5,0.75)]"
                   : status === "done"
@@ -329,7 +353,12 @@ export default function ScheduleSection() {
                 {status === "done" && (
                   <span className="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">завершено</span>
                 )}
-                {count > 0 ? (
+                {sub.noBooks ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-ink/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-soft/70">
+                    <Dumbbell className="h-3.5 w-3.5" />
+                    без підручника
+                  </span>
+                ) : count > 0 ? (
                   <span
                     className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider"
                     style={{ borderColor: `${sub.accent}55`, color: sub.accent, backgroundColor: `${sub.accent}12` }}
@@ -343,14 +372,153 @@ export default function ScheduleSection() {
                     {`поличка ${clsLabel}`}
                   </span>
                 )}
-                <ArrowUpRight className="hidden h-[18px] w-[18px] text-ink/40 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:block" />
+                {clickable && <ArrowUpRight className="hidden h-[18px] w-[18px] text-ink/40 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:block" />}
               </div>
             </article>
           );
         })}
       </div>
 
+        </>
+      )}
+
       {openSubject && <SubjectModal subject={openSubject} onClose={() => setOpenSubject(null)} onChanged={refreshCounts} />}
     </section>
+  );
+
+  function tabBtn(id: "week" | "bell", label: string, Icon: typeof CalendarDays) {
+    const on = tab === id;
+    return (
+      <button
+        onClick={() => setTab(id)}
+        className={cn(
+          "flex items-center gap-2 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest transition-all duration-300",
+          on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "text-ink-soft hover:text-ink"
+        )}
+      >
+        <Icon className="h-3.5 w-3.5" />
+        {label}
+      </button>
+    );
+  }
+}
+
+/* -------- вкладка «Дзвінок»: 8 уроків і перерви, з підвіткою поточного моменту -------- */
+function BellBoard({ now, clsLabel, bells }: { now: Date; clsLabel: string; bells: Bell[] }) {
+  const weekday = dayIndexOf(now) !== null;
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const liveIdx = weekday ? bells.findIndex((b) => nowMin >= toMin(b.start) && nowMin < toMin(b.end)) : -1;
+  const brkIdx = weekday
+    ? bells.findIndex((b, i) => i < bells.length - 1 && nowMin >= toMin(b.end) && nowMin < toMin(bells[i + 1].start))
+    : -1;
+
+  let t: string, subTxt: string;
+  if (!weekday) {
+    t = `Сьогодні ${now.getDay() === 6 ? "субота" : "неділя"} — вихідний`;
+    subTxt = "Дзвінків немає, гарного відпочинку";
+  } else if (liveIdx >= 0) {
+    t = `Триває ${liveIdx + 1}-й урок`;
+    subTxt = `до ${bells[liveIdx].end} · залишилось ${toMin(bells[liveIdx].end) - nowMin} хв`;
+  } else if (brkIdx >= 0) {
+    const gap = toMin(bells[brkIdx + 1].start) - toMin(bells[brkIdx].end);
+    t = `Перерва ${gap} хв`;
+    subTxt = `${brkIdx + 1}-й урок завершився · ${brkIdx + 2}-й о ${bells[brkIdx + 1].start} — через ${toMin(bells[brkIdx + 1].start) - nowMin} хв`;
+  } else if (nowMin < toMin(bells[0].start)) {
+    t = "Ще до першого дзвінка";
+    subTxt = `перший урок о ${bells[0].start} · через ${toMin(bells[0].start) - nowMin} хв`;
+  } else {
+    t = "Уроки на сьогодні завершено";
+    subTxt = `останній дзвінок — ${bells[bells.length - 1].end}`;
+  }
+
+  return (
+    <div className="anim-fade-up space-y-6">
+      <div
+        className="relative flex flex-col justify-between gap-5 overflow-hidden rounded-[1.75rem] bg-ink p-6 text-cream shadow-[0_30px_60px_-25px_rgba(23,20,12,0.6)] sm:flex-row sm:items-center"
+        style={{ animationDelay: "60ms" }}
+      >
+        <div className="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-sun/20 blur-2xl" />
+        <div className="relative flex items-start gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-sun backdrop-blur-sm">
+            <Clock className="h-6 w-6" />
+          </span>
+          <div>
+            <p className="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">
+              Дзвінки · {clsLabel} клас · 2026 / 27
+            </p>
+            <p className="mt-1.5 font-display text-lg font-bold leading-snug">{t}</p>
+            <p className="mt-1 text-sm leading-relaxed text-cream/60">{subTxt}</p>
+          </div>
+        </div>
+        <span className="relative hidden items-center gap-1.5 rounded-full bg-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-cream/80 backdrop-blur-sm md:inline-flex">
+          <Sigma className="h-3.5 w-3.5 text-sun" />8 уроків · перерви 15 хв · після 7-го — 5 хв
+        </span>
+      </div>
+
+      <div className="relative overflow-hidden rounded-[1.75rem] border border-ink/10 bg-cream/60 p-4 backdrop-blur sm:p-6">
+        <div className="space-y-1.5">
+          {bells.map((b, i) => {
+            const st = toMin(b.start), en = toMin(b.end);
+            const status = !weekday ? "later" : nowMin >= st && nowMin < en ? "now" : nowMin >= en ? "done" : "later";
+            const onBreak = i === brkIdx;
+            const gap = i < bells.length - 1 ? toMin(bells[i + 1].start) - en : 0;
+            return (
+              <div key={b.start}>
+                <div
+                  className={cn(
+                    "flex items-center gap-3 rounded-3xl border p-3.5 transition-all duration-300 sm:gap-4 sm:p-4",
+                    status === "now"
+                      ? "border-sun/70 bg-sun/10 shadow-[0_18px_45px_-22px_rgba(242,183,5,0.75)]"
+                      : status === "done"
+                        ? "border-ink/10 bg-paper opacity-55"
+                        : "border-ink/10 bg-paper"
+                  )}
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink/5 font-display text-xs font-bold tabular-nums text-ink-soft">
+                    {i + 1}
+                  </span>
+                  <p className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5 font-display text-base font-bold tabular-nums sm:text-lg">
+                    <span>{b.start}</span>
+                    <span className="text-ink-soft/50">—</span>
+                    <span>{b.end}</span>
+                    <span className="ml-1 rounded-full border border-ink/10 bg-ink/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-ink-soft">
+                      40 хв
+                    </span>
+                  </p>
+                  {status === "now" ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-ink">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60" />
+                        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink" />
+                      </span>
+                      триває · {en - nowMin} хв
+                    </span>
+                  ) : status === "done" ? (
+                    <span className="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">дзвінок був</span>
+                  ) : null}
+                </div>
+                {i < bells.length - 1 && (
+                  <div className="flex items-center gap-3 py-0.5 sm:pl-[3.4rem]">
+                    <span className="h-px flex-1 border-t border-dashed border-ink/20" />
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest",
+                        onBreak ? "border border-cobalt/40 bg-cobalt/10 text-cobalt" : "text-ink-soft/70"
+                      )}
+                    >
+                      перерва · {gap} хв{onBreak ? ` · ${toMin(bells[i + 1].start) - nowMin} хв` : ""}
+                    </span>
+                    <span className="h-px flex-1 border-t border-dashed border-ink/20" />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-4 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-ink-soft/60">
+          {clsLabel} клас · Великодолинська школа №2 · після 8-го урока — до побачення завтра
+        </p>
+      </div>
+    </div>
   );
 }

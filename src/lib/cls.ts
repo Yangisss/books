@@ -5,10 +5,7 @@ export interface ClassInfo {
   label: string;
 }
 
-export const CLASSES: ClassInfo[] = [
-  { id: "11a", label: "11-А" },
-  { id: "11b", label: "11-Б" },
-];
+export const CLASSES: ClassInfo[] = [{ id: "11a", label: "11-А" }];
 
 const KEY = "vdsh2-class";
 const ADMIN_KEY = "vdsh2-admin-key";

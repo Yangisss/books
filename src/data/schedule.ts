@@ -43,7 +43,7 @@ export const SCHOOL = {
 };
 
 /** 5 навчальних днів: індекс 0 = Понеділок … 4 = П'ятниця */
-const weekA: DaySchedule[] = [
+const week: DaySchedule[] = [
   {
     id: "mon",
     name: "Понеділок",
@@ -52,10 +52,10 @@ const weekA: DaySchedule[] = [
       { subjectId: "physics" },
       { subjectId: "chemistry" },
       { subjectId: "ukr-lang" },
-      { subjectId: "ukr-lit" },
+      { subjectId: "ukr-lang" },
       { subjectId: "history-ua" },
+      { subjectId: "pe" },
       { subjectId: "world-history" },
-      { subjectId: "informatics", n: 8 },
     ],
   },
   {
@@ -68,8 +68,7 @@ const weekA: DaySchedule[] = [
       { subjectId: "history-ua" },
       { subjectId: "biology" },
       { subjectId: "math", label: "Алгебра" },
-      { subjectId: "physics" },
-      { subjectId: "informatics", n: 8 },
+      { subjectId: "math", label: "Геометрія" },
     ],
   },
   {
@@ -77,11 +76,10 @@ const weekA: DaySchedule[] = [
     name: "Середа",
     short: "Ср",
     lessons: [
-      { subjectId: "math", label: "Геометрія" },
+      { subjectId: "geography" },
       { subjectId: "informatics" },
       { subjectId: "pe" },
       { subjectId: "world-lit" },
-      { subjectId: "math", label: "Алгебра" },
       { subjectId: "physics" },
     ],
   },
@@ -92,8 +90,8 @@ const weekA: DaySchedule[] = [
     lessons: [
       { subjectId: "english" },
       { subjectId: "math", label: "Геометрія" },
+      { subjectId: "math", label: "Алгебра" },
       { subjectId: "biology" },
-      { subjectId: "ukr-lit" },
       { subjectId: "informatics" },
       { subjectId: "art" },
       { subjectId: "astronomy" },
@@ -105,89 +103,18 @@ const weekA: DaySchedule[] = [
     short: "Пт",
     lessons: [
       { subjectId: "ukr-lang" },
-      { subjectId: "math", label: "Алгебра" },
+      { subjectId: "ukr-lang" },
       { subjectId: "pe" },
       { subjectId: "physics" },
       { subjectId: "ukr-lit" },
+      { subjectId: "chemistry" },
     ],
   },
 ];
 
-const weekB: DaySchedule[] = [
-  {
-    id: "mon",
-    name: "Понеділок",
-    short: "Пн",
-    lessons: [
-      { subjectId: "ukr-lang" },
-      { subjectId: "history-ua" },
-      { subjectId: "world-history" },
-      { subjectId: "pe" },
-      { subjectId: "physics" },
-      { subjectId: "math", label: "Алгебра" },
-      { subjectId: "math", label: "Геометрія" },
-    ],
-  },
-  {
-    id: "tue",
-    name: "Вівторок",
-    short: "Вт",
-    lessons: [
-      { subjectId: "math", label: "Алгебра" },
-      { subjectId: "english" },
-      { subjectId: "ukr-lit" },
-      { subjectId: "chemistry" },
-      { subjectId: "math", label: "Геометрія" },
-      { subjectId: "biology" },
-      { subjectId: "informatics", label: "Інформатика (профіль)", n: 7 },
-    ],
-  },
-  {
-    id: "wed",
-    name: "Середа",
-    short: "Ср",
-    lessons: [
-      { subjectId: "math", label: "Алгебра" },
-      { subjectId: "math", label: "Геометрія" },
-      { subjectId: "world-lit" },
-      { subjectId: "english" },
-      { subjectId: "pe" },
-      { subjectId: "physics" },
-    ],
-  },
-  {
-    id: "thu",
-    name: "Четвер",
-    short: "Чт",
-    lessons: [
-      { subjectId: "math", label: "Алгебра" },
-      { subjectId: "english" },
-      { subjectId: "ukr-lang" },
-      { subjectId: "chemistry" },
-      { subjectId: "math", label: "Геометрія" },
-      { subjectId: "biology" },
-      { subjectId: "informatics", label: "Інформатика (стандарт)" },
-    ],
-  },
-  {
-    id: "fri",
-    name: "П'ятниця",
-    short: "Пт",
-    lessons: [
-      { subjectId: "math", label: "Алгебра" },
-      { subjectId: "chemistry" },
-      { subjectId: "physics" },
-      { subjectId: "ukr-lit" },
-      { subjectId: "art" },
-      { subjectId: "pe" },
-    ],
-  },
-];
-
-/** Розклад по класах — ключі збігаються з id класу (src/lib/cls.ts) */
+/** Розклад по класах — поки що лише 11-А (за даними учня) */
 export const scheduleByClass: Record<string, { bells: Bell[]; week: DaySchedule[] }> = {
-  "11a": { bells, week: weekA },
-  "11b": { bells, week: weekB },
+  "11a": { bells, week },
 };
 
 export const toMin = (t: string): number => {
