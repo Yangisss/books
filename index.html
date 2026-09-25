@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Мої шкільні предмети — 11 клас" />
+    <title>Мої предмети — 11 клас</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,400;1,500;1,600;1,700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              cream: "#f6f3ea",
+              paper: "#fdfbf4",
+              ink: { DEFAULT: "#17140c", soft: "#6b6555" },
+              cobalt: "#2743d9",
+              sun: "#f2b705",
+              night: "#17143a",
+            },
+            fontFamily: {
+              display: ["Unbounded", "system-ui", "sans-serif"],
+              body: ["Manrope", "system-ui", "sans-serif"],
+              accent: ["Playfair Display", "Georgia", "serif"],
+            },
+            animation: {
+              marquee: "marquee 32s linear infinite",
+              "spin-slower": "spin 40s linear infinite",
+            },
+            keyframes: {
+              marquee: {
+                from: { transform: "translateX(0)" },
+                to: { transform: "translateX(-50%)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      html { scroll-behavior: smooth; }
+      body {
+        font-family: Manrope, system-ui, sans-serif;
+        background: #f6f3ea;
+        color: #17140c;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+      ::selection { background: #f2b705; color: #17140c; }
+      .grain::after {
+        content: "";
+        position: fixed;
+        inset: -50%;
+        z-index: 60;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        opacity: 0.045;
+        animation: grain-shift 9s steps(10) infinite;
+      }
+      @keyframes grain-shift {
+        0%, 100% { transform: translate(0, 0); }
+        10% { transform: translate(-3%, 2%); }
+        30% { transform: translate(2%, -3%); }
+        50% { transform: translate(-2%, 3%); }
+        70% { transform: translate(3%, 1%); }
+        90% { transform: translate(-1%, -2%); }
+      }
+      @keyframes floaty {
+        0%, 100% { transform: translateY(0) rotate(var(--tilt, 0deg)); }
+        50% { transform: translateY(-16px) rotate(var(--tilt, 0deg)); }
+      }
+      @keyframes fade-up {
+        from { opacity: 0; transform: translateY(22px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes pop-in {
+        0% { opacity: 0; transform: scale(0.7) rotate(-6deg); }
+        100% { opacity: 1; transform: scale(1) rotate(0deg); }
+      }
+      .anim-fade-up { animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+      .anim-pop { animation: pop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+      .reveal {
+        opacity: 0;
+        transform: translateY(28px);
+        transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .reveal.is-visible { opacity: 1; transform: translateY(0); }
+      .orbit-ring {
+        border: 2px dashed color-mix(in srgb, #17140c 22%, transparent);
+        border-radius: 9999px;
+      }
+      ::-webkit-scrollbar { width: 10px; }
+      ::-webkit-scrollbar-track { background: #f6f3ea; }
+      ::-webkit-scrollbar-thumb {
+        background: #c9c2ae;
+        border-radius: 999px;
+        border: 2px solid #f6f3ea;
+      }
+      .float-card {
+        animation: floaty 7s ease-in-out infinite;
+      }
+      .icon { width: 1em; height: 1em; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </head>
+  <body>
+    <div id="root" class="grain min-h-screen bg-cream font-body text-ink">
+      <header class="relative overflow-hidden">
+        <div class="pointer-events-none absolute -top-40 right-[-10%] h-[34rem] w-[34rem] rounded-full bg-sun/25 blur-3xl"></div>
+        <div class="pointer-events-none absolute -left-40 top-1/3 h-[28rem] w-[28rem] rounded-full bg-cobalt/15 blur-3xl"></div>
+        <div
+          class="pointer-events-none absolute inset-0 opacity-[0.35]"
+          style="background-image: radial-gradient(color-mix(in srgb, #17140c 14%, transparent) 1px, transparent 1px); background-size: 26px 26px; mask-image: radial-gradient(ellipse 90% 70% at 30% 20%, black, transparent);"
+        ></div>
+
+        <div class="relative mx-auto flex min-h-svh max-w-7xl flex-col px-6 pb-16 pt-6">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-ink shadow-lg">
+                <span class="absolute left-0 top-0 h-1/2 w-full bg-cobalt/90"></span>
+                <span class="absolute bottom-0 left-0 h-1/2 w-full bg-sun/90"></span>
+                <span class="relative font-display text-sm font-bold text-white mix-blend-difference">11</span>
+              </div>
+              <div class="leading-tight">
+                <p class="font-display text-xs font-bold uppercase tracking-widest">Мої предмети</p>
+                <p class="text-[11px] font-semibold uppercase tracking-widest text-ink-soft">Навчальний рік</p>
+              </div>
+            </div>
+            <div id="live-clock" class="flex items-center gap-2.5 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur"></div>
+          </div>
+
+          <div class="grid flex-1 items-center gap-14 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:py-8">
+            <div>
+              <div class="anim-fade-up flex flex-wrap items-center gap-2.5" style="animation-delay: 0.05s">
+                <span class="flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur">
+                  <svg class="icon h-3.5 w-3.5 text-cobalt"><use href="#i-map-pin"></use></svg>
+                  Українська школа
+                </span>
+                <span class="rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur">2025 / 26</span>
+              </div>
+
+              <h1 class="mt-7">
+                <span id="greeting" class="anim-fade-up block font-accent text-4xl italic text-ink/80 sm:text-5xl" style="animation-delay: 0.12s"></span>
+                <span class="anim-fade-up relative mt-1 inline-block font-display text-[17vw] font-extrabold uppercase leading-[0.95] tracking-tight sm:text-7xl lg:text-[5.6rem]" style="animation-delay: 0.2s">
+                  предмети
+                  <svg class="absolute -bottom-3 left-0 h-5 w-full text-sun sm:-bottom-4" viewBox="0 0 300 22" fill="none" preserveAspectRatio="none">
+                    <path d="M4 15C60 7 120 5 168 9C216 13 262 15 296 8" stroke="currentColor" stroke-width="7" stroke-linecap="round"></path>
+                  </svg>
+                </span>
+              </h1>
+
+              <p class="anim-fade-up mt-9 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg" style="animation-delay: 0.3s">
+                Усі дисципліни 11 класу в одному затишному місці — від математики,
+                де <span class="font-bold text-ink underline decoration-sun decoration-4 underline-offset-4">алгебра й геометрія живуть в одному підручнику</span>,
+                до астрономії та мистецтва.
+              </p>
+
+              <div class="anim-fade-up mt-9 flex flex-wrap items-center gap-4" style="animation-delay: 0.4s">
+                <a href="#predmety" class="group flex items-center gap-3 rounded-full bg-ink px-7 py-4 font-display text-xs font-bold uppercase tracking-widest text-cream shadow-[0_20px_40px_-15px_rgba(23,20,12,0.6)] transition-all duration-300 hover:-translate-y-1 hover:bg-cobalt hover:shadow-[0_24px_45px_-15px_rgba(39,67,217,0.6)]">
+                  Дивитися всі <span id="subject-count">14</span>
+                  <svg class="icon h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5"><use href="#i-arrow-down"></use></svg>
+                </a>
+                <div class="flex items-center gap-2 text-sm font-semibold text-ink-soft">
+                  <svg class="icon h-4 w-4 text-sun"><use href="#i-sparkles"></use></svg>
+                  14 предметів · завантаж свої підручники
+                </div>
+              </div>
+            </div>
+
+            <div class="relative mx-auto hidden aspect-square w-full max-w-md sm:block lg:max-w-none">
+              <div class="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-sun to-amber-400 shadow-[0_40px_80px_-30px_rgba(242,183,5,0.7)]"></div>
+              <div class="orbit-ring absolute left-1/2 top-1/2 h-[24rem] w-[24rem] -translate-x-1/2 -translate-y-1/2 animate-spin-slower"></div>
+              <div class="orbit-ring absolute left-1/2 top-1/2 h-[30rem] w-[30rem] -translate-x-1/2 -translate-y-1/2 opacity-50"></div>
+
+              <div class="float-card absolute left-0 top-6 flex items-center gap-3 rounded-2xl border border-ink/10 bg-paper px-4 py-3 shadow-[0_18px_40px_-18px_rgba(23,20,12,0.45)]" style="--tilt:-6deg">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-cobalt text-white"><svg class="icon h-5 w-5"><use href="#i-sigma"></use></svg></span>
+                <span class="font-display text-[11px] font-semibold uppercase tracking-wider">Математика</span>
+              </div>
+              <div class="float-card absolute right-0 top-24 flex items-center gap-3 rounded-2xl border border-ink/10 bg-paper px-4 py-3 shadow-[0_18px_40px_-18px_rgba(23,20,12,0.45)]" style="--tilt:5deg; animation-delay:1.2s">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl text-white" style="background:#0ea5e9"><svg class="icon h-5 w-5"><use href="#i-atom"></use></svg></span>
+                <span class="font-display text-[11px] font-semibold uppercase tracking-wider">Фізика</span>
+              </div>
+              <div class="float-card absolute bottom-20 left-2 flex items-center gap-3 rounded-2xl border border-ink/10 bg-paper px-4 py-3 shadow-[0_18px_40px_-18px_rgba(23,20,12,0.45)]" style="--tilt:-4deg; animation-delay:2.1s">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-night text-white"><svg class="icon h-5 w-5"><use href="#i-telescope"></use></svg></span>
+                <span class="font-display text-[11px] font-semibold uppercase tracking-wider">Астрономія</span>
+              </div>
+              <div class="float-card absolute bottom-4 right-6 flex items-center gap-3 rounded-2xl border border-ink/10 bg-paper px-4 py-3 shadow-[0_18px_40px_-18px_rgba(23,20,12,0.45)]" style="--tilt:7deg; animation-delay:0.6s">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl text-white" style="background:#db2777"><svg class="icon h-5 w-5"><use href="#i-palette"></use></svg></span>
+                <span class="font-display text-[11px] font-semibold uppercase tracking-wider">Мистецтво</span>
+              </div>
+              <div class="float-card absolute left-1/2 top-0 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-ink/10 bg-paper px-4 py-3 shadow-[0_18px_40px_-18px_rgba(23,20,12,0.45)]" style="--tilt:-8deg; animation-delay:1.7s">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl text-white" style="background:#ea580c"><svg class="icon h-5 w-5"><use href="#i-book-open"></use></svg></span>
+                <span class="font-display text-[11px] font-semibold uppercase tracking-wider">Література</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="relative -mx-6 rotate-[-1.4deg] overflow-hidden bg-ink py-3.5 shadow-[0_20px_50px_-20px_rgba(23,20,12,0.5)] sm:scale-[1.01]">
+            <div id="marquee" class="flex w-max animate-marquee items-center gap-8 whitespace-nowrap"></div>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section id="predmety" class="relative mx-auto max-w-7xl px-6 pb-28 pt-20">
+          <div id="section-head" class="reveal flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <p class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-cobalt">
+                <svg class="icon h-4 w-4"><use href="#i-filter"></use></svg>
+                Моя програма
+              </p>
+              <h2 class="mt-3 font-display text-4xl font-extrabold uppercase tracking-tight sm:text-5xl">
+                Усі <span class="font-accent normal-case italic tracking-normal text-ink/70">предмети</span>
+              </h2>
+            </div>
+            <p class="flex max-w-xs items-start gap-2.5 text-sm leading-relaxed text-ink-soft">
+              <svg class="icon mt-0.5 h-5 w-5 shrink-0 text-cobalt"><use href="#i-click"></use></svg>
+              Натисни на предмет, щоб завантажити свої підручники й відкривати їх у вкладках.
+            </p>
+          </div>
+          <div id="filters" class="reveal mt-8 flex flex-wrap gap-2.5" style="transition-delay: 120ms"></div>
+          <div id="grid" class="mt-10 grid grid-flow-dense grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6 lg:gap-5"></div>
+        </section>
+      </main>
+
+      <footer id="site-footer" class="relative overflow-hidden bg-ink text-cream">
+        <div class="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-cobalt/30 blur-3xl"></div>
+        <div class="pointer-events-none absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-sun/25 blur-3xl"></div>
+        <div class="reveal relative mx-auto flex max-w-7xl flex-col items-center px-6 py-20 text-center">
+          <div class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl">
+            <span class="flex h-full w-full flex-col">
+              <span class="flex-1 bg-cobalt"></span>
+              <span class="flex-1 bg-sun"></span>
+            </span>
+          </div>
+          <h2 class="mt-6 font-display text-3xl font-extrabold uppercase tracking-tight sm:text-5xl">
+            Вчись. <span class="font-accent normal-case italic tracking-normal text-sun">Питай.</span> Твори.
+          </h2>
+          <p class="mt-4 max-w-md text-sm leading-relaxed text-cream/60">
+            Чотирнадцять предметів — це не навантаження, а чотирнадцять вікон у світ. Гарного навчального року!
+          </p>
+          <div class="mt-10 flex items-center gap-2 border-t border-cream/10 pt-6 text-xs font-semibold uppercase tracking-widest text-cream/40">
+            Зроблено з
+            <svg class="h-3.5 w-3.5 text-sun" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 12.572l-7.5 7.428-7.5-7.428a5 5 0 1 1 7.5-6.566 5 5 0 1 1 7.5 6.572z"></path></svg>
+            для української школи
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <div id="modal" class="fixed inset-0 z-[70] hidden items-end justify-center p-0 sm:items-center sm:p-6" role="dialog" aria-modal="true"></div>
+
+    <svg xmlns="http://www.w3.org/2000/svg" class="hidden">
+      <symbol id="i-sigma" viewBox="0 0 24 24"><path d="M18 7V4H6l6 8-6 8h12v-3"></path></symbol>
+      <symbol id="i-atom" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"></path><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"></path></symbol>
+      <symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 2v7.31"></path><path d="M14 9.3V2"></path><path d="M8.5 2h7"></path><path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path><path d="M5.52 16h12.96"></path></symbol>
+      <symbol id="i-dna" viewBox="0 0 24 24"><path d="m10 16 1.5 1.5"></path><path d="m14 8-1.5-1.5"></path><path d="M15 2c-1.973 2.84-3 6.292-3 10s1.027 7.16 3 10"></path><path d="M9 2c1.973 2.84 3 6.292 3 10s-1.027 7.16-3 10"></path><path d="m9 9 6 6"></path><path d="m15 9-6 6"></path></symbol>
+      <symbol id="i-telescope" viewBox="0 0 24 24"><path d="m10.065 12.493-6.18 1.318a.934.934 0 0 1-1.108-.702l-.75-2.8a.933.933 0 0 1 .612-1.115l6.89-1.875"></path><path d="M12.56 6.77 17.2 2.13a2.647 2.647 0 1 1 3.75 3.74L16.3 10.5"></path><path d="m12.56 6.77 1.875 6.89a.935.935 0 0 1-.7 1.116l-2.8.75a.933.933 0 0 1-1.108-.702l-1.318-6.18"></path><path d="m16 21-3.105-6.21"></path><path d="M8 21h10"></path><circle cx="12" cy="13" r=".5"></circle></symbol>
+      <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"></path></symbol>
+      <symbol id="i-book-open" viewBox="0 0 24 24"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path></symbol>
+      <symbol id="i-languages" viewBox="0 0 24 24"><path d="m5 8 6 6"></path><path d="m4 14 6-6 2-3"></path><path d="M2 5h12"></path><path d="M7 2h1"></path><path d="m22 22-5-10-5 10"></path><path d="M14 18h6"></path></symbol>
+      <symbol id="i-landmark" viewBox="0 0 24 24"><line x1="3" x2="21" y1="22" y2="22"></line><line x1="6" x2="6" y1="18" y2="11"></line><line x1="10" x2="10" y1="18" y2="11"></line><line x1="14" x2="14" y1="18" y2="11"></line><line x1="18" x2="18" y1="18" y2="11"></line><polygon points="12 2 20 7 4 7"></polygon></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></symbol>
+      <symbol id="i-binary" viewBox="0 0 24 24"><rect x="14" y="14" width="4" height="6" rx="1"></rect><rect x="6" y="4" width="4" height="6" rx="1"></rect><path d="M6 20h4"></path><path d="M14 10h4"></path><path d="M6 14h2v6"></path><path d="M14 4h2v6"></path></symbol>
+      <symbol id="i-book-marked" viewBox="0 0 24 24"><path d="M10 2v8l3-3 3 3V2"></path><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"></path></symbol>
+      <symbol id="i-palette" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path></symbol>
+      <symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="M14.4 14.4 9.6 9.6"></path><path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"></path><path d="m21.5 21.5-1.4-1.4"></path><path d="M3.9 3.9 2.5 2.5"></path><path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"></path></symbol>
+      <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="m19 12-7 7-7-7"></path></symbol>
+      <symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></symbol>
+      <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></symbol>
+      <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></symbol>
+      <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M7 12h10"></path><path d="M10 18h4"></path></symbol>
+      <symbol id="i-click" viewBox="0 0 24 24"><path d="M14 4.1 12 6"></path><path d="m5.1 8-2.9-.8"></path><path d="m6 12-1.9 2"></path><path d="M7.2 2.2 8 5.1"></path><path d="M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"></path></symbol>
+      <symbol id="i-quote" viewBox="0 0 24 24"><path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M12 12v9"></path><path d="m16 16-4-4-4 4"></path></symbol>
+      <symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></symbol>
+      <symbol id="i-external" viewBox="0 0 24 24"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></symbol>
+      <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path></symbol>
+      <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></symbol>
+      <symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></symbol>
+    </svg>
+
+    <script>
+      const categories = [
+        { id: "exact", label: "Точні науки" },
+        { id: "natural", label: "Природничі науки" },
+        { id: "humanities", label: "Гуманітарні" },
+        { id: "other", label: "Мистецтво і спорт" },
+      ];
+
+      const subjects = [
+        { id: "math", name: "Математика", desc: "Алгебра і геометрія — один підручник на два предмети", category: "exact", icon: "i-sigma", accent: "#2743d9", span: "lg:col-span-3", variant: "cobalt" },
+        { id: "physics", name: "Фізика", desc: "Закони руху, електрики та світла", category: "exact", icon: "i-atom", accent: "#0ea5e9", span: "lg:col-span-3" },
+        { id: "chemistry", name: "Хімія", desc: "Реакції, елементи й формули", category: "natural", icon: "i-flask", accent: "#0d9488", span: "lg:col-span-2" },
+        { id: "biology", name: "Біологія", desc: "Життя — від клітини до екосистеми", category: "natural", icon: "i-dna", accent: "#16a34a", span: "lg:col-span-2" },
+        { id: "astronomy", name: "Астрономія", desc: "Зорі, планети та подорожі всесвітом", category: "exact", icon: "i-telescope", accent: "#8b7cf6", span: "lg:col-span-2", variant: "night" },
+        { id: "ukr-lang", name: "Українська мова", desc: "Граматика, синтаксис і краса слова", category: "humanities", icon: "i-pen", accent: "#d99f0e", span: "lg:col-span-2", variant: "sun" },
+        { id: "ukr-lit", name: "Українська література", desc: "Від Шевченка до сучасних голосів", category: "humanities", icon: "i-book-open", accent: "#ea580c", span: "lg:col-span-2" },
+        { id: "english", name: "Англійська мова", desc: "Speaking, grammar & culture", category: "humanities", icon: "i-languages", accent: "#8b5cf6", span: "lg:col-span-2" },
+        { id: "history-ua", name: "Історія України", desc: "Тисячоліття української державності", category: "humanities", icon: "i-landmark", accent: "#b45309", span: "lg:col-span-3" },
+        { id: "world-history", name: "Всесвітня історія", desc: "Цивілізації, відкриття та великі епохи", category: "humanities", icon: "i-globe", accent: "#0891b2", span: "lg:col-span-3" },
+        { id: "informatics", name: "Інформатика", desc: "Код, алгоритми та цифрові технології", category: "exact", icon: "i-binary", accent: "#4f46e5", span: "lg:col-span-2" },
+        { id: "world-lit", name: "Зарубіжна література", desc: "Класика та шедеври країн світу", category: "humanities", icon: "i-book-marked", accent: "#be123c", span: "lg:col-span-2" },
+        { id: "art", name: "Мистецтво", desc: "Музика, образи та творчість", category: "other", icon: "i-palette", accent: "#db2777", span: "lg:col-span-2" },
+        { id: "pe", name: "Фізична культура", desc: "Рух, спорт і здорова енергія", category: "other", icon: "i-dumbbell", accent: "#dc2626", span: "lg:col-span-4" },
+      ];
+
+      const categoryLabel = (id) => categories.find((c) => c.id === id)?.label ?? "";
+      const svg = (id, cls = "icon") => `<svg class="${cls}"><use href="#${id}"></use></svg>`;
+
+      function greeting(h) {
+        if (h >= 5 && h < 11) return "Доброго ранку";
+        if (h >= 11 && h < 18) return "Добрий день";
+        if (h >= 18 && h < 23) return "Добрий вечір";
+        return "Доброї ночі";
+      }
+
+      function plural(n, one, few, many) {
+        const m100 = n % 100;
+        if (m100 >= 11 && m100 <= 14) return many;
+        const m10 = n % 10;
+        if (m10 === 1) return one;
+        if (m10 >= 2 && m10 <= 4) return few;
+        return many;
+      }
+
+      function formatSize(bytes) {
+        if (bytes < 1024) return bytes + " Б";
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + " КБ";
+        if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " МБ";
+        return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " ГБ";
+      }
+
+      const DB_NAME = "moi-pidruchnyky";
+      const STORE = "textbooks";
+
+      function openDB() {
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(DB_NAME, 1);
+          req.onupgradeneeded = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains(STORE)) {
+              db.createObjectStore(STORE, { keyPath: "id" }).createIndex("bySubject", "subjectId", { unique: false });
+            }
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async function addFiles(subjectId, files) {
+        const db = await openDB();
+        try {
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE, "readwrite");
+            const store = tx.objectStore(STORE);
+            files.forEach((f) => {
+              store.put({
+                id: crypto.randomUUID(),
+                subjectId,
+                name: f.name,
+                type: f.type || "application/octet-stream",
+                size: f.size,
+                addedAt: Date.now(),
+                blob: f,
+              });
+            });
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          });
+        } finally {
+          db.close();
+        }
+      }
+
+      async function getFiles(subjectId) {
+        const db = await openDB();
+        try {
+          const out = await new Promise((resolve, reject) => {
+            const req = db.transaction(STORE, "readonly").objectStore(STORE).index("bySubject").getAll(subjectId);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          });
+          return out.sort((a, b) => b.addedAt - a.addedAt);
+        } finally {
+          db.close();
+        }
+      }
+
+      async function getCounts() {
+        const db = await openDB();
+        try {
+          return await new Promise((resolve, reject) => {
+            const req = db.transaction(STORE, "readonly").objectStore(STORE).getAll();
+            req.onsuccess = () => {
+              const counts = {};
+              req.result.forEach((f) => { counts[f.subjectId] = (counts[f.subjectId] || 0) + 1; });
+              resolve(counts);
+            };
+            req.onerror = () => reject(req.error);
+          });
+        } finally {
+          db.close();
+        }
+      }
+
+      async function removeFile(id) {
+        const db = await openDB();
+        try {
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE, "readwrite");
+            tx.objectStore(STORE).delete(id);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          });
+        } finally {
+          db.close();
+        }
+      }
+
+      let filter = "all";
+      let counts = {};
+      let openSubject = null;
+
+      function tickClock() {
+        const now = new Date();
+        const time = now.toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        const date = now.toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
+        document.getElementById("live-clock").innerHTML =
+          `${svg("i-clock", "icon h-4 w-4 text-cobalt")}
+           <span class="font-display text-[11px] font-semibold tracking-widest tabular-nums">${time}</span>
+           <span class="h-3 w-px bg-ink/15"></span>
+           <span class="hidden text-xs font-semibold capitalize text-ink-soft sm:inline">${date}</span>`;
+      }
+
+      function renderMarquee() {
+        const row = [...subjects, ...subjects];
+        document.getElementById("marquee").innerHTML = row.map((s, i) => `
+          <span class="flex items-center gap-8">
+            <span class="font-display text-xs font-semibold uppercase tracking-[0.22em] text-cream">${s.name}</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" class="shrink-0 text-sun" fill="currentColor"><path d="M5 0L9.5 5L5 10L0.5 5L5 0Z"></path></svg>
+          </span>`).join("");
+      }
+
+      function stars() {
+        const pts = [[22,30,1.6],[68,14,1.1],[120,42,1.9],[170,18,1.2],[215,52,1.5],[258,22,1.0],[46,66,1.2],[196,84,1.6],[90,90,1.0],[140,70,1.3]];
+        return `<svg class="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>${pts.map(([x,y,r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="white" opacity="0.55"></circle>`).join("")}</svg>`;
+      }
+
+      function cardHTML(subject, index, order) {
+        const v = subject.variant;
+        const isDark = v === "cobalt" || v === "night";
+        const isSun = v === "sun";
+        const count = counts[subject.id] || 0;
+        const skin = isDark
+          ? (v === "cobalt"
+            ? "bg-gradient-to-br from-cobalt via-[#2336b8] to-[#1a2a8f] text-cream shadow-[0_30px_60px_-25px_rgba(39,67,217,0.55)]"
+            : "bg-gradient-to-br from-night via-[#1d1a4d] to-[#100e2e] text-cream shadow-[0_30px_60px_-25px_rgba(23,20,58,0.7)]")
+          : isSun
+            ? "bg-gradient-to-br from-sun to-[#e3a203] text-ink shadow-[0_30px_60px_-25px_rgba(242,183,5,0.6)]"
+            : "border border-ink/10 bg-paper text-ink shadow-[0_18px_45px_-28px_rgba(23,20,12,0.35)] hover:shadow-[0_34px_70px_-30px_rgba(23,20,12,0.45)]";
+        const numColor = isDark ? "text-white/10" : isSun ? "text-ink/10" : "";
+        const numStyle = !isDark && !isSun ? `style="color:${subject.accent}1f"` : "";
+        const iconWrap = isDark
+          ? "bg-white/15 text-white backdrop-blur-sm"
+          : isSun
+            ? "bg-ink text-sun"
+            : "text-white";
+        const iconStyle = !isDark && !isSun ? `style="background-color:${subject.accent}"` : "";
+        const catCls = isDark ? "text-white/60" : isSun ? "text-ink/60" : "text-ink-soft";
+        const descCls = isDark ? "text-white/70" : isSun ? "text-ink/70" : "text-ink-soft";
+        const badge = count > 0
+          ? `<span class="mt-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${isDark ? "bg-white/15 text-white" : isSun ? "bg-ink/10 text-ink" : "border"}" ${!isDark && !isSun ? `style="border-color:${subject.accent}55;color:${subject.accent};background-color:${subject.accent}12"` : ""}>
+               ${svg("i-book-marked", "icon h-3.5 w-3.5")} ${count} ${plural(count, "підручник", "підручники", "підручників")}
+             </span>`
+          : "";
+
+        return `
+          <article data-open="${subject.id}" class="group relative flex min-h-[15rem] cursor-pointer flex-col justify-between overflow-hidden rounded-[1.75rem] p-6 text-left transition-all duration-500 hover:-translate-y-1.5 sm:min-h-[16rem] ${skin} ${subject.span} anim-fade-up" style="animation-delay:${order * 60}ms">
+            <div class="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"></div>
+            ${v === "night" ? stars() : ""}
+            <span class="pointer-events-none absolute -bottom-4 -right-2 font-display text-7xl font-extrabold leading-none ${numColor}" ${numStyle}>${String(index + 1).padStart(2, "0")}</span>
+            <div class="relative flex items-start justify-between gap-3">
+              <span class="flex h-12 w-12 items-center justify-center rounded-2xl transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110 ${iconWrap}" ${iconStyle}>${svg(subject.icon, "icon h-6 w-6")}</span>
+              ${svg("i-arrow-up-right", `icon h-5 w-5 -translate-x-1 translate-y-1 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100 ${isDark ? "text-white/80" : "text-ink/60"}`)}
+            </div>
+            <div class="relative mt-6">
+              <p class="font-display text-[10px] font-semibold uppercase tracking-[0.2em] ${catCls}">${categoryLabel(subject.category)}</p>
+              <h3 class="mt-2 font-display text-lg font-bold leading-snug sm:text-xl">${subject.name}</h3>
+              <p class="mt-2 text-sm leading-relaxed ${descCls}">${subject.desc}</p>
+              ${badge}
+            </div>
+          </article>`;
+      }
+
+      function quoteTile() {
+        return `
+          <aside class="anim-fade-up relative flex min-h-[15rem] flex-col justify-between overflow-hidden rounded-[1.75rem] bg-ink p-6 text-cream shadow-[0_30px_60px_-25px_rgba(23,20,12,0.6)] sm:min-h-[16rem] lg:col-span-2">
+            <div class="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-sun/20 blur-2xl"></div>
+            ${svg("i-quote", "icon h-7 w-7 text-sun")}
+            <div>
+              <p class="font-accent text-lg italic leading-snug text-cream/95">«Освіта — найпотужніша зброя, якою можна змінити світ»</p>
+              <p class="mt-3 font-display text-[10px] font-semibold uppercase tracking-[0.25em] text-cream/50">Нельсон Мандела</p>
+            </div>
+          </aside>`;
+      }
+
+      function renderFilters() {
+        const chip = (id, label, count) => {
+          const on = filter === id;
+          return `<button data-filter="${id}" class="flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+            on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "border border-ink/10 bg-white/70 text-ink-soft backdrop-blur hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink"
+          }">${label}<span class="rounded-full px-1.5 py-0.5 text-[10px] leading-none ${on ? "bg-sun text-ink" : "bg-ink/10 text-ink-soft"}">${count}</span></button>`;
+        };
+        document.getElementById("filters").innerHTML =
+          chip("all", "Усі", subjects.length) +
+          categories.map((c) => chip(c.id, c.label, subjects.filter((s) => s.category === c.id).length)).join("");
+      }
+
+      function renderGrid() {
+        const visible = subjects.filter((s) => filter === "all" || s.category === filter);
+        document.getElementById("grid").innerHTML =
+          visible.map((s, i) => cardHTML(s, subjects.indexOf(s), i)).join("") + quoteTile();
+      }
+
+      function fileIcon(type) {
+        if (type.startsWith("image/")) return "i-image";
+        if (type === "application/pdf") return "i-file-text";
+        return "i-file";
+      }
+
+      function openOne(file) {
+        window.open(URL.createObjectURL(file.blob), "_blank", "noopener");
+      }
+
+      async function renderModal() {
+        const el = document.getElementById("modal");
+        if (!openSubject) {
+          el.classList.add("hidden");
+          el.classList.remove("flex");
+          document.body.style.overflow = "";
+          el.innerHTML = "";
+          return;
+        }
+        const s = openSubject;
+        el.classList.remove("hidden");
+        el.classList.add("flex");
+        document.body.style.overflow = "hidden";
+        el.innerHTML = `
+          <div class="anim-fade-up absolute inset-0 bg-ink/55 backdrop-blur-sm" data-close style="animation-duration:0.3s"></div>
+          <div class="anim-pop relative flex max-h-[92svh] w-full max-w-lg flex-col overflow-hidden rounded-t-[2rem] bg-paper shadow-2xl sm:rounded-[2rem]">
+            <div class="flex items-start gap-4 border-b border-ink/10 p-6 pb-5">
+              <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg" style="background-color:${s.accent}">${svg(s.icon, "icon h-7 w-7")}</span>
+              <div class="min-w-0 flex-1">
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-soft">${categoryLabel(s.category)}</p>
+                <h3 class="mt-1 font-display text-xl font-bold leading-tight">${s.name}</h3>
+                <p class="mt-1 line-clamp-2 text-sm text-ink-soft">${s.desc}</p>
+              </div>
+              <button data-close aria-label="Закрити" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:rotate-90 hover:border-ink/30 hover:text-ink">${svg("i-x", "icon h-[18px] w-[18px]")}</button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 pt-5">
+              <button id="dropzone" class="group flex w-full flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-ink/20 bg-white/60 px-6 py-8 text-center transition-all duration-300 hover:border-cobalt/50 hover:bg-white">
+                <span id="drop-icon" class="flex h-12 w-12 items-center justify-center rounded-2xl bg-ink/5 text-ink-soft transition-all duration-300 group-hover:bg-cobalt group-hover:text-white">${svg("i-upload", "icon h-6 w-6")}</span>
+                <span id="drop-title" class="text-sm font-bold">Перетягни підручник сюди</span>
+                <span class="text-xs text-ink-soft">або натисни, щоб обрати — PDF, EPUB, DJVU, фото, документи</span>
+                <input id="file-input" type="file" multiple class="hidden" />
+              </button>
+              <div class="mt-6">
+                <div class="flex items-center justify-between">
+                  <p id="files-label" class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-soft">Мої файли</p>
+                  <button id="open-all" class="hidden items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-cream transition-all hover:-translate-y-0.5 hover:bg-cobalt">${svg("i-external", "icon h-3 w-3")} Відкрити всі</button>
+                </div>
+                <div id="files-list" class="mt-4 flex items-center gap-2 text-sm text-ink-soft">${svg("i-loader", "icon h-4 w-4 animate-spin")} Завантажую…</div>
+              </div>
+            </div>
+            <div class="flex items-center justify-center gap-2 border-t border-ink/10 py-3.5 text-[10px] font-bold uppercase tracking-widest text-ink-soft/70">
+              ${svg("i-lock", "icon h-3 w-3")} Файли зберігаються лише у твоєму браузері
+            </div>
+          </div>`;
+
+        const listEl = document.getElementById("files-list");
+        const files = await getFiles(s.id);
+        if (openSubject !== s) return;
+        document.getElementById("files-label").textContent = files.length ? `Мої файли · ${files.length}` : "Мої файли";
+        const openAll = document.getElementById("open-all");
+        if (files.length > 1) {
+          openAll.classList.remove("hidden");
+          openAll.classList.add("flex");
+          openAll.onclick = () => files.forEach((f, i) => setTimeout(() => openOne(f), i * 150));
+        }
+        if (!files.length) {
+          listEl.className = "mt-4 rounded-2xl bg-ink/5 px-4 py-5 text-center text-sm text-ink-soft";
+          listEl.textContent = "Поки що порожньо. Додай підручник — і він завжди буде під рукою.";
+        } else {
+          listEl.className = "mt-4 space-y-2";
+          listEl.innerHTML = files.map((f) => `
+            <div class="anim-fade-up flex items-center gap-3 rounded-2xl border border-ink/10 bg-white/70 p-3 transition-all hover:border-ink/20 hover:bg-white" style="animation-duration:0.35s">
+              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white" style="background-color:${s.accent}">${svg(fileIcon(f.type), "icon h-5 w-5")}</span>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-bold">${f.name}</p>
+                <p class="text-xs text-ink-soft">${formatSize(f.size)}</p>
+              </div>
+              <button data-open-file="${f.id}" title="Відкрити в новій вкладці" class="flex h-9 w-9 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:border-cobalt hover:bg-cobalt hover:text-white">${svg("i-external", "icon h-4 w-4")}</button>
+              <button data-remove-file="${f.id}" title="Видалити" class="flex h-9 w-9 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:border-red-500 hover:bg-red-500 hover:text-white">${svg("i-trash", "icon h-4 w-4")}</button>
+            </div>`).join("");
+          listEl.querySelectorAll("[data-open-file]").forEach((btn) => {
+            btn.onclick = () => {
+              const file = files.find((x) => x.id === btn.getAttribute("data-open-file"));
+              if (file) openOne(file);
+            };
+          });
+          listEl.querySelectorAll("[data-remove-file]").forEach((btn) => {
+            btn.onclick = async () => {
+              await removeFile(btn.getAttribute("data-remove-file"));
+              counts = await getCounts();
+              renderGrid();
+              renderModal();
+            };
+          });
+        }
+
+        async function upload(list) {
+          const arr = Array.from(list || []);
+          if (!arr.length) return;
+          const title = document.getElementById("drop-title");
+          const iconWrap = document.getElementById("drop-icon");
+          title.textContent = "Зберігаю файли…";
+          iconWrap.innerHTML = svg("i-loader", "icon h-6 w-6 animate-spin");
+          await addFiles(s.id, arr);
+          counts = await getCounts();
+          renderGrid();
+          await renderModal();
+        }
+
+        const zone = document.getElementById("dropzone");
+        const input = document.getElementById("file-input");
+        zone.onclick = () => input.click();
+        input.onchange = () => { upload(input.files); input.value = ""; };
+        zone.ondragover = (e) => { e.preventDefault(); zone.classList.add("scale-[1.02]", "border-cobalt", "bg-cobalt/5"); };
+        zone.ondragleave = () => zone.classList.remove("scale-[1.02]", "border-cobalt", "bg-cobalt/5");
+        zone.ondrop = (e) => {
+          e.preventDefault();
+          zone.classList.remove("scale-[1.02]", "border-cobalt", "bg-cobalt/5");
+          upload(e.dataTransfer.files);
+        };
+      }
+
+      async function refresh() {
+        try { counts = await getCounts(); } catch (e) { counts = {}; }
+        renderFilters();
+        renderGrid();
+      }
+
+      document.getElementById("greeting").innerHTML = greeting(new Date().getHours()) + " —<br class=\"sm:hidden\" /> ось мої";
+      document.getElementById("subject-count").textContent = subjects.length;
+      tickClock();
+      setInterval(tickClock, 1000);
+      renderMarquee();
+      refresh();
+
+      document.getElementById("filters").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-filter]");
+        if (!btn) return;
+        filter = btn.getAttribute("data-filter");
+        renderFilters();
+        renderGrid();
+      });
+
+      document.getElementById("grid").addEventListener("click", (e) => {
+        const card = e.target.closest("[data-open]");
+        if (!card) return;
+        openSubject = subjects.find((s) => s.id === card.getAttribute("data-open"));
+        renderModal();
+      });
+
+      document.getElementById("modal").addEventListener("click", (e) => {
+        if (e.target.closest("[data-close]")) {
+          openSubject = null;
+          renderModal();
+        }
+      });
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && openSubject) {
+          openSubject = null;
+          renderModal();
+        }
+      });
+
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    </script>
+  </body>
+</html>
