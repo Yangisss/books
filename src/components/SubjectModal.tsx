@@ -14,7 +14,7 @@ import {
 import { categoryLabel, type Subject } from "../data/subjects";
 import { addFiles, canEdit, formatSize, isShared, isStatic, listFiles, plural, removeFile, staticDate, type StoredFile } from "../lib/storage";
 import { useClassInfo } from "../lib/cls";
-import Reader from "./Reader";
+import Reader, { warmPdfjs } from "./Reader";
 
 function fileIcon(type: string) {
   if (type.startsWith("image/")) return ImageIcon;
@@ -58,6 +58,11 @@ export default function SubjectModal({
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  /* прогрів читаля: поки користувач дивиться полицю, тягнемо pdf.js заздалегідь */
+  useEffect(() => {
+    if (files?.some((f) => f.type === "application/pdf")) warmPdfjs();
+  }, [files]);
 
   useEffect(() => {
     const prev = document.body.style.overflow;

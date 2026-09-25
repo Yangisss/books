@@ -155,3 +155,38 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-ink);
 }
+
+/* ---------- читалка: м'яке перелистування ---------- */
+.pdf-page-canvas.slide {
+  animation: pdf-slide 0.26s cubic-bezier(0.22, 0.8, 0.3, 1);
+}
+@keyframes pdf-slide {
+  from {
+    opacity: 0.25;
+    transform: translateX(var(--turn-dir, 20px)) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.pdf-toast {
+  animation: pdf-toast 2.4s ease forwards;
+}
+@keyframes pdf-toast {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  14% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -4px);
+  }
+}
