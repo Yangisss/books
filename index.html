@@ -256,10 +256,6 @@
                 Розклад <span id="schedule-accent" class="font-accent normal-case italic tracking-normal text-ink/70">на сьогодні</span>
               </h2>
             </div>
-            <p class="flex max-w-xs items-start gap-2.5 text-sm leading-relaxed text-ink-soft">
-              <svg class="icon mt-0.5 h-5 w-5 shrink-0 text-cobalt"><use href="#i-click"></use></svg>
-              Сайт сам визначає день і показує уроки класу. Дзвінки та перерви — окрема вкладка «Дзвінок». Розклад: 8 уроків, 08:30–15:25.
-            </p>
           </div>
           <div id="sched-tabs" class="reveal mt-8 inline-flex rounded-full border border-ink/10 bg-white/70 p-1 backdrop-blur-none sm:backdrop-blur"></div>
           <div id="day-chips" class="reveal mt-5 flex flex-wrap gap-2.5" style="transition-delay: 120ms"></div>
@@ -961,9 +957,13 @@
         if (todayIdx === null) {
           const wd = now.getDay() === 6 ? "Субота" : "Неділя";
           sTitle = `Сьогодні ${wd.toLowerCase()} — вихідний`;
-          sSub = `Наступні уроки — ${week[0].name.toLowerCase()} (${week[0].lessons.length} уроків)`;
-          sBtn = `Розклад на ${week[0].short}`;
-          summaryAction = { kind: "day", day: 0 };
+          sSub = selectedDay === 0
+            ? `Показуємо розклад на ${week[0].name.toLowerCase()} — наступний навчальний день (${week[0].lessons.length} уроків)`
+            : `Наступні уроки — ${week[0].name.toLowerCase()} (${week[0].lessons.length} уроків)`;
+          if (selectedDay !== 0) {
+            sBtn = `Розклад на ${week[0].short}`;
+            summaryAction = { kind: "day", day: 0 };
+          }
         } else if (isToday && ongoingIdx >= 0) {
           const l = day.lessons[ongoingIdx];
           const s = subjectById[l.s];

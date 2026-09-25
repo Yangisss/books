@@ -5,7 +5,6 @@ import {
   CalendarDays,
   Clock,
   Dumbbell,
-  MousePointerClick,
   Sigma,
 } from "lucide-react";
 import { categoryLabel, subjects, type Subject } from "../data/subjects";
@@ -86,8 +85,11 @@ export default function ScheduleSection() {
 
   if (todayIdx === null) {
     summaryTitle = `Сьогодні ${weekendName(now).toLowerCase()} — вихідний`;
-    summarySub = `Наступні уроки — ${week[0].name.toLowerCase()} (${week[0].lessons.length} уроків)`;
-    summaryAction = { label: `Розклад на ${week[0].short}`, kind: "day", day: 0 };
+    summarySub =
+      selected === 0
+        ? `Показуємо розклад на ${week[0].name.toLowerCase()} — наступний навчальний день (${week[0].lessons.length} уроків)`
+        : `Наступні уроки — ${week[0].name.toLowerCase()} (${week[0].lessons.length} уроків)`;
+    if (selected !== 0) summaryAction = { label: `Розклад на ${week[0].short}`, kind: "day", day: 0 };
   } else if (isToday && ongoingIdx >= 0) {
     const l = day.lessons[ongoingIdx];
     const sub = subjectById.get(l.subjectId);
@@ -170,10 +172,6 @@ export default function ScheduleSection() {
           Розклад <span className="font-accent normal-case italic tracking-normal text-ink/70">{accent}</span>
         </h2>
       </div>
-      <p className="flex max-w-xs items-start gap-2.5 text-sm leading-relaxed text-ink-soft">
-        <MousePointerClick className="mt-0.5 h-5 w-5 shrink-0 text-cobalt" />
-        Сайт сам визначає день і показує уроки {clsLabel} класу. Дзвінки 08:30–15:25 · 8 уроків · перерви 15 хв (після 7-го — 5 хв).
-      </p>
     </div>
   );
 
