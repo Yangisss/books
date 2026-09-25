@@ -44,7 +44,7 @@
       };
     </script>
     <style>
-      html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; overflow-x: hidden; overflow-x: clip; }
+      html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       body {
         font-family: Manrope, system-ui, sans-serif;
         background: #f6f3ea;
@@ -52,7 +52,10 @@
         -webkit-font-smoothing: antialiased;
         text-rendering: optimizeLegibility;
         overflow-x: hidden;
+        overflow-x: clip;
       }
+      /* «11-А» — мітка, вона не ламатися на дві частини */
+      [data-cls-num] { white-space: nowrap; }
       ::selection { background: #f2b705; color: #17140c; }
       @media (max-width: 639px) {
         /* на телефонах зерно робить текст «мильним» — вимикаємо разом з анімацією */
@@ -1070,8 +1073,160 @@
       }
       let openFile = null;
       function openReader(f) { openFile = f; renderReader(); }
+
+      /* ---------- читалка PDF: pdf.js + свайп + повзунок + зум ---------- */
+      const PDFJS_URL = "https://unpkg.com/pdfjs-dist@3.11.174/legacy/build/";
+      let pdfjsReady = null;
+      function loadPdfjs() {
+        if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+        return (pdfjsReady = pdfjsReady || new Promise((resolve, reject) => {
+          const sc = document.createElement("script");
+          sc.src = PDFJS_URL + "pdf.min.js";
+          sc.onload = () => resolve(window.pdfjsLib);
+          sc.onerror = () => { pdfjsReady = null; reject(new Error("pdf.js not loaded")); };
+          document.head.appendChild(sc);
+        }));
+      }
+      let pdfState = null;
+
+      function pdfStageHTML() {
+        return `
+            <div id="pdf-stage" class="relative min-h-0 flex-1 overflow-hidden bg-ink">
+              <div id="pdf-scroll" class="absolute inset-0 overflow-auto overscroll-contain px-2 py-2">
+                <canvas id="pdf-canvas" class="mx-auto block rounded-lg bg-white shadow-2xl"></canvas>
+              </div>
+              <div id="pdf-loading" class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-cream/70">
+                ${svg("i-loader", "icon h-7 w-7 animate-spin text-sun")}
+                <p class="font-display text-[10px] font-bold uppercase tracking-[0.25em]">Готую книгу…</p>
+              </div>
+              <div class="absolute right-2.5 top-2.5 z-10 flex flex-col gap-1.5">
+                <button data-pdf="in" aria-label="Наблизити" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-ink/70 text-lg font-bold text-cream backdrop-blur transition hover:bg-white/15 active:scale-95">+</button>
+                <button data-pdf="out" aria-label="Віддалити" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-ink/70 text-lg font-bold text-cream backdrop-blur transition hover:bg-white/15 active:scale-95">−</button>
+                <button data-pdf="fit" aria-label="По ширині" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-ink/70 text-[10px] font-bold text-cream backdrop-blur transition hover:bg-white/15 active:scale-95">1:1</button>
+              </div>
+              <div class="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center p-3 sm:p-4">
+                <div class="pointer-events-auto flex w-full max-w-md items-center gap-2.5 rounded-full border border-white/10 bg-ink/85 px-3 py-2 text-cream shadow-2xl backdrop-blur">
+                  <button data-pdf="prev" aria-label="Попередня сторінка" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm transition hover:bg-white/20 active:scale-95">◀</button>
+                  <input id="pdf-slider" type="range" min="1" max="1" value="1" class="h-1.5 min-w-0 flex-1 accent-sun" aria-label="Прогрес читання" />
+                  <span class="flex shrink-0 items-center gap-1 font-display text-[11px] font-bold tabular-nums">
+                    <input id="pdf-jump" type="number" min="1" value="1" class="w-12 rounded-full bg-white/10 px-2 py-1.5 text-center outline-none transition focus:bg-white/20" aria-label="Сторінка" />
+                    <span id="pdf-page" class="text-cream/60">/ 1</span>
+                  </span>
+                  <button data-pdf="next" aria-label="Наступна сторінка" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm transition hover:bg-white/20 active:scale-95">▶</button>
+                </div>
+              </div>
+            </div>`;
+      }
+
+      async function renderPdfPage(n) {
+        const st = pdfState;
+        if (!st || !st.doc) return;
+        const total = st.doc.numPages;
+        const clamped = Math.min(Math.max(1, Math.round(n) || 1), total);
+        if (st.busy) { st.queued = clamped; return; }
+        st.busy = true;
+        st.page = clamped;
+        try {
+          const pageObj = await st.doc.getPage(clamped);
+          const scroll = document.getElementById("pdf-scroll");
+          const canvas = document.getElementById("pdf-canvas");
+          if (!scroll || !canvas) return;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) throw new Error("canvas unavailable");
+          const vp1 = pageObj.getViewport({ scale: 1 });
+          const cssScale = Math.max(0.2, (scroll.clientWidth - 16) / vp1.width);
+          const dpr = Math.min(window.devicePixelRatio || 1, 2);
+          const vp = pageObj.getViewport({ scale: cssScale * st.zoom * dpr });
+          canvas.width = Math.floor(vp.width);
+          canvas.height = Math.floor(vp.height);
+          canvas.style.width = Math.floor(vp.width / dpr) + "px";
+          canvas.style.height = Math.floor(vp.height / dpr) + "px";
+          await pageObj.render({ canvasContext: ctx, viewport: vp }).promise;
+          if (st.zoom > 1.05) scroll.scrollTop = clamped === st.lastZoomPage ? scroll.scrollTop : 0;
+          else scroll.scrollTop = 0;
+          st.lastZoomPage = clamped;
+          const lbl = document.getElementById("pdf-page");
+          if (lbl) lbl.textContent = "/ " + total;
+          const slider = document.getElementById("pdf-slider");
+          if (slider) slider.value = String(clamped);
+          const jump = document.getElementById("pdf-jump");
+          if (jump && document.activeElement !== jump) jump.value = String(clamped);
+        } catch (e) {
+          pdfFail();
+        } finally {
+          st.busy = false;
+          if (st.queued != null) { const q = st.queued; st.queued = null; renderPdfPage(q); }
+        }
+      }
+
+      function pdfFail() {
+        const stage = document.getElementById("pdf-stage");
+        if (!stage) return;
+        const url = fileURL(openFile);
+        stage.innerHTML = `
+          <iframe src="${url}" title="${openFile.name}" class="h-full w-full bg-white"></iframe>
+          <p class="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-ink/80 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-cream/80">показуємо засобами браузера</p>`;
+      }
+
+      async function initPdfReader(url) {
+        try {
+          const lib = await loadPdfjs();
+          lib.GlobalWorkerOptions.workerSrc = PDFJS_URL + "pdf.worker.min.js";
+          const doc = await lib.getDocument({ url }).promise;
+          if (!openFile) return;
+          pdfState = { doc, page: 1, zoom: 1, busy: false, queued: null, total: doc.numPages, lastZoomPage: 1 };
+          const loading = document.getElementById("pdf-loading");
+          if (loading) loading.remove();
+          const slider = document.getElementById("pdf-slider");
+          if (slider) { slider.max = String(doc.numPages); slider.value = "1"; }
+          const jump = document.getElementById("pdf-jump");
+          if (jump) { jump.max = String(doc.numPages); jump.value = "1"; }
+          renderPdfPage(1);
+        } catch (e) {
+          pdfFail();
+        }
+      }
+
+      function wirePdfReader(url) {
+        const stage = document.getElementById("pdf-stage");
+        if (!stage) return;
+        document.getElementById("reader").querySelectorAll("[data-pdf]").forEach((b) => {
+          b.addEventListener("click", () => {
+            const a = b.getAttribute("data-pdf");
+            const st = pdfState;
+            if (!st) return;
+            if (a === "prev") renderPdfPage(st.page - 1);
+            else if (a === "next") renderPdfPage(st.page + 1);
+            else if (a === "in") { st.zoom = Math.min(4, st.zoom * 1.35); renderPdfPage(st.page); }
+            else if (a === "out") { st.zoom = Math.max(0.6, st.zoom / 1.35); renderPdfPage(st.page); }
+            else if (a === "fit") { st.zoom = 1; renderPdfPage(st.page); }
+          });
+        });
+        const slider = document.getElementById("pdf-slider");
+        if (slider) slider.addEventListener("input", () => renderPdfPage(Number(slider.value)));
+        const jump = document.getElementById("pdf-jump");
+        if (jump) {
+          jump.addEventListener("change", () => renderPdfPage(Number(jump.value) || 1));
+          jump.addEventListener("keydown", (e) => { if (e.key === "Enter") { renderPdfPage(Number(jump.value) || 1); jump.blur(); } });
+        }
+        let tx = 0, ty = 0;
+        stage.addEventListener("touchstart", (e) => { const t = e.touches[0]; tx = t.clientX; ty = t.clientY; }, { passive: true });
+        stage.addEventListener("touchend", (e) => {
+          const t = e.changedTouches[0];
+          const dx = t.clientX - tx, dy = t.clientY - ty;
+          if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.4) renderPdfPage((pdfState?.page || 1) + (dx < 0 ? 1 : -1));
+        }, { passive: true });
+        initPdfReader(url);
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (!pdfState || !openFile) return;
+        if (e.key === "ArrowRight" || e.key === "PageDown") renderPdfPage(pdfState.page + 1);
+        else if (e.key === "ArrowLeft" || e.key === "PageUp") renderPdfPage(pdfState.page - 1);
+      });
       function closeReader() {
         openFile = null;
+        pdfState = null;
         const el = document.getElementById("reader");
         el.classList.add("hidden");
         el.classList.remove("flex");
@@ -1084,7 +1239,8 @@
         const f = openFile;
         const s = subjectById[f.subject] || (openSubject && subjectById[openSubject.id]) || subjects[0];
         const url = fileURL(f);
-        const inline = f.type === "application/pdf" || f.type.startsWith("image/") || f.type.startsWith("text/");
+        const isPdf = f.type === "application/pdf";
+        const inline = isPdf || f.type.startsWith("image/") || f.type.startsWith("text/");
         el.classList.remove("hidden");
         el.classList.add("flex");
         document.body.style.overflow = "hidden";
@@ -1101,7 +1257,11 @@
               <a href="${url}" download="${f.name}" title="Завантажити" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:border-ink/30 hover:text-ink">${svg("i-download", "icon h-4 w-4")}</a>
               <button data-reader-close aria-label="Закрити читалку" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:rotate-90 hover:border-ink/30 hover:text-ink">${svg("i-x", "icon h-[18px] w-[18px]")}</button>
             </div>
-            ${inline
+            ${isPdf
+              ? pdfStageHTML()
+              : f.type.startsWith("image/")
+              ? `<div class="flex-1 overflow-auto bg-ink p-2"><img src="${url}" alt="${f.name}" class="mx-auto block max-w-full rounded-lg"></div>`
+              : inline
               ? `<iframe src="${url}" title="${f.name}" class="h-full w-full flex-1 bg-white"></iframe>`
               : `<div class="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
                   <span class="flex h-16 w-16 items-center justify-center rounded-3xl bg-ink/5 text-ink-soft">${svg("i-file", "icon h-8 w-8")}</span>
@@ -1112,6 +1272,7 @@
                   </div>
                 </div>`}
           </div>`;
+        if (isPdf) wirePdfReader(url);
       }
 
       async function renderModal() {

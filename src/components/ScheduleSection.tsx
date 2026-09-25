@@ -164,7 +164,7 @@ export default function ScheduleSection() {
       <div>
         <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-cobalt">
           <CalendarDays className="h-4 w-4" />
-          {clsLabel} клас · автоматично за днем тижня
+          <span className="whitespace-nowrap">{clsLabel}</span> клас · автоматично за днем тижня
         </p>
         <h2 className="mt-3 font-display text-4xl font-extrabold uppercase tracking-tight sm:text-5xl">
           Розклад <span className="font-accent normal-case italic tracking-normal text-ink/70">{accent}</span>
