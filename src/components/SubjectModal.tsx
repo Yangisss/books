@@ -12,8 +12,8 @@ import {
   X,
 } from "lucide-react";
 import { categoryLabel, type Subject } from "../data/subjects";
-import { addFiles, formatSize, isShared, listFiles, plural, removeFile, type StoredFile } from "../lib/storage";
-import { useClass } from "../lib/cls";
+import { addFiles, canEdit, formatSize, isShared, listFiles, plural, removeFile, type StoredFile } from "../lib/storage";
+import { useClassInfo } from "../lib/cls";
 import Reader from "./Reader";
 
 function fileIcon(type: string) {
@@ -31,7 +31,14 @@ export default function SubjectModal({
   onClose: () => void;
   onChanged: () => void;
 }) {
-  const cls = useClass();
+  const { id: cls, label: clsLabel } = useClassInfo();
+  const [editTick, setEditTick] = useState(0);
+  useEffect(() => {
+    const h = () => setEditTick((t) => t + 1);
+    window.addEventListener("vdsh2-admin", h);
+    return () => window.removeEventListener("vdsh2-admin", h);
+  }, []);
+  const editable = canEdit();
   const [files, setFiles] = useState<StoredFile[] | null>(null);
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -66,6 +73,8 @@ export default function SubjectModal({
       window.removeEventListener("keydown", onKey);
     };
   }, [onClose, reading]);
+
+  void editTick; // перечитуємо права, коли власник увімкнув/вимкнув режим
 
   const upload = async (list: FileList | File[]) => {
     const arr = Array.from(list);
@@ -117,7 +126,7 @@ export default function SubjectModal({
           </span>
           <div className="min-w-0 flex-1">
             <p className="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-soft">
-              {cls} клас · {categoryLabel(subject.category)}
+              {clsLabel} клас · {categoryLabel(subject.category)}
             </p>
             <h3 className="mt-1 font-display text-xl font-bold leading-tight">{subject.name}</h3>
             <p className="mt-1 line-clamp-2 text-sm text-ink-soft">{subject.desc}</p>
@@ -133,7 +142,8 @@ export default function SubjectModal({
 
         {/* body */}
         <div className="flex-1 overflow-y-auto p-6 pt-5">
-          {/* dropzone */}
+          {/* dropzone — лише для власника сайту */}
+          {editable ? (
           <button
             onClick={() => inputRef.current?.click()}
             onDragOver={(e) => {
@@ -177,6 +187,15 @@ export default function SubjectModal({
               }}
             />
           </button>
+          ) : (
+            <div className="flex flex-col items-center gap-2.5 rounded-3xl border border-ink/10 bg-white/60 px-6 py-7 text-center">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cobalt/10 text-cobalt">
+                <BookOpen className="h-5 w-5" />
+              </span>
+              <p className="text-sm font-bold">Це шкільна поличка — книжки додає власник сайту</p>
+              <p className="text-xs text-ink-soft">Тут уже лежать підручники класу {clsLabel}. Просто натискай і читай.</p>
+            </div>
+          )}
 
           {error && (
             <p className="anim-fade-up mt-3 rounded-2xl border border-red-300/60 bg-red-500/10 px-4 py-2.5 text-center text-xs font-bold text-red-600">
@@ -207,7 +226,9 @@ export default function SubjectModal({
               </div>
             ) : files.length === 0 ? (
               <p className="mt-4 rounded-2xl bg-ink/5 px-4 py-5 text-center text-sm text-ink-soft">
-                Поки що порожньо. Додай підручник — {isShared() ? "його побачить увесь клас" : "і він завжди буде під рукою"}.
+                {editable
+                  ? "Поки що порожньо. Додай підручник — і він завжди буде під рукою."
+                  : "Тут ще немає книжок — власник сайту щойно їх додасть, і вони з'являться у всіх."}
               </p>
             ) : (
               <ul className="mt-4 space-y-2">
@@ -243,13 +264,15 @@ export default function SubjectModal({
                       >
                         <FileText className="h-4 w-4" />
                       </a>
-                      <button
-                        onClick={() => remove(f.id)}
-                        title="Видалити"
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:border-red-500 hover:bg-red-500 hover:text-white"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      {editable && (
+                        <button
+                          onClick={() => remove(f.id)}
+                          title="Видалити"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:border-red-500 hover:bg-red-500 hover:text-white"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
                     </li>
                   );
                 })}
@@ -263,12 +286,12 @@ export default function SubjectModal({
           {isShared() ? (
             <>
               <Sparkles className="h-3 w-3 text-cobalt" />
-              Спільна бібліотека · {cls} клас · Великодолинська школа №2 · ці книги бачать усі
+              Спільна бібліотека · {clsLabel} клас · Великодолинська школа №2 · {editable ? "ти у режимі власника" : "додає книжки лише власник"}
             </>
           ) : (
             <>
               <Lock className="h-3 w-3" />
-              Файли зберігаються лише у твоєму браузері · {cls} клас
+              Файли зберігаються лише у твоєму браузері · {clsLabel} клас
             </>
           )}
         </div>

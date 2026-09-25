@@ -1,10 +1,10 @@
 import { Heart } from "lucide-react";
 import { useInView } from "../hooks/useInView";
-import { useClass } from "../lib/cls";
+import { useClassInfo } from "../lib/cls";
 
 export default function Footer() {
   const { ref, inView } = useInView<HTMLElement>();
-  const cls = useClass();
+  const { label: clsLabel } = useClassInfo();
 
   return (
     <footer ref={ref} className="relative overflow-hidden bg-ink text-cream">
@@ -35,7 +35,7 @@ export default function Footer() {
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2 border-t border-cream/10 pt-6 text-xs font-semibold uppercase tracking-widest text-cream/40">
           Зроблено з
           <Heart className="h-3.5 w-3.5 text-sun" fill="currentColor" />
-          для {cls} класу
+          для {clsLabel} класу
         </div>
       </div>
     </footer>

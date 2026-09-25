@@ -12,7 +12,7 @@ export default function Reader({
 }: {
   file: StoredFile;
   subject?: Subject;
-  cls: number;
+  cls: string;
   onClose: () => void;
 }) {
   useEffect(() => {

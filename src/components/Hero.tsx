@@ -1,33 +1,73 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { ArrowDown, Atom, BookOpen, CalendarDays, Clock3, MapPin, Palette, Sigma, Sparkles, Telescope } from "lucide-react";
+import { ArrowDown, Atom, BookOpen, CalendarDays, Clock3, Lock, MapPin, Palette, Sigma, Sparkles, Telescope } from "lucide-react";
 import { subjects } from "../data/subjects";
-import { setClass, useClass } from "../lib/cls";
+import { CLASSES, getAdminKey, setAdminKey, setClass, useClassInfo } from "../lib/cls";
+import { checkAdminKey, isShared } from "../lib/storage";
 
-function ClassSelect({ dark = false }: { dark?: boolean }) {
-  const cls = useClass();
+function ClassSelect() {
+  const { id: cls } = useClassInfo();
   return (
     <label
-      className={`flex items-center gap-2 rounded-full border border-ink/10 px-4 py-2 shadow-sm backdrop-blur transition-colors ${
-        dark ? "bg-white/10 text-cream" : "bg-white/70"
-      }`}
+      className="flex items-center gap-2 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur transition-colors"
       title="Обери свій клас"
     >
-      <span className={`font-display text-[11px] font-bold uppercase tracking-widest ${dark ? "text-cream/60" : "text-ink-soft"}`}>
-        Клас
-      </span>
+      <span className="font-display text-[11px] font-bold uppercase tracking-widest text-ink-soft">Клас</span>
       <select
         value={cls}
-        onChange={(e) => setClass(Number(e.target.value))}
+        onChange={(e) => setClass(e.target.value)}
         aria-label="Обрати клас"
-        className={`cursor-pointer appearance-none bg-transparent pr-1 font-display text-[13px] font-extrabold tabular-nums tracking-wide outline-none ${dark ? "text-cream" : "text-ink"}`}
+        className="cursor-pointer appearance-none bg-transparent pr-1 font-display text-[13px] font-extrabold tracking-wide text-ink outline-none"
       >
-        {Array.from({ length: 11 }, (_, i) => i + 1).map((n) => (
-          <option key={n} value={n} className="text-ink">
-            {n}
+        {CLASSES.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.label}
           </option>
         ))}
       </select>
     </label>
+  );
+}
+
+/* Режим власника: лише з кодом можна додавати/видаляти книги на спільному сервері */
+function AdminButton() {
+  const [on, setOn] = useState(() => !!getAdminKey() || !isShared());
+  useEffect(() => {
+    const h = () => setOn(!!getAdminKey() || !isShared());
+    window.addEventListener("vdsh2-admin", h);
+    window.addEventListener("vdsh2-probed", h);
+    return () => {
+      window.removeEventListener("vdsh2-admin", h);
+      window.removeEventListener("vdsh2-probed", h);
+    };
+  }, []);
+  const toggle = async () => {
+    if (isShared() && getAdminKey()) {
+      setAdminKey("");
+      window.dispatchEvent(new Event("vdsh2-admin"));
+      return;
+    }
+    const k = prompt("Код власника сайту (його знаєш лише ти):");
+    if (k === null) return;
+    if (isShared() && !(await checkAdminKey(k))) {
+      alert("Не той код — спробуй ще.");
+      return;
+    }
+    setAdminKey(k);
+    window.dispatchEvent(new Event("vdsh2-admin"));
+  };
+  return (
+    <button
+      onClick={toggle}
+      title={on ? "Книги можна додавати та видаляти" : "Книги бачать усі, але додає їх лише власник сайту"}
+      className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 font-display text-[10px] font-bold uppercase tracking-widest shadow-sm backdrop-blur transition-all ${
+        on
+          ? "border-transparent bg-sun text-ink"
+          : "border-ink/10 bg-white/70 text-ink-soft hover:border-ink/30 hover:text-ink"
+      }`}
+    >
+      <Lock className="h-3.5 w-3.5" />
+      <span className="hidden sm:inline">{on ? "режим власника" : "код власника"}</span>
+    </button>
   );
 }
 
@@ -110,7 +150,7 @@ function Marquee() {
 }
 
 export default function Hero() {
-  const cls = useClass();
+  const { label: clsLabel } = useClassInfo();
   const greeting = getGreeting(new Date().getHours());
 
   return (
@@ -134,7 +174,7 @@ export default function Hero() {
             <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-ink shadow-lg">
               <span className="absolute left-0 top-0 h-1/2 w-full bg-cobalt/90" />
               <span className="absolute bottom-0 left-0 h-1/2 w-full bg-sun/90" />
-              <span className="relative font-display text-sm font-bold text-white mix-blend-difference">{cls}</span>
+              <span className="relative font-display text-sm font-bold text-white mix-blend-difference">11</span>
             </div>
             <div className="leading-tight">
               <p className="font-display text-xs font-bold uppercase tracking-widest">Мої предмети</p>
@@ -145,7 +185,10 @@ export default function Hero() {
           </div>
           <div className="flex items-center gap-2">
             <ClassSelect />
-            <LiveClock />
+            <AdminButton />
+            <div className="hidden lg:block">
+              <LiveClock />
+            </div>
           </div>
         </div>
 
@@ -191,7 +234,7 @@ export default function Hero() {
             </h1>
 
             <p className="anim-fade-up mt-9 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg" style={{ animationDelay: "0.3s" }}>
-              Усі дисципліни {cls} класу в одному затишному місці — від математики,
+              Усі дисципліни {clsLabel} класу в одному затишному місці — від математики,
               де <span className="font-bold text-ink underline decoration-sun decoration-4 underline-offset-4">алгебра й геометрія живуть в одному підручнику</span>,
               до астрономії та мистецтва.
             </p>
@@ -213,7 +256,7 @@ export default function Hero() {
               </a>
               <div className="flex items-center gap-2 text-sm font-semibold text-ink-soft">
                 <Sparkles className="h-4 w-4 text-sun" />
-                {cls} клас · 14 предметів · завантаж свої підручники
+                {clsLabel} клас · 14 предметів · спільна поличка підручників
               </div>
             </div>
           </div>

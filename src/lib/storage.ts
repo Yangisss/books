@@ -18,7 +18,23 @@ export interface StoredFile {
   shared?: boolean;
 }
 
+import { getAdminKey } from "./cls";
+
 export type SharedStatus = "unknown" | "on" | "off";
+
+/** Хто може змінювати полицю: у спільному режимі — лише власник із кодом */
+export function canEdit(): boolean {
+  return sharedState !== "on" || getAdminKey() !== "";
+}
+
+export async function checkAdminKey(k: string): Promise<boolean> {
+  try {
+    const r = await fetch("/api/admin/check", { headers: { "x-admin-key": k } });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
 
 let sharedState: SharedStatus = "unknown";
 export const isShared = () => sharedState === "on";
@@ -52,7 +68,7 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-export async function probeShared(cls: number): Promise<boolean> {
+export async function probeShared(cls: string): Promise<boolean> {
   if (typeof location === "undefined" || !(location.protocol === "http:" || location.protocol === "https:")) {
     sharedState = "off";
     return false;
@@ -66,7 +82,7 @@ export async function probeShared(cls: number): Promise<boolean> {
   return sharedState === "on";
 }
 
-async function sharedList(cls: number): Promise<StoredFile[]> {
+async function sharedList(cls: string): Promise<StoredFile[]> {
   const r = await fetch(`/api/books?cls=${cls}`, { cache: "no-store" });
   if (!r.ok) throw new Error("shared list failed");
   return (await r.json()) as StoredFile[];
@@ -74,7 +90,7 @@ async function sharedList(cls: number): Promise<StoredFile[]> {
 
 /* ---------------- public API (усе — в межах класу) ---------------- */
 
-export async function listFiles(cls: number, subjectId: string): Promise<StoredFile[]> {
+export async function listFiles(cls: string, subjectId: string): Promise<StoredFile[]> {
   if (sharedState === "on") {
     try {
       const all = await sharedList(cls);
@@ -96,13 +112,17 @@ export async function listFiles(cls: number, subjectId: string): Promise<StoredF
   }
 }
 
-export async function addFiles(cls: number, subjectId: string, files: File[]): Promise<void> {
+export async function addFiles(cls: string, subjectId: string, files: File[]): Promise<void> {
   if (sharedState === "on") {
     const fd = new FormData();
     fd.append("cls", String(cls));
     fd.append("subject", subjectId);
     files.forEach((f) => fd.append("file", f));
-    const r = await fetch("/api/books", { method: "POST", body: fd });
+    const r = await fetch("/api/books", {
+      method: "POST",
+      body: fd,
+      headers: { "x-admin-key": getAdminKey() },
+    });
     if (!r.ok) throw new Error(await r.text().catch(() => "upload failed"));
     return;
   }
@@ -133,7 +153,7 @@ export async function addFiles(cls: number, subjectId: string, files: File[]): P
 
 export async function removeFile(id: string): Promise<void> {
   if (sharedState === "on") {
-    const r = await fetch(`/api/books/${id}`, { method: "DELETE" });
+    const r = await fetch(`/api/books/${id}`, { method: "DELETE", headers: { "x-admin-key": getAdminKey() } });
     if (!r.ok) throw new Error("delete failed");
     return;
   }
@@ -150,7 +170,7 @@ export async function removeFile(id: string): Promise<void> {
   }
 }
 
-export async function getCounts(cls: number): Promise<Record<string, number>> {
+export async function getCounts(cls: string): Promise<Record<string, number>> {
   if (sharedState === "on") {
     try {
       const all = await sharedList(cls);
@@ -173,13 +193,13 @@ export async function getCounts(cls: number): Promise<Record<string, number>> {
         (req.result as LocalRecord[]).forEach((f) => {
           const key = String(f.subjectId ?? "");
           const slash = key.indexOf("/");
-          let c: number;
+          let c: string;
           let subj: string;
           if (slash === -1) {
-            c = 11;
+            c = "11a";
             subj = key;
           } else {
-            c = Number(key.slice(0, slash));
+            c = key.slice(0, slash);
             subj = key.slice(slash + 1);
           }
           if (c === cls && subj) counts[subj] = (counts[subj] ?? 0) + 1;

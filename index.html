@@ -148,7 +148,8 @@
             <div class="flex items-center gap-2">
               <select id="class-select" aria-label="Обрати клас"
                 class="cls-select rounded-full border border-ink/10 bg-white/70 py-2 pl-4 pr-8 font-display text-[11px] font-bold uppercase tracking-widest text-ink shadow-sm backdrop-blur transition-all hover:border-ink/30 focus:outline-none focus:ring-2 focus:ring-cobalt/40"></select>
-              <div id="live-clock" class="flex items-center gap-2.5 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur"></div>
+              <button id="admin-btn" title="" class="flex items-center gap-1 rounded-full border border-ink/10 bg-white/70 px-3.5 py-2 font-display text-[10px] font-bold uppercase tracking-widest text-ink-soft shadow-sm backdrop-blur transition-all hover:border-ink/30 hover:text-ink focus:outline-none focus:ring-2 focus:ring-cobalt/40"></button>
+              <div id="live-clock" class="hidden items-center gap-2.5 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur lg:flex"></div>
             </div>
           </div>
 
@@ -242,7 +243,7 @@
             </div>
             <p class="flex max-w-xs items-start gap-2.5 text-sm leading-relaxed text-ink-soft">
               <svg class="icon mt-0.5 h-5 w-5 shrink-0 text-cobalt"><use href="#i-click"></use></svg>
-              Сайт сам визначає день тижня та показує уроки цього дня. Натисни на урок — відкриєш свої підручники до нього.
+              Сайт сам визначає день і показує уроки класу. Дзвінки 08:30–15:25 · 8 уроків · перерви 15 хв (після 7-го — 5 хв).
             </p>
           </div>
           <div id="day-chips" class="reveal mt-8 flex flex-wrap gap-2.5" style="transition-delay: 120ms"></div>
@@ -455,8 +456,8 @@
                 const key = String(f.subjectId || "");
                 const slash = key.indexOf("/");
                 let c, subj;
-                if (slash === -1) { c = 11; subj = key; }
-                else { c = Number(key.slice(0, slash)); subj = key.slice(slash + 1); }
+                if (slash === -1) { c = "11a"; subj = key; }
+                else { c = key.slice(0, slash); subj = key.slice(slash + 1); }
                 if (c === cls && subj) counts[subj] = (counts[subj] || 0) + 1;
               });
               resolve(counts);
@@ -515,7 +516,7 @@
           fd.append("cls", String(cls));
           fd.append("subject", subject);
           files.forEach((f) => fd.append("file", f));
-          const r = await fetch("/api/books", { method: "POST", body: fd });
+          const r = await fetch("/api/books", { method: "POST", body: fd, headers: { "x-admin-key": adminKey } });
           if (!r.ok) throw new Error(await r.text());
           return;
         }
@@ -523,7 +524,7 @@
       }
       async function removeOne(id) {
         if (sharedOK) {
-          const r = await fetch(`/api/books/${id}`, { method: "DELETE" });
+          const r = await fetch(`/api/books/${id}`, { method: "DELETE", headers: { "x-admin-key": adminKey } });
           if (!r.ok) throw new Error("delete failed");
           return;
         }
@@ -537,41 +538,67 @@
       /* ---------- Розклад уроків ----------
          subject "s" має збігатися з id предмета зі списку subjects —
          тож до кожного урока автоматично підтягується твоя полка підручників. */
+      /* Дзвінки за розкладом школи (для дистанційного навчання):
+         15 хв перерви, після 7 уроку — 5 хв */
       const bells = [
-        { start: "08:30", end: "09:15" },
-        { start: "09:25", end: "10:10" },
-        { start: "10:20", end: "11:05" },
-        { start: "11:25", end: "12:10" },
-        { start: "12:20", end: "13:05" },
-        { start: "13:15", end: "14:00" },
-        { start: "14:10", end: "14:55" },
+        { start: "08:30", end: "09:10" },
+        { start: "09:25", end: "10:05" },
+        { start: "10:20", end: "11:00" },
+        { start: "11:15", end: "11:55" },
+        { start: "12:10", end: "12:50" },
+        { start: "13:05", end: "13:45" },
+        { start: "14:00", end: "14:40" },
+        { start: "14:45", end: "15:25" },
       ];
 
-      const week = [
+      const CLASSES = [
+        { id: "11a", label: "11-А" },
+        { id: "11b", label: "11-Б" },
+      ];
+
+      const weekA = [
         { name: "Понеділок", short: "Пн", lessons: [
-          { s: "math", room: "каб. 305" }, { s: "ukr-lang", room: "каб. 210" }, { s: "english", room: "каб. 414" },
-          { s: "physics", room: "каб. 301" }, { s: "history-ua", room: "каб. 218" }, { s: "informatics", room: "каб. 112" },
-          { s: "pe", room: "спортзал" },
+          { s: "math" }, { s: "ukr-lang" }, { s: "english" }, { s: "physics" },
+          { s: "history-ua" }, { s: "informatics" }, { s: "astronomy" }, { s: "pe" },
         ] },
         { name: "Вівторок", short: "Вт", lessons: [
-          { s: "ukr-lit", room: "каб. 210" }, { s: "math", room: "каб. 305" }, { s: "chemistry", room: "каб. 303" },
-          { s: "biology", room: "каб. 307" }, { s: "world-history", room: "каб. 218" }, { s: "art", room: "каб. 116" },
-          { s: "english", room: "каб. 414" },
+          { s: "ukr-lit" }, { s: "math" }, { s: "chemistry" }, { s: "biology" },
+          { s: "world-history" }, { s: "english" },
         ] },
         { name: "Середа", short: "Ср", lessons: [
-          { s: "physics", room: "каб. 301" }, { s: "math", room: "каб. 305" }, { s: "informatics", room: "каб. 112" },
-          { s: "ukr-lang", room: "каб. 210" }, { s: "astronomy", room: "каб. 401" }, { s: "world-lit", room: "каб. 214" },
-          { s: "pe", room: "спортзал" },
+          { s: "math" }, { s: "physics" }, { s: "informatics" }, { s: "ukr-lang" },
+          { s: "world-lit" }, { s: "art" }, { s: "pe" },
         ] },
         { name: "Четвер", short: "Чт", lessons: [
-          { s: "math", room: "каб. 305" }, { s: "chemistry", room: "каб. 303" }, { s: "biology", room: "каб. 307" },
-          { s: "history-ua", room: "каб. 218" }, { s: "english", room: "каб. 414" }, { s: "physics", room: "каб. 301" },
-          { s: "world-lit", room: "каб. 214" },
+          { s: "math" }, { s: "chemistry" }, { s: "biology" }, { s: "history-ua" },
+          { s: "english" }, { s: "physics" },
         ] },
         { name: "П'ятниця", short: "Пт", lessons: [
-          { s: "ukr-lit", room: "каб. 210" }, { s: "math", room: "каб. 305" }, { s: "informatics", room: "каб. 112" },
-          { s: "world-history", room: "каб. 218" }, { s: "art", room: "каб. 116" }, { s: "astronomy", room: "каб. 401" },
-          { s: "pe", room: "спортзал" },
+          { s: "ukr-lit" }, { s: "math" }, { s: "world-history" }, { s: "world-lit" },
+          { s: "pe" },
+        ] },
+      ];
+
+      const weekB = [
+        { name: "Понеділок", short: "Пн", lessons: [
+          { s: "math" }, { s: "ukr-lang" }, { s: "english" }, { s: "history-ua" },
+          { s: "biology" }, { s: "pe" },
+        ] },
+        { name: "Вівторок", short: "Вт", lessons: [
+          { s: "physics" }, { s: "math" }, { s: "ukr-lit" }, { s: "chemistry" },
+          { s: "informatics" }, { s: "world-lit" }, { s: "art" }, { s: "world-history" },
+        ] },
+        { name: "Середа", short: "Ср", lessons: [
+          { s: "math" }, { s: "ukr-lang" }, { s: "physics" }, { s: "biology" },
+          { s: "english" }, { s: "astronomy" },
+        ] },
+        { name: "Четвер", short: "Чт", lessons: [
+          { s: "math" }, { s: "chemistry" }, { s: "history-ua" }, { s: "ukr-lit" },
+          { s: "informatics" }, { s: "physics" }, { s: "pe" },
+        ] },
+        { name: "П'ятниця", short: "Пт", lessons: [
+          { s: "math" }, { s: "world-lit" }, { s: "world-history" }, { s: "informatics" },
+          { s: "art" }, { s: "ukr-lang" }, { s: "pe" },
         ] },
       ];
 
@@ -584,31 +611,70 @@
       /* ---------- Клас та школа ---------- */
       const SCHOOL = { place: "смт Великодолинське", name: "Великодолинська школа №2", year: "2026 / 27" };
       const CLS_KEY = "vdsh2-class";
-      let cls = 11;
-      try { const v = Number(localStorage.getItem(CLS_KEY)); if (v >= 1 && v <= 11) cls = v; } catch (e) {}
+      let cls = "11a";
+      try { const v = localStorage.getItem(CLS_KEY); if (CLASSES.some((c) => c.id === v)) cls = v; } catch (e) {}
+      const classLabel = () => (CLASSES.find((c) => c.id === cls) || CLASSES[0]).label;
 
-      /* Розклад по класах: додай сюди "5: { bells, week }" тощо — і сайт сам почне його показувати */
-      const scheduleByClass = { 11: { bells, week } };
+      /* Розклад по класах — правіть тут, коли прийде справжнє розкладення */
+      const scheduleByClass = { "11a": { bells, week: weekA }, "11b": { bells, week: weekB } };
+
+      /* ---------- Режим власника: книги додає лише адмін ---------- */
+      const ADMIN_KEY = "vdsh2-admin-key";
+      let adminKey = "";
+      try { adminKey = localStorage.getItem(ADMIN_KEY) || ""; } catch (e) {}
+      const canEdit = () => !sharedOK || adminKey !== "";
 
       function renderClassBits() {
-        document.querySelectorAll("[data-cls-num]").forEach((el) => { el.textContent = cls; });
+        document.querySelectorAll("[data-cls-num]").forEach((el) => { el.textContent = classLabel(); });
         const sel = document.getElementById("class-select");
-        if (sel) sel.value = String(cls);
+        if (sel) sel.value = cls;
         const logo = document.getElementById("logo-num");
-        if (logo) logo.textContent = cls;
-        document.title = `Мої предмети · ${cls} клас — ${SCHOOL.name}`;
+        if (logo) logo.textContent = "11";
+        document.title = `Мої предмети · ${classLabel()} клас — ${SCHOOL.name}`;
       }
       function buildClassSelect() {
         const sel = document.getElementById("class-select");
         if (!sel) return;
-        sel.innerHTML = Array.from({ length: 11 }, (_, i) => `<option value="${i + 1}">${i + 1} клас</option>`).join("");
-        sel.onchange = () => setCls(Number(sel.value));
+        sel.innerHTML = CLASSES.map((c) => `<option value="${c.id}">${c.label} клас</option>`).join("");
+        sel.onchange = () => setCls(sel.value);
       }
-      function setCls(n) {
-        cls = n;
-        try { localStorage.setItem(CLS_KEY, String(n)); } catch (e) {}
+      function setCls(id) {
+        cls = id;
+        try { localStorage.setItem(CLS_KEY, id); } catch (e) {}
         renderClassBits();
         (async () => { await probeShared(); await refresh(); renderSchedule({ animate: true }); })();
+      }
+      function renderAdminBtn() {
+        const btn = document.getElementById("admin-btn");
+        if (!btn) return;
+        const on = canEdit();
+        btn.classList.toggle("bg-sun", on && sharedOK);
+        btn.innerHTML = svg(on ? "i-lock" : "i-lock", "icon h-3.5 w-3.5") +
+          `<span class="hidden sm:inline ml-0.5">${on ? (sharedOK ? "режим власника" : "локальний режим") : "код власника"}</span>`;
+        btn.title = on ? "Книги можна додавати та видаляти" : "Книги бачать усі, але додає їх лише власник сайту";
+      }
+      async function toggleAdmin() {
+        if (sharedOK && adminKey) {
+          adminKey = "";
+          try { localStorage.removeItem(ADMIN_KEY); } catch (e) {}
+          renderAdminBtn();
+          renderModal();
+          return;
+        }
+        const key = prompt("Код власника сайту (його знаєш лише ти):");
+        if (key === null) return;
+        const ok = await (async () => {
+          if (!sharedOK) return true;
+          try {
+            const r = await fetch("/api/admin/check", { headers: { "x-admin-key": key } });
+            return r.ok;
+          } catch (e) { return false; }
+        })();
+        if (!ok) { alert("Не той код — спробуй ще."); return; }
+        adminKey = key;
+        try { localStorage.setItem(ADMIN_KEY, key); } catch (e) {}
+        renderAdminBtn();
+        renderModal();
       }
 
       function tickClock() {
@@ -713,7 +779,7 @@
       }
 
       function renderScheduleEmpty(animate) {
-        document.getElementById("schedule-accent").textContent = `· ${cls} клас`;
+        document.getElementById("schedule-accent").textContent = `· ${classLabel()} клас`;
         document.getElementById("day-chips").innerHTML = "";
         document.getElementById("schedule-body").innerHTML = `
           <div class="${animate ? "anim-fade-up" : ""} relative flex flex-col justify-between gap-5 overflow-hidden rounded-[1.75rem] bg-ink p-6 text-cream shadow-[0_30px_60px_-25px_rgba(23,20,12,0.6)]">
@@ -721,8 +787,8 @@
             <div class="relative flex items-start gap-4">
               <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-sun backdrop-blur-sm">${svg("i-calendar", "icon h-6 w-6")}</span>
               <div>
-                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">Розклад · ${cls} клас</p>
-                <p class="mt-1.5 font-display text-lg font-bold leading-snug">Для ${cls} класу розклад ще не додано</p>
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">Розклад · ${classLabel()} клас</p>
+                <p class="mt-1.5 font-display text-lg font-bold leading-snug">Для ${classLabel()} класу розклад ще не додано</p>
                 <p class="mt-1 max-w-xl text-sm leading-relaxed text-cream/60">Щойно розклад з'явиться у файлі (об'єкт <span class="font-bold text-cream/80">scheduleByClass</span>) — сайт сам почне показувати уроки та підручники за днем тижня. Полиці предметів нижче працюють уже зараз.</p>
               </div>
             </div>
@@ -771,7 +837,7 @@
           const l = day.lessons[ongoingIdx];
           const s = subjectById[l.s];
           sTitle = `Триває ${ongoingIdx + 1}-й урок — ${s ? s.name : ""}`;
-          sSub = `${l.room ? l.room + " · " : ""}до ${bells[ongoingIdx].end} · залишилось ${toMin(bells[ongoingIdx].end) - nowMin} хв`;
+          sSub = `до ${bells[ongoingIdx].end} · залишилось ${toMin(bells[ongoingIdx].end) - nowMin} хв`;
           sBtn = "Книги до уроку";
           summaryAction = { kind: "open", id: l.s };
         } else if (isToday && nextIdx >= 0) {
@@ -781,7 +847,7 @@
           sTitle = first ? `Перший урок о ${bells[0].start} — ${s.name}` : `Наступний урок — ${s.name}`;
           sSub = first
             ? `До дзвінка ${toMin(bells[0].start) - nowMin} хв · у розкладі ${day.lessons.length} уроків`
-            : `${nextIdx + 1}-й урок · ${bells[nextIdx].start} · через ${toMin(bells[nextIdx].start) - nowMin} хв${l.room ? " · " + l.room : ""}`;
+            : `${nextIdx + 1}-й урок · ${bells[nextIdx].start} · через ${toMin(bells[nextIdx].start) - nowMin} хв`;
           sBtn = first ? "Книги до першого уроку" : "Готуємо підручник";
           summaryAction = { kind: "open", id: l.s };
         } else if (isToday) {
@@ -846,7 +912,7 @@
               <span class="hidden h-10 w-px bg-ink/10 sm:block"></span>
               <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-md transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-105" style="background-color:${s.accent}">${svg(s.icon, "icon h-5 w-5")}</span>
               <div class="min-w-0 flex-1">
-                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-soft">${categoryLabel(s.category)}${l.room ? ` · ${l.room}` : ""}<span class="sm:hidden"> · ${bells[i].start}–${bells[i].end}</span></p>
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-soft">${categoryLabel(s.category)}<span class="sm:hidden"> · ${bells[i].start}–${bells[i].end}</span></p>
                 <h3 class="mt-1 font-display text-base font-bold leading-snug sm:text-lg">${s.name}</h3>
               </div>
               <div class="flex flex-wrap items-center gap-2.5">${pill}${books}${svg("i-arrow-up-right", "icon hidden h-4 w-4 text-ink/40 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:block")}</div>
@@ -930,19 +996,25 @@
             <div class="flex items-start gap-4 border-b border-ink/10 p-6 pb-5">
               <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg" style="background-color:${s.accent}">${svg(s.icon, "icon h-7 w-7")}</span>
               <div class="min-w-0 flex-1">
-                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-soft">${categoryLabel(s.category)}</p>
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-soft">${classLabel()} клас · ${categoryLabel(s.category)}</p>
                 <h3 class="mt-1 font-display text-xl font-bold leading-tight">${s.name}</h3>
                 <p class="mt-1 line-clamp-2 text-sm text-ink-soft">${s.desc}</p>
               </div>
               <button data-close aria-label="Закрити" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:rotate-90 hover:border-ink/30 hover:text-ink">${svg("i-x", "icon h-[18px] w-[18px]")}</button>
             </div>
             <div class="flex-1 overflow-y-auto p-6 pt-5">
+              ${canEdit() ? `
               <button id="dropzone" class="group flex w-full flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-ink/20 bg-white/60 px-6 py-8 text-center transition-all duration-300 hover:border-cobalt/50 hover:bg-white">
                 <span id="drop-icon" class="flex h-12 w-12 items-center justify-center rounded-2xl bg-ink/5 text-ink-soft transition-all duration-300 group-hover:bg-cobalt group-hover:text-white">${svg("i-upload", "icon h-6 w-6")}</span>
                 <span id="drop-title" class="text-sm font-bold">Перетягни підручник сюди</span>
                 <span class="text-xs text-ink-soft">або натисни, щоб обрати — PDF, EPUB, DJVU, фото, документи</span>
                 <input id="file-input" type="file" multiple class="hidden" />
-              </button>
+              </button>` : `
+              <div class="flex flex-col items-center gap-2.5 rounded-3xl border border-ink/10 bg-white/60 px-6 py-7 text-center">
+                <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-cobalt/10 text-cobalt">${svg("i-book-open", "icon h-5 w-5")}</span>
+                <p class="text-sm font-bold">Це шкільна поличка — книжки додає власник сайту</p>
+                <p class="text-xs text-ink-soft">Тут уже лежать підручники класу ${classLabel()}. Просто натискай і читай.</p>
+              </div>`}
               <div class="mt-6">
                 <div class="flex items-center justify-between">
                   <p id="files-label" class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-soft">Мої файли</p>
@@ -953,8 +1025,8 @@
             </div>
             <div class="flex flex-wrap items-center justify-center gap-2 border-t border-ink/10 px-4 py-3.5 text-center text-[10px] font-bold uppercase tracking-widest text-ink-soft/70">
               ${sharedOK
-                ? `${svg("i-sparkles", "icon h-3 w-3 text-cobalt")} Спільна бібліотека · ${cls} клас · ${SCHOOL.name} · ці книги бачать усі`
-                : `${svg("i-lock", "icon h-3 w-3")} Файли зберігаються лише у твоєму браузері · ${cls} клас`}
+                ? `${svg("i-sparkles", "icon h-3 w-3 text-cobalt")} Спільна бібліотека · ${classLabel()} клас · ${SCHOOL.name} · ${canEdit() ? "ти у режимі власника" : "додає книжки лише власник"}`
+                : `${svg("i-lock", "icon h-3 w-3")} Файли зберігаються лише у твоєму браузері · ${classLabel()} клас`}
             </div>
           </div>`;
 
@@ -971,18 +1043,17 @@
         }
         if (!files.length) {
           listEl.className = "mt-4 rounded-2xl bg-ink/5 px-4 py-5 text-center text-sm text-ink-soft";
-          listEl.textContent = "Поки що порожньо. Додай підручник — і він завжди буде під рукою.";
+          listEl.textContent = canEdit() ? "Поки що порожньо. Додай підручник — і він завжди буде під рукою." : "Тут ще немає книжок — власник сайту щойно їх додасть, і вони з'являться у всіх.";
         } else {
           listEl.className = "mt-4 space-y-2";
           listEl.innerHTML = files.map((f) => `
-            <div class="anim-fade-up flex items-center gap-3 rounded-2xl border border-ink/10 bg-white/70 p-3 transition-all hover:border-ink/20 hover:bg-white" style="animation-duration:0.35s">
+            <div data-open-file="${f.id}" class="anim-fade-up flex cursor-pointer items-center gap-3 rounded-2xl border border-ink/10 bg-white/70 p-3 transition-all hover:border-ink/20 hover:bg-white" style="animation-duration:0.35s">
               <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white" style="background-color:${s.accent}">${svg(fileIcon(f.type), "icon h-5 w-5")}</span>
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-bold">${f.name}</p>
-                <p class="text-xs text-ink-soft">${formatSize(f.size)}</p>
+                <p class="text-xs text-ink-soft">${formatSize(f.size)} · читати всередині сайту</p>
               </div>
-              <button data-open-file="${f.id}" title="Відкрити в новій вкладці" class="flex h-9 w-9 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:border-cobalt hover:bg-cobalt hover:text-white">${svg("i-external", "icon h-4 w-4")}</button>
-              <button data-remove-file="${f.id}" title="Видалити" class="flex h-9 w-9 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:border-red-500 hover:bg-red-500 hover:text-white">${svg("i-trash", "icon h-4 w-4")}</button>
+              ${canEdit() ? `<button data-remove-file="${f.id}" title="Видалити" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:border-red-500 hover:bg-red-500 hover:text-white">${svg("i-trash", "icon h-4 w-4")}</button>` : ""}
             </div>`).join("");
           listEl.querySelectorAll("[data-open-file]").forEach((btn) => {
             btn.onclick = () => {
@@ -991,7 +1062,8 @@
             };
           });
           listEl.querySelectorAll("[data-remove-file]").forEach((btn) => {
-            btn.onclick = async () => {
+            btn.onclick = async (ev) => {
+              ev.stopPropagation();
               try { await removeOne(btn.getAttribute("data-remove-file")); } catch (e) {}
               await refreshCounts();
               renderGrid();
@@ -1026,15 +1098,17 @@
 
         const zone = document.getElementById("dropzone");
         const input = document.getElementById("file-input");
-        zone.onclick = () => input.click();
-        input.onchange = () => { upload(input.files); input.value = ""; };
-        zone.ondragover = (e) => { e.preventDefault(); zone.classList.add("scale-[1.02]", "border-cobalt", "bg-cobalt/5"); };
-        zone.ondragleave = () => zone.classList.remove("scale-[1.02]", "border-cobalt", "bg-cobalt/5");
-        zone.ondrop = (e) => {
-          e.preventDefault();
-          zone.classList.remove("scale-[1.02]", "border-cobalt", "bg-cobalt/5");
-          upload(e.dataTransfer.files);
-        };
+        if (zone && input) {
+          zone.onclick = () => input.click();
+          input.onchange = () => { upload(input.files); input.value = ""; };
+          zone.ondragover = (e) => { e.preventDefault(); zone.classList.add("scale-[1.02]", "border-cobalt", "bg-cobalt/5"); };
+          zone.ondragleave = () => zone.classList.remove("scale-[1.02]", "border-cobalt", "bg-cobalt/5");
+          zone.ondrop = (e) => {
+            e.preventDefault();
+            zone.classList.remove("scale-[1.02]", "border-cobalt", "bg-cobalt/5");
+            upload(e.dataTransfer.files);
+          };
+        }
       }
 
       async function refresh() {
@@ -1048,11 +1122,13 @@
       buildClassSelect();
       renderClassBits();
       document.getElementById("today-word").textContent = ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота"][new Date().getDay()];
+      document.getElementById("admin-btn").onclick = toggleAdmin;
       tickClock();
       setInterval(tickClock, 1000);
       renderMarquee();
       (async () => {
         await probeShared();
+        renderAdminBtn();
         await refresh();
         renderSchedule({ animate: true });
       })();

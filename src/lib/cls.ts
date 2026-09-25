@@ -1,29 +1,62 @@
 import { useSyncExternalStore } from "react";
 
-const KEY = "vdsh2-class";
-const subs = new Set<() => void>();
-
-let current = 11;
-if (typeof localStorage !== "undefined") {
-  const v = Number(localStorage.getItem(KEY));
-  if (v >= 1 && v <= 11) current = v;
+export interface ClassInfo {
+  id: string;
+  label: string;
 }
 
-export const getClass = () => current;
+export const CLASSES: ClassInfo[] = [
+  { id: "11a", label: "11-А" },
+  { id: "11b", label: "11-Б" },
+];
 
-export function setClass(n: number) {
-  current = n;
+const KEY = "vdsh2-class";
+const ADMIN_KEY = "vdsh2-admin-key";
+const subs = new Set<() => void>();
+
+function initial(): string {
+  if (typeof localStorage !== "undefined") {
+    const v = localStorage.getItem(KEY) || "";
+    if (CLASSES.some((c) => c.id === v)) return v;
+  }
+  return CLASSES[0].id;
+}
+
+let current = initial();
+let adminKey =
+  typeof localStorage !== "undefined" ? localStorage.getItem(ADMIN_KEY) || "" : "";
+
+const emit = () => subs.forEach((f) => f());
+
+export const getClass = () => current;
+export const classLabel = (id: string = current) =>
+  CLASSES.find((c) => c.id === id)?.label ?? id;
+
+export const getAdminKey = () => adminKey;
+
+export function setAdminKey(k: string) {
+  adminKey = k;
   try {
-    localStorage.setItem(KEY, String(n));
+    if (k) localStorage.setItem(ADMIN_KEY, k);
+    else localStorage.removeItem(ADMIN_KEY);
   } catch {
     /* private mode */
   }
-  subs.forEach((f) => f());
+  emit();
 }
 
-/** Реагує на зміну класу в будь-якому місці сайду */
-export function useClass(): number {
-  return useSyncExternalStore(
+export function setClass(id: string) {
+  current = id;
+  try {
+    localStorage.setItem(KEY, id);
+  } catch {
+    /* private mode */
+  }
+  emit();
+}
+
+export function useClassInfo(): { id: string; label: string } {
+  const id = useSyncExternalStore(
     (cb) => {
       subs.add(cb);
       return () => {
@@ -33,4 +66,5 @@ export function useClass(): number {
     getClass,
     getClass
   );
+  return { id, label: classLabel(id) };
 }

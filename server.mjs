@@ -20,6 +20,10 @@ const UPLOADS = join(ROOT, "uploads");
 const INDEX = join(UPLOADS, "index.json");
 const MAX_FILE = 80 * 1024 * 1024; // 80 МБ на файл
 const PORT = Number(process.env.PORT || 8080);
+/* Код власника: лише з ним можна додавати/видаляти книги.
+   Зміни на свій: SCHOOL_ADMIN_PASSWORD=твій_код node server.mjs */
+const ADMIN_PASSWORD = process.env.SCHOOL_ADMIN_PASSWORD || "vdsh2-2026";
+const authorized = (req) => (req.headers["x-admin-key"] || "") === ADMIN_PASSWORD;
 
 const MIME = {
   ".pdf": "application/pdf",
@@ -106,8 +110,8 @@ function parseMultipart(buf, boundary) {
 }
 
 const safeCls = (v) => {
-  const n = parseInt(v, 10);
-  return n >= 1 && n <= 11 ? n : null;
+  const s = String(v || "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 8);
+  return /^[0-9]{1,2}[a-яa-z]{0,2}$/.test(s) ? s : null;
 };
 const safeSubject = (v) => {
   const s = String(v || "").toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 40);
@@ -120,9 +124,15 @@ const server = createServer(async (req, res) => {
 
   try {
     /* -------- API: список книг класу -------- */
+    /* -------- API: перевірка коду власника -------- */
+    if (req.method === "GET" && route === "/api/admin/check") {
+      if (authorized(req)) return json(res, 200, { ok: true });
+      return json(res, 401, { error: "невірний код" });
+    }
+
     if (req.method === "GET" && route === "/api/books") {
       const cls = safeCls(url.searchParams.get("cls"));
-      if (cls === null) return json(res, 400, { error: "cls має бути 1..11" });
+      if (cls === null) return json(res, 400, { error: "невірний клас" });
       const ix = await loadIndex();
       const list = Object.entries(ix)
         .filter(([, e]) => e.cls === cls)
@@ -142,6 +152,7 @@ const server = createServer(async (req, res) => {
 
     /* -------- API: завантаження (multipart: cls, subject, file[]) -------- */
     if (req.method === "POST" && route === "/api/books") {
+      if (!authorized(req)) return json(res, 401, { error: "лише власник сайту може додавати книги" });
       const ct = req.headers["content-type"] || "";
       const boundary = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(ct)?.slice(1).find(Boolean);
       if (!boundary) return json(res, 400, { error: "multipart only" });
@@ -185,6 +196,7 @@ const server = createServer(async (req, res) => {
     /* -------- API: видалення -------- */
     const del = /^\/api\/books\/([0-9a-f-]{36})$/i.exec(route);
     if (req.method === "DELETE" && del) {
+      if (!authorized(req)) return json(res, 401, { error: "лише власник сайту може видаляти книги" });
       const ix = await loadIndex();
       const e = ix[del[1]];
       if (!e) return json(res, 404, { error: "not found" });

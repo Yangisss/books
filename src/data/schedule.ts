@@ -1,28 +1,28 @@
 /**
- * Розклад уроків на тиждень.
+ * Розклад уроків.
  * subjectId має збігатися з id предмета у src/data/subjects.ts,
  * щоб до уроків автоматично підтягувалися твої підручники.
  */
 
 export interface Bell {
   start: string; // "08:30"
-  end: string; // "09:15"
+  end: string; // "09:10"
 }
 
-/** Дзвінки — час кожного уроку (індекс = номер уроку) */
+/** Дзвінки за розкладом школи (дистанційне навчання): перерви 15 хв, після 7-го уроку — 5 хв */
 export const bells: Bell[] = [
-  { start: "08:30", end: "09:15" },
-  { start: "09:25", end: "10:10" },
-  { start: "10:20", end: "11:05" },
-  { start: "11:25", end: "12:10" },
-  { start: "12:20", end: "13:05" },
-  { start: "13:15", end: "14:00" },
-  { start: "14:10", end: "14:55" },
+  { start: "08:30", end: "09:10" },
+  { start: "09:25", end: "10:05" },
+  { start: "10:20", end: "11:00" },
+  { start: "11:15", end: "11:55" },
+  { start: "12:10", end: "12:50" },
+  { start: "13:05", end: "13:45" },
+  { start: "14:00", end: "14:40" },
+  { start: "14:45", end: "15:25" },
 ];
 
 export interface Lesson {
   subjectId: string;
-  room?: string;
 }
 
 export interface DaySchedule {
@@ -32,20 +32,27 @@ export interface DaySchedule {
   lessons: Lesson[];
 }
 
+export const SCHOOL = {
+  place: "смт Великодолинське",
+  name: "Великодолинська школа №2",
+  year: "2026 / 27",
+};
+
 /** 5 навчальних днів: індекс 0 = Понеділок … 4 = П'ятниця */
-export const week: DaySchedule[] = [
+const weekA: DaySchedule[] = [
   {
     id: "mon",
     name: "Понеділок",
     short: "Пн",
     lessons: [
-      { subjectId: "math", room: "каб. 305" },
-      { subjectId: "ukr-lang", room: "каб. 210" },
-      { subjectId: "english", room: "каб. 414" },
-      { subjectId: "physics", room: "каб. 301" },
-      { subjectId: "history-ua", room: "каб. 218" },
-      { subjectId: "informatics", room: "каб. 112" },
-      { subjectId: "pe", room: "спортзал" },
+      { subjectId: "math" },
+      { subjectId: "ukr-lang" },
+      { subjectId: "english" },
+      { subjectId: "physics" },
+      { subjectId: "history-ua" },
+      { subjectId: "informatics" },
+      { subjectId: "astronomy" },
+      { subjectId: "pe" },
     ],
   },
   {
@@ -53,13 +60,12 @@ export const week: DaySchedule[] = [
     name: "Вівторок",
     short: "Вт",
     lessons: [
-      { subjectId: "ukr-lit", room: "каб. 210" },
-      { subjectId: "math", room: "каб. 305" },
-      { subjectId: "chemistry", room: "каб. 303" },
-      { subjectId: "biology", room: "каб. 307" },
-      { subjectId: "world-history", room: "каб. 218" },
-      { subjectId: "art", room: "каб. 116" },
-      { subjectId: "english", room: "каб. 414" },
+      { subjectId: "ukr-lit" },
+      { subjectId: "math" },
+      { subjectId: "chemistry" },
+      { subjectId: "biology" },
+      { subjectId: "world-history" },
+      { subjectId: "english" },
     ],
   },
   {
@@ -67,13 +73,13 @@ export const week: DaySchedule[] = [
     name: "Середа",
     short: "Ср",
     lessons: [
-      { subjectId: "physics", room: "каб. 301" },
-      { subjectId: "math", room: "каб. 305" },
-      { subjectId: "informatics", room: "каб. 112" },
-      { subjectId: "ukr-lang", room: "каб. 210" },
-      { subjectId: "astronomy", room: "каб. 401" },
-      { subjectId: "world-lit", room: "каб. 214" },
-      { subjectId: "pe", room: "спортзал" },
+      { subjectId: "math" },
+      { subjectId: "physics" },
+      { subjectId: "informatics" },
+      { subjectId: "ukr-lang" },
+      { subjectId: "world-lit" },
+      { subjectId: "art" },
+      { subjectId: "pe" },
     ],
   },
   {
@@ -81,13 +87,12 @@ export const week: DaySchedule[] = [
     name: "Четвер",
     short: "Чт",
     lessons: [
-      { subjectId: "math", room: "каб. 305" },
-      { subjectId: "chemistry", room: "каб. 303" },
-      { subjectId: "biology", room: "каб. 307" },
-      { subjectId: "history-ua", room: "каб. 218" },
-      { subjectId: "english", room: "каб. 414" },
-      { subjectId: "physics", room: "каб. 301" },
-      { subjectId: "world-lit", room: "каб. 214" },
+      { subjectId: "math" },
+      { subjectId: "chemistry" },
+      { subjectId: "biology" },
+      { subjectId: "history-ua" },
+      { subjectId: "english" },
+      { subjectId: "physics" },
     ],
   },
   {
@@ -95,13 +100,83 @@ export const week: DaySchedule[] = [
     name: "П'ятниця",
     short: "Пт",
     lessons: [
-      { subjectId: "ukr-lit", room: "каб. 210" },
-      { subjectId: "math", room: "каб. 305" },
-      { subjectId: "informatics", room: "каб. 112" },
-      { subjectId: "world-history", room: "каб. 218" },
-      { subjectId: "art", room: "каб. 116" },
-      { subjectId: "astronomy", room: "каб. 401" },
-      { subjectId: "pe", room: "спортзал" },
+      { subjectId: "ukr-lit" },
+      { subjectId: "math" },
+      { subjectId: "world-history" },
+      { subjectId: "world-lit" },
+      { subjectId: "pe" },
+    ],
+  },
+];
+
+const weekB: DaySchedule[] = [
+  {
+    id: "mon",
+    name: "Понеділок",
+    short: "Пн",
+    lessons: [
+      { subjectId: "math" },
+      { subjectId: "ukr-lang" },
+      { subjectId: "english" },
+      { subjectId: "history-ua" },
+      { subjectId: "biology" },
+      { subjectId: "pe" },
+    ],
+  },
+  {
+    id: "tue",
+    name: "Вівторок",
+    short: "Вт",
+    lessons: [
+      { subjectId: "physics" },
+      { subjectId: "math" },
+      { subjectId: "ukr-lit" },
+      { subjectId: "chemistry" },
+      { subjectId: "informatics" },
+      { subjectId: "world-lit" },
+      { subjectId: "art" },
+      { subjectId: "world-history" },
+    ],
+  },
+  {
+    id: "wed",
+    name: "Середа",
+    short: "Ср",
+    lessons: [
+      { subjectId: "math" },
+      { subjectId: "ukr-lang" },
+      { subjectId: "physics" },
+      { subjectId: "biology" },
+      { subjectId: "english" },
+      { subjectId: "astronomy" },
+    ],
+  },
+  {
+    id: "thu",
+    name: "Четвер",
+    short: "Чт",
+    lessons: [
+      { subjectId: "math" },
+      { subjectId: "chemistry" },
+      { subjectId: "history-ua" },
+      { subjectId: "ukr-lit" },
+      { subjectId: "informatics" },
+      { subjectId: "physics" },
+      { subjectId: "pe" },
+    ],
+  },
+  {
+    id: "fri",
+    name: "П'ятниця",
+    short: "Пт",
+    lessons: [
+      { subjectId: "math" },
+      { subjectId: "world-lit" },
+      { subjectId: "world-history" },
+      { subjectId: "informatics" },
+      { subjectId: "art" },
+      { subjectId: "ukr-lang" },
+      { subjectId: "pe" },
     ],
   },
 ];
@@ -109,17 +184,6 @@ export const week: DaySchedule[] = [
 export const toMin = (t: string): number => {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + m;
-};
-
-export const SCHOOL = {
-  place: "смт Великодолинське",
-  name: "Великодолинська школа №2",
-  year: "2026 / 27",
-};
-
-/** Розклад по класах: додай "5: { bells, week }" тощо — сайт сам почне його показувати */
-export const scheduleByClass: Record<number, { bells: Bell[]; week: DaySchedule[] }> = {
-  11: { bells, week },
 };
 
 /** 0 = Понеділок … 4 = П'ятниця; null — вихідні (субота/неділя) */
@@ -131,4 +195,10 @@ export const dayIndexOf = (d: Date): number | null => {
 export const fmtMin = (total: number): string => {
   const m = ((total % 1440) + 1440) % 1440;
   return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+};
+
+/** Розклад по класах — ключі збігаються з id класу (src/lib/cls.ts) */
+export const scheduleByClass: Record<string, { bells: Bell[]; week: DaySchedule[] }> = {
+  "11a": { bells, week: weekA },
+  "11b": { bells, week: weekB },
 };
