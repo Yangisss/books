@@ -1,5 +1,5 @@
 {
-  "updated": 1790375975168,
+  "updated": 1790376020468,
   "files": [
     {
       "id": "50636bee-2dde-466c-b410-243c4ed3a3f9",
@@ -90,6 +90,16 @@
       "size": 40253815,
       "addedAt": 1790375975165,
       "path": "11a/history-ua/bd6982da-226a-4724-8f5b-a25698423074.pdf"
+    },
+    {
+      "id": "e068ea54-2ffc-4365-a18a-b69a4178e439",
+      "cls": "11a",
+      "subject": "world-lit",
+      "name": "11-klas-istoriya-vsesvit-schupak-2024.pdf",
+      "type": "application/pdf",
+      "size": 15536441,
+      "addedAt": 1790376020465,
+      "path": "11a/world-lit/e068ea54-2ffc-4365-a18a-b69a4178e439.pdf"
     }
   ]
 }
