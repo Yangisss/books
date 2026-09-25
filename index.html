@@ -207,6 +207,26 @@
       </header>
 
       <main>
+        <section id="rozklad" class="relative mx-auto max-w-7xl px-6 pb-10 pt-20">
+          <div class="reveal flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <p class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-cobalt">
+                <svg class="icon h-4 w-4"><use href="#i-calendar"></use></svg>
+                11 клас · автоматично за днем тижня
+              </p>
+              <h2 class="mt-3 font-display text-4xl font-extrabold uppercase tracking-tight sm:text-5xl">
+                Розклад <span id="schedule-accent" class="font-accent normal-case italic tracking-normal text-ink/70">на сьогодні</span>
+              </h2>
+            </div>
+            <p class="flex max-w-xs items-start gap-2.5 text-sm leading-relaxed text-ink-soft">
+              <svg class="icon mt-0.5 h-5 w-5 shrink-0 text-cobalt"><use href="#i-click"></use></svg>
+              Сайт сам визначає день тижня та показує уроки цього дня. Натисни на урок — відкриєш свої підручники до нього.
+            </p>
+          </div>
+          <div id="day-chips" class="reveal mt-8 flex flex-wrap gap-2.5" style="transition-delay: 120ms"></div>
+          <div id="schedule-body" class="mt-8 space-y-6"></div>
+        </section>
+
         <section id="predmety" class="relative mx-auto max-w-7xl px-6 pb-28 pt-20">
           <div id="section-head" class="reveal flex flex-wrap items-end justify-between gap-6">
             <div>
@@ -287,6 +307,7 @@
       <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></symbol>
       <symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></symbol>
       <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></symbol>
     </svg>
 
     <script>
@@ -431,6 +452,53 @@
       let counts = {};
       let openSubject = null;
 
+      /* ---------- Розклад уроків ----------
+         subject "s" має збігатися з id предмета зі списку subjects —
+         тож до кожного урока автоматично підтягується твоя полка підручників. */
+      const bells = [
+        { start: "08:30", end: "09:15" },
+        { start: "09:25", end: "10:10" },
+        { start: "10:20", end: "11:05" },
+        { start: "11:25", end: "12:10" },
+        { start: "12:20", end: "13:05" },
+        { start: "13:15", end: "14:00" },
+        { start: "14:10", end: "14:55" },
+      ];
+
+      const week = [
+        { name: "Понеділок", short: "Пн", lessons: [
+          { s: "math", room: "каб. 305" }, { s: "ukr-lang", room: "каб. 210" }, { s: "english", room: "каб. 414" },
+          { s: "physics", room: "каб. 301" }, { s: "history-ua", room: "каб. 218" }, { s: "informatics", room: "каб. 112" },
+          { s: "pe", room: "спортзал" },
+        ] },
+        { name: "Вівторок", short: "Вт", lessons: [
+          { s: "ukr-lit", room: "каб. 210" }, { s: "math", room: "каб. 305" }, { s: "chemistry", room: "каб. 303" },
+          { s: "biology", room: "каб. 307" }, { s: "world-history", room: "каб. 218" }, { s: "art", room: "каб. 116" },
+          { s: "english", room: "каб. 414" },
+        ] },
+        { name: "Середа", short: "Ср", lessons: [
+          { s: "physics", room: "каб. 301" }, { s: "math", room: "каб. 305" }, { s: "informatics", room: "каб. 112" },
+          { s: "ukr-lang", room: "каб. 210" }, { s: "astronomy", room: "каб. 401" }, { s: "world-lit", room: "каб. 214" },
+          { s: "pe", room: "спортзал" },
+        ] },
+        { name: "Четвер", short: "Чт", lessons: [
+          { s: "math", room: "каб. 305" }, { s: "chemistry", room: "каб. 303" }, { s: "biology", room: "каб. 307" },
+          { s: "history-ua", room: "каб. 218" }, { s: "english", room: "каб. 414" }, { s: "physics", room: "каб. 301" },
+          { s: "world-lit", room: "каб. 214" },
+        ] },
+        { name: "П'ятниця", short: "Пт", lessons: [
+          { s: "ukr-lit", room: "каб. 210" }, { s: "math", room: "каб. 305" }, { s: "informatics", room: "каб. 112" },
+          { s: "world-history", room: "каб. 218" }, { s: "art", room: "каб. 116" }, { s: "astronomy", room: "каб. 401" },
+          { s: "pe", room: "спортзал" },
+        ] },
+      ];
+
+      const subjectById = Object.fromEntries(subjects.map((x) => [x.id, x]));
+      const toMin = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+      const dayIndexOf = (d) => { const g = d.getDay(); return g >= 1 && g <= 5 ? g - 1 : null; };
+      let selectedDay = dayIndexOf(new Date()) ?? 0;
+      let summaryAction = null;
+
       function tickClock() {
         const now = new Date();
         const time = now.toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -532,6 +600,129 @@
           visible.map((s, i) => cardHTML(s, subjects.indexOf(s), i)).join("") + quoteTile();
       }
 
+      function renderSchedule(opts) {
+        const animate = !!(opts && opts.animate);
+        const animCls = animate ? "anim-fade-up" : "";
+        const now = new Date();
+        const todayIdx = dayIndexOf(now);
+        const isToday = selectedDay === todayIdx;
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        const day = week[selectedDay];
+
+        document.getElementById("schedule-accent").textContent = isToday ? "на сьогодні" : day.name.toLowerCase();
+
+        /* чипи днів */
+        document.getElementById("day-chips").innerHTML = week.map((d, i) => {
+          const on = i === selectedDay;
+          const dot = i === todayIdx ? '<span class="h-1.5 w-1.5 rounded-full bg-sun" title="сьогодні"></span>' : "";
+          return `<button data-day="${i}" class="flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+            on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "border border-ink/10 bg-white/70 text-ink-soft backdrop-blur hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink"
+          }">${dot}${d.name}<span class="rounded-full px-1.5 py-0.5 text-[10px] leading-none ${on ? "bg-sun text-ink" : "bg-ink/10 text-ink-soft"}">${d.lessons.length}</span></button>`;
+        }).join("");
+
+        const ongoingIdx = isToday ? day.lessons.findIndex((l, i) => nowMin >= toMin(bells[i].start) && nowMin < toMin(bells[i].end)) : -1;
+        const nextIdx = isToday ? day.lessons.findIndex((l, i) => nowMin < toMin(bells[i].start)) : -1;
+        const booksInDay = [...new Set(day.lessons.map((l) => l.s))].reduce((a, id) => a + (counts[id] || 0), 0);
+        const bpl = (n) => `${n} ${plural(n, "підручник", "підручники", "підручників")}`;
+
+        /* смужка: що зараз / що далі + скільки книжок */
+        let sTitle, sSub, sBtn = null;
+        summaryAction = null;
+        if (todayIdx === null) {
+          const wd = now.getDay() === 6 ? "Субота" : "Неділя";
+          sTitle = `Сьогодні ${wd.toLowerCase()} — вихідний`;
+          sSub = `Наступні уроки — ${week[0].name.toLowerCase()} (${week[0].lessons.length} уроків)`;
+          sBtn = `Розклад на ${week[0].short}`;
+          summaryAction = { kind: "day", day: 0 };
+        } else if (isToday && ongoingIdx >= 0) {
+          const l = day.lessons[ongoingIdx];
+          const s = subjectById[l.s];
+          sTitle = `Триває ${ongoingIdx + 1}-й урок — ${s ? s.name : ""}`;
+          sSub = `${l.room ? l.room + " · " : ""}до ${bells[ongoingIdx].end} · залишилось ${toMin(bells[ongoingIdx].end) - nowMin} хв`;
+          sBtn = "Книги до уроку";
+          summaryAction = { kind: "open", id: l.s };
+        } else if (isToday && nextIdx >= 0) {
+          const first = nextIdx === 0;
+          const l = day.lessons[nextIdx];
+          const s = subjectById[l.s];
+          sTitle = first ? `Перший урок о ${bells[0].start} — ${s.name}` : `Наступний урок — ${s.name}`;
+          sSub = first
+            ? `До дзвінка ${toMin(bells[0].start) - nowMin} хв · у розкладі ${day.lessons.length} уроків`
+            : `${nextIdx + 1}-й урок · ${bells[nextIdx].start} · через ${toMin(bells[nextIdx].start) - nowMin} хв${l.room ? " · " + l.room : ""}`;
+          sBtn = first ? "Книги до першого уроку" : "Готуємо підручник";
+          summaryAction = { kind: "open", id: l.s };
+        } else if (isToday) {
+          sTitle = "Уроки на сьогодні завершено";
+          sSub = booksInDay > 0 ? `Твій день тримали ${bpl(booksInDay)} — гарного вечора!` : "Додай підручники — і вони завжди будуть під рукою.";
+        } else {
+          sTitle = `Перегляд: ${day.name}`;
+          sSub = `Сьогодні — ${week[todayIdx].name.toLowerCase()}. Повернись до актуального дня.`;
+          sBtn = "Показати сьогодні";
+          summaryAction = { kind: "day", day: todayIdx };
+        }
+
+        const partOfDay = nowMin < 720 ? "ранок" : nowMin < 1020 ? "день" : "вечір";
+        const summaryHTML = `
+          <div class="${animCls} relative flex flex-col justify-between gap-5 overflow-hidden rounded-[1.75rem] bg-ink p-6 text-cream shadow-[0_30px_60px_-25px_rgba(23,20,12,0.6)] sm:flex-row sm:items-center">
+            <div class="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-sun/20 blur-2xl"></div>
+            <div class="relative flex items-start gap-4">
+              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-sun backdrop-blur-sm">${svg(todayIdx === null ? "i-map-pin" : "i-calendar", "icon h-6 w-6")}</span>
+              <div>
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">${isToday ? "Сьогодні" : day.name} · ${partOfDay}</p>
+                <p class="mt-1.5 font-display text-lg font-bold leading-snug">${sTitle}</p>
+                <p class="mt-1 text-sm leading-relaxed text-cream/60">${sSub}</p>
+              </div>
+            </div>
+            <div class="relative flex shrink-0 items-center gap-3">
+              <span class="hidden items-center gap-1.5 rounded-full bg-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-cream/80 backdrop-blur-sm md:inline-flex">${svg("i-book-marked", "icon h-3.5 w-3.5 text-sun")} ${booksInDay > 0 ? bpl(booksInDay) + " на день" : "книг ще немає"}</span>
+              ${sBtn ? `<button data-summary-action class="rounded-full bg-sun px-5 py-2.5 font-display text-[11px] font-bold uppercase tracking-widest text-ink transition-all duration-300 hover:-translate-y-0.5 hover:bg-cream">${sBtn}</button>` : ""}
+            </div>
+          </div>`;
+
+        /* список уроків */
+        const rows = day.lessons.map((l, i) => {
+          const s = subjectById[l.s];
+          if (!s) return "";
+          const status = !isToday ? "later" : i === ongoingIdx ? "now" : i === nextIdx ? "next" : nowMin >= toMin(bells[i].end) ? "done" : "later";
+          const count = counts[l.s] || 0;
+          const rowCls = status === "now"
+            ? "border-sun/70 bg-sun/10 shadow-[0_18px_45px_-22px_rgba(242,183,5,0.75)]"
+            : status === "done"
+              ? "border-ink/10 bg-paper opacity-55"
+              : "border-ink/10 bg-paper hover:-translate-y-0.5 hover:border-ink/25 hover:shadow-[0_18px_40px_-24px_rgba(23,20,12,0.4)]";
+          const stripe = status === "now" ? "#f2b705" : s.accent;
+          const pill =
+            status === "now"
+              ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-ink"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink"></span></span>зараз · ${toMin(bells[i].end) - nowMin} хв</span>`
+              : status === "next"
+                ? `<span class="rounded-full border border-cobalt/40 bg-cobalt/10 px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-cobalt">наступний · через ${toMin(bells[i].start) - nowMin} хв</span>`
+                : status === "done"
+                  ? `<span class="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">завершено</span>`
+                  : "";
+          const books = count > 0
+            ? `<span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider" style="border-color:${s.accent}55;color:${s.accent};background-color:${s.accent}12">${svg("i-book-marked", "icon h-3.5 w-3.5")} ${bpl(count)}</span>`
+            : `<span class="inline-flex items-center gap-1.5 rounded-full border border-dashed border-ink/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-soft/70">${svg("i-book-marked", "icon h-3.5 w-3.5")} додати книгу</span>`;
+          return `
+            <div data-open="${l.s}" ${animate ? `style="animation-delay:${i * 50}ms"` : ""} class="group ${animCls} relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-3xl border p-4 pl-5 transition-all duration-300 sm:flex-row sm:items-center sm:gap-4 ${rowCls}">
+              <span class="absolute inset-y-0 left-0 w-1.5" style="background-color:${stripe}"></span>
+              <div class="flex items-center gap-3 sm:w-[8.5rem] sm:shrink-0 sm:flex-col sm:items-start sm:gap-0.5">
+                <span class="flex h-6 w-6 items-center justify-center rounded-full bg-ink/5 font-display text-[11px] font-bold tabular-nums text-ink-soft">${i + 1}</span>
+                <span class="font-display text-sm font-bold tabular-nums">${bells[i].start}</span>
+                <span class="hidden text-[11px] font-semibold tabular-nums text-ink-soft sm:inline">до ${bells[i].end}</span>
+              </div>
+              <span class="hidden h-10 w-px bg-ink/10 sm:block"></span>
+              <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-md transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-105" style="background-color:${s.accent}">${svg(s.icon, "icon h-5 w-5")}</span>
+              <div class="min-w-0 flex-1">
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-soft">${categoryLabel(s.category)}${l.room ? ` · ${l.room}` : ""}<span class="sm:hidden"> · ${bells[i].start}–${bells[i].end}</span></p>
+                <h3 class="mt-1 font-display text-base font-bold leading-snug sm:text-lg">${s.name}</h3>
+              </div>
+              <div class="flex flex-wrap items-center gap-2.5">${pill}${books}${svg("i-arrow-up-right", "icon hidden h-4 w-4 text-ink/40 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:block")}</div>
+            </div>`;
+        }).join("");
+
+        document.getElementById("schedule-body").innerHTML = summaryHTML + `<div class="space-y-3">${rows}</div>`;
+      }
+
       function fileIcon(type) {
         if (type.startsWith("image/")) return "i-image";
         if (type === "application/pdf") return "i-file-text";
@@ -623,6 +814,7 @@
               await removeFile(btn.getAttribute("data-remove-file"));
               counts = await getCounts();
               renderGrid();
+              renderSchedule({ animate: false });
               renderModal();
             };
           });
@@ -638,6 +830,7 @@
           await addFiles(s.id, arr);
           counts = await getCounts();
           renderGrid();
+          renderSchedule({ animate: false });
           await renderModal();
         }
 
@@ -666,6 +859,35 @@
       setInterval(tickClock, 1000);
       renderMarquee();
       refresh();
+      renderSchedule({ animate: true });
+      setInterval(() => renderSchedule({ animate: false }), 20000);
+
+      document.getElementById("day-chips").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-day]");
+        if (!btn) return;
+        selectedDay = Number(btn.getAttribute("data-day"));
+        renderSchedule({ animate: true });
+      });
+
+      document.getElementById("schedule-body").addEventListener("click", (e) => {
+        const act = e.target.closest("[data-summary-action]");
+        if (act) {
+          if (!summaryAction) return;
+          if (summaryAction.kind === "open") {
+            openSubject = subjects.find((s) => s.id === summaryAction.id);
+            renderModal();
+          } else {
+            selectedDay = summaryAction.day;
+            renderSchedule({ animate: true });
+          }
+          return;
+        }
+        const row = e.target.closest("[data-open]");
+        if (row) {
+          openSubject = subjects.find((s) => s.id === row.getAttribute("data-open"));
+          renderModal();
+        }
+      });
 
       document.getElementById("filters").addEventListener("click", (e) => {
         const btn = e.target.closest("[data-filter]");
