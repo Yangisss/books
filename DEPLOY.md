@@ -37,3 +37,26 @@ VPS). Команда запуску: `node server.mjs`. Сервер уже сл
 GitHub Pages можна залишити — він віддасть дизайн, розклад і **спільну полицю
 книг прямо з репозиторію** (`library/index.json`). Додає книги тоді лише власник
 — скриптом `tools/publish-library.mjs` (докладно: `BOOKS-GUIDE.md`).
+
+## Cloudflare Pages
+
+Важливо: GitHub Pages і Cloudflare мають будувати **той самий гілок**, де лежать
+книги. Зараз усе (код + `library/` з підручниками) — у гілці `main` після мержу
+PR #1; до мержу — у `arena/01a0da47-books`.
+
+Налаштування Cloudflare Pages (Dashboard → Workers & Pages → ваш проєкт →
+Settings → Build & deployment):
+
+- Framework preset: **None**
+- Build command: **(порожньо)**
+- Build output directory: **`.`** (крапка — деплой прямо з кореня репо, як GitHub Pages)
+- Production branch: `main`
+
+Або варіант «з білдом» (якщо хочете саме `npm run build`):
+
+- Build command: `npm run build`
+- Build output directory: `dist` — сюди книги копіює `tools/postbuild.mjs`
+
+Якщо замість під'єднання репо ви тягнули файли в Cloudflare вручну («Upload
+project») — кладіть у zip **і `index.html`, і всю папку `library/`**, інакше
+полка буде порожньою.
