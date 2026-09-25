@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, BookMarked, ListFilter, MousePointerClick, Quote } from "lucide-react";
-import { categories, categoryLabel, subjects, type CategoryId, type Subject } from "../data/subjects";
-import { getCounts, plural } from "../lib/storage";
+import { bookSubjects, categories, categoryLabel, subjects, type CategoryId, type Subject } from "../data/subjects";
+import { getCounts, plural, probeShared } from "../lib/storage";
+import { useClassInfo } from "../lib/cls";
 import { useInView } from "../hooks/useInView";
 import SubjectModal from "./SubjectModal";
 
@@ -118,21 +119,27 @@ function SubjectCard({
 }
 
 export default function SubjectsSection() {
+  const { id: cls } = useClassInfo();
   const [filter, setFilter] = useState<Filter>("all");
   const [openSubject, setOpenSubject] = useState<Subject | null>(null);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const { ref: headRef, inView: headIn } = useInView<HTMLDivElement>();
 
   const refreshCounts = useCallback(async () => {
-    setCounts(await getCounts());
-  }, []);
+    try {
+      setCounts(await getCounts(cls));
+    } catch {
+      setCounts({});
+    }
+  }, [cls]);
 
   useEffect(() => {
+    probeShared(cls);
     refreshCounts();
-  }, [refreshCounts]);
+  }, [cls, refreshCounts]);
 
   const visible = useMemo(
-    () => subjects.filter((s) => filter === "all" || s.category === filter),
+    () => bookSubjects.filter((s) => filter === "all" || s.category === filter),
     [filter]
   );
 
@@ -179,8 +186,8 @@ export default function SubjectsSection() {
       </div>
 
       <div className={`reveal ${headIn ? "is-visible" : ""} mt-8 flex flex-wrap gap-2.5`} style={{ transitionDelay: "120ms" }}>
-        {chip("all", "Усі", subjects.length)}
-        {categories.map((c) => chip(c.id, c.label, subjects.filter((s) => s.category === c.id).length))}
+        {chip("all", "Усі", bookSubjects.length)}
+        {categories.map((c) => chip(c.id, c.label, bookSubjects.filter((s) => s.category === c.id).length))}
       </div>
 
       <div key={filter} className="mt-10 grid grid-flow-dense grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6 lg:gap-5">

@@ -1,0 +1,115 @@
+{
+  "updated": 1790376243658,
+  "files": [
+    {
+      "id": "50636bee-2dde-466c-b410-243c4ed3a3f9",
+      "cls": "11a",
+      "subject": "math",
+      "name": "11-klas-matematika-merzljak-2019.pdf",
+      "type": "application/pdf",
+      "size": 4472668,
+      "addedAt": 1790374326292,
+      "path": "11a/math/50636bee-2dde-466c-b410-243c4ed3a3f9.pdf"
+    },
+    {
+      "id": "1aef5181-6d2c-46a4-b918-f87b584a6bb6",
+      "cls": "11a",
+      "subject": "english",
+      "name": "11-klas-anglijska-mova-karpjuk-2019.pdf",
+      "type": "application/pdf",
+      "size": 20172005,
+      "addedAt": 1790374878613,
+      "path": "11a/english/1aef5181-6d2c-46a4-b918-f87b584a6bb6.pdf"
+    },
+    {
+      "id": "6cf56cf6-6875-4086-8cdb-8b05aa2dbe9b",
+      "cls": "11a",
+      "subject": "biology",
+      "name": "11-klas-biologija-sobol-2019.pdf",
+      "type": "application/pdf",
+      "size": 18330577,
+      "addedAt": 1790375121251,
+      "path": "11a/biology/6cf56cf6-6875-4086-8cdb-8b05aa2dbe9b.pdf"
+    },
+    {
+      "id": "051be124-d1ee-4c7f-8e5a-195c73d9922a",
+      "cls": "11a",
+      "subject": "physics",
+      "name": "11-klas-fizika-barjakhtar-2019.pdf",
+      "type": "application/pdf",
+      "size": 11817271,
+      "addedAt": 1790375147516,
+      "path": "11a/physics/051be124-d1ee-4c7f-8e5a-195c73d9922a.pdf"
+    },
+    {
+      "id": "f474fdbb-80e6-46a7-816e-b5f95b302897",
+      "cls": "11a",
+      "subject": "chemistry",
+      "name": "11-klas-khimija-popel-2019.pdf",
+      "type": "application/pdf",
+      "size": 4438836,
+      "addedAt": 1790375460795,
+      "path": "11a/chemistry/f474fdbb-80e6-46a7-816e-b5f95b302897.pdf"
+    },
+    {
+      "id": "4e38f9da-e180-47a3-a823-ecba459581e5",
+      "cls": "11a",
+      "subject": "ukr-lit",
+      "name": "11-klas-ukrajinska-literatura-avramenko-2019.pdf",
+      "type": "application/pdf",
+      "size": 9890112,
+      "addedAt": 1790375506042,
+      "path": "11a/ukr-lit/4e38f9da-e180-47a3-a823-ecba459581e5.pdf"
+    },
+    {
+      "id": "74ac5b03-ca4c-4e88-9baa-6bdbd036354c",
+      "cls": "11a",
+      "subject": "ukr-lang",
+      "name": "11-klas-ukrajinska-mova-karaman-2019.pdf",
+      "type": "application/pdf",
+      "size": 10088221,
+      "addedAt": 1790375530623,
+      "path": "11a/ukr-lang/74ac5b03-ca4c-4e88-9baa-6bdbd036354c.pdf"
+    },
+    {
+      "id": "fb8523d4-36b4-4b23-9ea8-fc4c2ad47762",
+      "cls": "11a",
+      "subject": "astronomy",
+      "name": "11-klas-astronomiia-syrotuk-2019.pdf",
+      "type": "application/pdf",
+      "size": 11020365,
+      "addedAt": 1790375917119,
+      "path": "11a/astronomy/fb8523d4-36b4-4b23-9ea8-fc4c2ad47762.pdf"
+    },
+    {
+      "id": "bd6982da-226a-4724-8f5b-a25698423074",
+      "cls": "11a",
+      "subject": "history-ua",
+      "name": "11-klas-istoriya-ukr-galimov-2024.pdf",
+      "type": "application/pdf",
+      "size": 40253815,
+      "addedAt": 1790375975165,
+      "path": "11a/history-ua/bd6982da-226a-4724-8f5b-a25698423074.pdf"
+    },
+    {
+      "id": "023de8ce-042e-415f-9c97-fe4441a77451",
+      "cls": "11a",
+      "subject": "world-history",
+      "name": "11-klas-istoriya-vsesvit-schupak-2024.pdf",
+      "type": "application/pdf",
+      "size": 15536441,
+      "addedAt": 1790376203756,
+      "path": "11a/world-history/023de8ce-042e-415f-9c97-fe4441a77451.pdf"
+    },
+    {
+      "id": "595e8813-6106-4ea0-adc0-fb51bf902724",
+      "cls": "11a",
+      "subject": "world-lit",
+      "name": "11-klas-zarubizhna-literatura-nikolenko-2019.pdf",
+      "type": "application/pdf",
+      "size": 14389963,
+      "addedAt": 1790376243655,
+      "path": "11a/world-lit/595e8813-6106-4ea0-adc0-fb51bf902724.pdf"
+    }
+  ]
+}

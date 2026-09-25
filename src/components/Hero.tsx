@@ -1,6 +1,90 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { ArrowDown, Atom, BookOpen, Clock3, MapPin, Palette, Sigma, Sparkles, Telescope } from "lucide-react";
-import { subjects } from "../data/subjects";
+import { ArrowDown, Atom, BookOpen, CalendarDays, Clock3, Lock, MapPin, Palette, Sigma, Sparkles, Telescope } from "lucide-react";
+import { bookSubjects, subjects } from "../data/subjects";
+import { CLASSES, getAdminKey, setAdminKey, setClass, useClassInfo } from "../lib/cls";
+import { checkAdminKey, isShared, isStatic } from "../lib/storage";
+
+function ClassSelect() {
+  const { id: cls } = useClassInfo();
+  return (
+    <label
+      className="flex items-center gap-2 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur-none sm:backdrop-blur transition-colors"
+      title="Обери свій клас"
+    >
+      <span className="font-display text-[11px] font-bold uppercase tracking-widest text-ink-soft">Клас</span>
+      <select
+        value={cls}
+        onChange={(e) => setClass(e.target.value)}
+        aria-label="Обрати клас"
+        className="cursor-pointer appearance-none bg-transparent pr-1 font-display text-[13px] font-extrabold tracking-wide text-ink outline-none"
+      >
+        {CLASSES.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.label}
+          </option>
+        ))}
+      </select>
+      {CLASSES.length === 1 && (
+        <span className="text-[10px] font-bold uppercase tracking-wider text-ink-soft/70">
+          поки що лише {CLASSES[0].label}
+        </span>
+      )}
+    </label>
+  );
+}
+
+/* Режим власника: лише з кодом можна додавати/видаляти книги на спільному сервері */
+function AdminButton() {
+  const [on, setOn] = useState(() => !!getAdminKey() || !isShared());
+  useEffect(() => {
+    const h = () => setOn(!!getAdminKey() || !isShared());
+    window.addEventListener("vdsh2-admin", h);
+    window.addEventListener("vdsh2-probed", h);
+    return () => {
+      window.removeEventListener("vdsh2-admin", h);
+      window.removeEventListener("vdsh2-probed", h);
+    };
+  }, []);
+  if (isStatic() && !isShared()) return null; // спільна полиця з GitHub — додає лише власник скриптом
+  const toggle = async () => {
+    if (isShared() && getAdminKey()) {
+      setAdminKey("");
+      window.dispatchEvent(new Event("vdsh2-admin"));
+      return;
+    }
+    const k = prompt("Код власника сайту (його знаєш лише ти):");
+    if (k === null) return;
+    if (isShared() && !(await checkAdminKey(k))) {
+      alert("Не той код — спробуй ще.");
+      return;
+    }
+    setAdminKey(k);
+    window.dispatchEvent(new Event("vdsh2-admin"));
+  };
+  return (
+    <button
+      onClick={toggle}
+      title={on ? "Книги можна додавати та видаляти" : "Книги бачать усі, але додає їх лише власник сайту"}
+      className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 font-display text-[10px] font-bold uppercase tracking-widest shadow-sm backdrop-blur-none sm:backdrop-blur transition-all ${
+        on
+          ? "border-transparent bg-sun text-ink"
+          : "border-ink/10 bg-white/70 text-ink-soft hover:border-ink/30 hover:text-ink"
+      }`}
+    >
+      <Lock className="h-3.5 w-3.5" />
+      <span className="hidden sm:inline">{on ? "режим власника" : "код власника"}</span>
+    </button>
+  );
+}
+
+const todayShort = () =>
+  ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота"][new Date().getDay()];
+
+/* субота/неділя — уроків немає, тому кнопки «Розклад на …» не існує */
+const isWeekend = () => {
+  const g = new Date().getDay();
+  return g === 0 || g === 6;
+};
 
 const getGreeting = (h: number) => {
   if (h >= 5 && h < 11) return "Доброго ранку";
@@ -20,7 +104,7 @@ function LiveClock() {
   const date = now.toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <div className="flex items-center gap-2.5 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur">
+    <div className="flex items-center gap-2.5 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur-none sm:backdrop-blur">
       <Clock3 className="h-4 w-4 text-cobalt" />
       <span className="font-display text-[11px] font-semibold tracking-widest tabular-nums">{time}</span>
       <span className="h-3 w-px bg-ink/15" />
@@ -60,7 +144,7 @@ function FloatCard({
 function Marquee() {
   const row = [...subjects, ...subjects];
   return (
-    <div className="relative -mx-6 rotate-[-1.4deg] overflow-hidden bg-ink py-3.5 shadow-[0_20px_50px_-20px_rgba(23,20,12,0.5)] sm:scale-[1.01]">
+    <div className="relative -mx-6 overflow-hidden bg-ink py-3.5 shadow-[0_20px_50px_-20px_rgba(23,20,12,0.5)] sm:rotate-[-1.4deg]">
       <div className="flex w-max animate-marquee items-center gap-8 whitespace-nowrap">
         {row.map((s, i) => (
           <span key={`${s.id}-${i}`} className="flex items-center gap-8">
@@ -78,6 +162,7 @@ function Marquee() {
 }
 
 export default function Hero() {
+  const { label: clsLabel } = useClassInfo();
   const greeting = getGreeting(new Date().getHours());
 
   return (
@@ -96,7 +181,7 @@ export default function Hero() {
 
       <div className="relative mx-auto flex min-h-svh max-w-7xl flex-col px-6 pb-16 pt-6">
         {/* top bar */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-ink shadow-lg">
               <span className="absolute left-0 top-0 h-1/2 w-full bg-cobalt/90" />
@@ -105,22 +190,30 @@ export default function Hero() {
             </div>
             <div className="leading-tight">
               <p className="font-display text-xs font-bold uppercase tracking-widest">Мої предмети</p>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-ink-soft">Навчальний рік</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-ink-soft">
+                Великодолинська школа №2 · 2026/27
+              </p>
             </div>
           </div>
-          <LiveClock />
+          <div className="flex items-center gap-2">
+            <ClassSelect />
+            <AdminButton />
+            <div className="hidden lg:block">
+              <LiveClock />
+            </div>
+          </div>
         </div>
 
         {/* main */}
         <div className="grid flex-1 items-center gap-14 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:py-8">
           <div>
             <div className="anim-fade-up flex flex-wrap items-center gap-2.5" style={{ animationDelay: "0.05s" }}>
-              <span className="flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur">
+              <span className="flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur-none sm:backdrop-blur">
                 <MapPin className="h-3.5 w-3.5 text-cobalt" />
-                Українська школа
+                Великодолинська школа №2
               </span>
-              <span className="rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur">
-                2025 / 26
+              <span className="hidden rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur-none sm:inline-flex sm:backdrop-blur">
+                2026 / 27
               </span>
             </div>
 
@@ -132,7 +225,7 @@ export default function Hero() {
                 {greeting} —<br className="sm:hidden" /> ось мої
               </span>
               <span
-                className="anim-fade-up relative mt-1 inline-block font-display text-[17vw] font-extrabold uppercase leading-[0.95] tracking-tight sm:text-7xl lg:text-[5.6rem]"
+                className="anim-fade-up relative mt-1 inline-block whitespace-nowrap font-display text-[12.6vw] font-extrabold uppercase leading-[0.95] tracking-tight sm:text-7xl lg:text-[5.6rem]"
                 style={{ animationDelay: "0.2s" }}
               >
                 предмети
@@ -152,9 +245,9 @@ export default function Hero() {
               </span>
             </h1>
 
-            <p className="anim-fade-up mt-9 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg" style={{ animationDelay: "0.3s" }}>
-              Усі дисципліни 11 класу в одному затишному місці — від математики,
-              де <span className="font-bold text-ink underline decoration-sun decoration-4 underline-offset-4">алгебра й геометрія живуть в одному підручнику</span>,
+            <p className="anim-fade-up mt-7 max-w-xl text-[15.5px] leading-[1.65] text-ink-soft sm:mt-9 sm:text-lg sm:leading-relaxed" style={{ animationDelay: "0.3s" }}>
+              Усі дисципліни {clsLabel} класу в одному затишному місці — від математики,
+              де <span className="font-bold text-ink underline decoration-sun decoration-2 underline-offset-[3px] sm:decoration-4 sm:underline-offset-4">алгебра й геометрія живуть в одному підручнику</span>,
               до астрономії та мистецтва.
             </p>
 
@@ -163,12 +256,24 @@ export default function Hero() {
                 href="#predmety"
                 className="group flex items-center gap-3 rounded-full bg-ink px-7 py-4 font-display text-xs font-bold uppercase tracking-widest text-cream shadow-[0_20px_40px_-15px_rgba(23,20,12,0.6)] transition-all duration-300 hover:-translate-y-1 hover:bg-cobalt hover:shadow-[0_24px_45px_-15px_rgba(39,67,217,0.6)]"
               >
-                Дивитися всі {subjects.length}
+                Дивитися всі {bookSubjects.length}
                 <ArrowDown className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
               </a>
-              <div className="flex items-center gap-2 text-sm font-semibold text-ink-soft">
-                <Sparkles className="h-4 w-4 text-sun" />
-                14 предметів · завантаж свої підручники
+              {!isWeekend() && (
+                <a
+                  href="#rozklad"
+                  className="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur-none sm:backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt"
+                >
+                  <CalendarDays className="h-4 w-4 text-cobalt" />
+                  Розклад на {todayShort()}
+                </a>
+              )}
+              <div className="flex items-center gap-2 text-[13px] font-semibold leading-snug text-ink-soft sm:text-sm">
+                <Sparkles className="h-4 w-4 shrink-0 text-sun" />
+                <span>
+                  {clsLabel} клас · {bookSubjects.length} предметів
+                  <span className="hidden sm:inline"> · спільна поличка підручників</span>
+                </span>
               </div>
             </div>
           </div>

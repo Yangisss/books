@@ -9,6 +9,7 @@ import {
   Globe2,
   Landmark,
   Languages,
+  Map as MapIcon,
   Palette,
   PenLine,
   Sigma,
@@ -40,6 +41,8 @@ export interface Subject {
   /** tailwind column span on large screens (grid of 6) */
   span: string;
   variant?: "cobalt" | "night" | "sun";
+  /** урок есть в расписании, но полки с учебниками не существует (фізкультура) */
+  noBooks?: boolean;
 }
 
 export const subjects: Subject[] = [
@@ -69,6 +72,15 @@ export const subjects: Subject[] = [
     category: "natural",
     icon: FlaskConical,
     accent: "#0d9488",
+    span: "lg:col-span-2",
+  },
+  {
+    id: "geography",
+    name: "Географія",
+    desc: "Карти, країни та процеси на планеті",
+    category: "natural",
+    icon: MapIcon,
+    accent: "#15803d",
     span: "lg:col-span-2",
   },
   {
@@ -166,13 +178,17 @@ export const subjects: Subject[] = [
   {
     id: "pe",
     name: "Фізична культура",
-    desc: "Рух, спорт і здорова енергія",
+    desc: "Рух, спорт і здорова енергія — підручника не передбачено",
     category: "other",
     icon: Dumbbell,
     accent: "#dc2626",
     span: "lg:col-span-4",
+    noBooks: true,
   },
 ];
+
+/* предмети з поличкою книжок (фізкультура — урок є, книги немає) */
+export const bookSubjects = subjects.filter((s) => !s.noBooks);
 
 export const categoryLabel = (id: CategoryId) =>
   categories.find((c) => c.id === id)?.label ?? "";

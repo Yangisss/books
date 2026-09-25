@@ -1,8 +1,10 @@
 import { Heart } from "lucide-react";
 import { useInView } from "../hooks/useInView";
+import { useClassInfo } from "../lib/cls";
 
 export default function Footer() {
   const { ref, inView } = useInView<HTMLElement>();
+  const { label: clsLabel } = useClassInfo();
 
   return (
     <footer ref={ref} className="relative overflow-hidden bg-ink text-cream">
@@ -27,10 +29,13 @@ export default function Footer() {
           Гарного навчального року!
         </p>
 
-        <div className="mt-10 flex items-center gap-2 border-t border-cream/10 pt-6 text-xs font-semibold uppercase tracking-widest text-cream/40">
+        <p className="mt-6 max-w-md text-[11px] font-semibold uppercase tracking-widest text-cream/40">
+          смт Великодолинське · Великодолинська загальна школа №2 · 2026 / 2027 навчальний рік
+        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 border-t border-cream/10 pt-6 text-xs font-semibold uppercase tracking-widest text-cream/40">
           Зроблено з
           <Heart className="h-3.5 w-3.5 text-sun" fill="currentColor" />
-          для української школи
+          для {clsLabel} класу
         </div>
       </div>
     </footer>

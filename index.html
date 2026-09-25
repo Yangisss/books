@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Мої шкільні предмети — 11 клас" />
-    <title>Мої предмети — 11 клас</title>
+    <meta name="description" content="Мої предмети, розклад і підручники · Великодолинська школа №2 · 2026/2027" />
+    <title>Мої предмети · Великодолинська школа №2</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -44,15 +44,41 @@
       };
     </script>
     <style>
-      html { scroll-behavior: smooth; }
+      html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       body {
         font-family: Manrope, system-ui, sans-serif;
         background: #f6f3ea;
         color: #17140c;
         -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
         overflow-x: hidden;
+        overflow-x: clip;
+      }
+      /* «11-А» — мітка, вона не ламатися на дві частини */
+      [data-cls-num] { white-space: nowrap; }
+      /* читалка: м'яке перелистування та підказки */
+      #pdf-scroll { touch-action: pan-x pan-y; }
+      #pdf-canvas.slide { animation: pdf-slide 0.26s cubic-bezier(0.22, 0.8, 0.3, 1); }
+      @keyframes pdf-slide {
+        from { opacity: 0.25; transform: translateX(var(--turn-dir, 18px)) scale(0.985); }
+        to   { opacity: 1; transform: none; }
+      }
+      .pdf-toast { animation: pdf-toast 2.4s ease forwards; }
+      @keyframes pdf-toast {
+        0%   { opacity: 0; transform: translate(-50%, -8px); }
+        14%  { opacity: 1; transform: translate(-50%, 0); }
+        80%  { opacity: 1; }
+        100% { opacity: 0; transform: translate(-50%, -4px); }
       }
       ::selection { background: #f2b705; color: #17140c; }
+      @media (max-width: 639px) {
+        /* на телефонах зерно робить текст «мильним» — вимикаємо разом з анімацією */
+        .grain::after { display: none; }
+        /* заголовки й абзаци не «комкаються»: рівні рядки без одиноких слів */
+        h1, h2, h3 { text-wrap: balance; }
+        p, li, span { text-wrap: pretty; }
+        .font-display { letter-spacing: -0.01em; }
+      }
       .grain::after {
         content: "";
         position: fixed;
@@ -106,6 +132,20 @@
         animation: floaty 7s ease-in-out infinite;
       }
       .icon { width: 1em; height: 1em; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      /* ---- mobile comfort ---- */
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { scrollbar-width: none; }
+      #day-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+      #day-chips button { flex-shrink: 0; }
+      @media (min-width: 640px) {
+        #day-chips { flex-wrap: wrap; overflow: visible; }
+      }
+      button, a { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+      select.cls-select {
+        appearance: none; -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%2317140c' stroke-width='1.8'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 12px center;
+      }
     </style>
   </head>
   <body>
@@ -119,34 +159,42 @@
         ></div>
 
         <div class="relative mx-auto flex min-h-svh max-w-7xl flex-col px-6 pb-16 pt-6">
-          <div class="flex items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-3">
               <div class="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-ink shadow-lg">
                 <span class="absolute left-0 top-0 h-1/2 w-full bg-cobalt/90"></span>
                 <span class="absolute bottom-0 left-0 h-1/2 w-full bg-sun/90"></span>
-                <span class="relative font-display text-sm font-bold text-white mix-blend-difference">11</span>
+                <span id="logo-num" class="relative font-display text-sm font-bold text-white mix-blend-difference">11</span>
               </div>
               <div class="leading-tight">
                 <p class="font-display text-xs font-bold uppercase tracking-widest">Мої предмети</p>
-                <p class="text-[11px] font-semibold uppercase tracking-widest text-ink-soft">Навчальний рік</p>
+                <p class="text-[11px] font-semibold uppercase tracking-widest text-ink-soft">Великодолинська школа №2 · 2026/27</p>
               </div>
             </div>
-            <div id="live-clock" class="flex items-center gap-2.5 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur"></div>
+            <div class="flex items-center gap-2">
+              <span class="relative flex items-center gap-2">
+                <select id="class-select" aria-label="Обрати клас" title="Поки що тільки 11-А клас"
+                  class="cls-select rounded-full border border-ink/10 bg-white/70 py-2 pl-4 pr-8 font-display text-[11px] font-bold uppercase tracking-widest text-ink shadow-sm backdrop-blur-none sm:backdrop-blur transition-all hover:border-ink/30 focus:outline-none focus:ring-2 focus:ring-cobalt/40"></select>
+                <span id="cls-hint" class="hidden text-[10px] font-bold uppercase tracking-wider text-ink-soft/70 md:inline"></span>
+              </span>
+              <button id="admin-btn" title="" class="flex items-center gap-1 rounded-full border border-ink/10 bg-white/70 px-3.5 py-2 font-display text-[10px] font-bold uppercase tracking-widest text-ink-soft shadow-sm backdrop-blur-none sm:backdrop-blur transition-all hover:border-ink/30 hover:text-ink focus:outline-none focus:ring-2 focus:ring-cobalt/40"></button>
+              <div id="live-clock" class="hidden items-center gap-2.5 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur-none sm:backdrop-blur lg:flex"></div>
+            </div>
           </div>
 
           <div class="grid flex-1 items-center gap-14 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:py-8">
             <div>
               <div class="anim-fade-up flex flex-wrap items-center gap-2.5" style="animation-delay: 0.05s">
-                <span class="flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur">
+                <span class="flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur-none sm:backdrop-blur">
                   <svg class="icon h-3.5 w-3.5 text-cobalt"><use href="#i-map-pin"></use></svg>
-                  Українська школа
+                  <span id="chip-school">Великодолинська школа №2</span>
                 </span>
-                <span class="rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur">2025 / 26</span>
+                <span id="chip-year" class="hidden rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur-none sm:backdrop-blur sm:inline-flex">2026 / 27</span>
               </div>
 
               <h1 class="mt-7">
                 <span id="greeting" class="anim-fade-up block font-accent text-4xl italic text-ink/80 sm:text-5xl" style="animation-delay: 0.12s"></span>
-                <span class="anim-fade-up relative mt-1 inline-block font-display text-[17vw] font-extrabold uppercase leading-[0.95] tracking-tight sm:text-7xl lg:text-[5.6rem]" style="animation-delay: 0.2s">
+                <span class="anim-fade-up relative mt-1 inline-block font-display text-[12.6vw] whitespace-nowrap font-extrabold uppercase leading-[0.95] tracking-tight sm:text-7xl lg:text-[5.6rem]" style="animation-delay: 0.2s">
                   предмети
                   <svg class="absolute -bottom-3 left-0 h-5 w-full text-sun sm:-bottom-4" viewBox="0 0 300 22" fill="none" preserveAspectRatio="none">
                     <path d="M4 15C60 7 120 5 168 9C216 13 262 15 296 8" stroke="currentColor" stroke-width="7" stroke-linecap="round"></path>
@@ -154,9 +202,9 @@
                 </span>
               </h1>
 
-              <p class="anim-fade-up mt-9 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg" style="animation-delay: 0.3s">
-                Усі дисципліни 11 класу в одному затишному місці — від математики,
-                де <span class="font-bold text-ink underline decoration-sun decoration-4 underline-offset-4">алгебра й геометрія живуть в одному підручнику</span>,
+              <p class="anim-fade-up mt-7 max-w-xl text-[15.5px] leading-[1.65] text-ink-soft sm:mt-9 sm:text-lg sm:leading-relaxed" style="animation-delay: 0.3s">
+                Усі дисципліни <span class="text-ink underline decoration-cobalt decoration-2 underline-offset-4"><span data-cls-num>11</span> класу</span> в одному затишному місці — від математики,
+                де <span class="font-bold text-ink underline decoration-sun decoration-2 underline-offset-[3px] sm:decoration-4 sm:underline-offset-4">алгебра й геометрія живуть в одному підручнику</span>,
                 до астрономії та мистецтва.
               </p>
 
@@ -165,9 +213,13 @@
                   Дивитися всі <span id="subject-count">14</span>
                   <svg class="icon h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5"><use href="#i-arrow-down"></use></svg>
                 </a>
-                <div class="flex items-center gap-2 text-sm font-semibold text-ink-soft">
-                  <svg class="icon h-4 w-4 text-sun"><use href="#i-sparkles"></use></svg>
-                  14 предметів · завантаж свої підручники
+                <a id="today-sched-btn" href="#rozklad" class="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur-none sm:backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt">
+                  <svg class="icon h-4 w-4 text-cobalt"><use href="#i-calendar"></use></svg>
+                  Розклад на <span id="today-word">сьогодні</span>
+                </a>
+                <div class="flex items-center gap-2 text-[13px] font-semibold leading-snug text-ink-soft sm:text-sm">
+                  <svg class="icon h-4 w-4 shrink-0 text-sun"><use href="#i-sparkles"></use></svg>
+                  <span><span data-cls-num>11</span> клас · <span id="subject-count2">14</span> предметів<span class="hidden sm:inline"> · завантаж свої підручники</span></span>
                 </div>
               </div>
             </div>
@@ -200,13 +252,30 @@
             </div>
           </div>
 
-          <div class="relative -mx-6 rotate-[-1.4deg] overflow-hidden bg-ink py-3.5 shadow-[0_20px_50px_-20px_rgba(23,20,12,0.5)] sm:scale-[1.01]">
+          <div class="relative -mx-6 overflow-hidden bg-ink py-3.5 shadow-[0_20px_50px_-20px_rgba(23,20,12,0.5)] sm:rotate-[-1.4deg]">
             <div id="marquee" class="flex w-max animate-marquee items-center gap-8 whitespace-nowrap"></div>
           </div>
         </div>
       </header>
 
       <main>
+        <section id="rozklad" class="relative mx-auto max-w-7xl px-6 pb-10 pt-20">
+          <div class="reveal flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <p class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-cobalt">
+                <svg class="icon h-4 w-4"><use href="#i-calendar"></use></svg>
+                <span data-cls-num>11</span> клас · автоматично за днем тижня
+              </p>
+              <h2 class="mt-3 font-display text-4xl font-extrabold uppercase tracking-tight sm:text-5xl">
+                Розклад <span id="schedule-accent" class="font-accent normal-case italic tracking-normal text-ink/70">на сьогодні</span>
+              </h2>
+            </div>
+          </div>
+          <div id="sched-tabs" class="reveal mt-8 inline-flex rounded-full border border-ink/10 bg-white/70 p-1 backdrop-blur-none sm:backdrop-blur"></div>
+          <div id="day-chips" class="reveal mt-5 flex flex-wrap gap-2.5" style="transition-delay: 120ms"></div>
+          <div id="schedule-body" class="mt-8 space-y-6"></div>
+        </section>
+
         <section id="predmety" class="relative mx-auto max-w-7xl px-6 pb-28 pt-20">
           <div id="section-head" class="reveal flex flex-wrap items-end justify-between gap-6">
             <div>
@@ -244,16 +313,20 @@
           <p class="mt-4 max-w-md text-sm leading-relaxed text-cream/60">
             Чотирнадцять предметів — це не навантаження, а чотирнадцять вікон у світ. Гарного навчального року!
           </p>
-          <div class="mt-10 flex items-center gap-2 border-t border-cream/10 pt-6 text-xs font-semibold uppercase tracking-widest text-cream/40">
+          <p class="mt-6 max-w-md text-[11px] font-semibold uppercase tracking-widest text-cream/40">
+            смт Великодолинське · <span id="footer-school">Великодолинська загальна школа №2</span> · 2026 / 2027 навчальний рік
+          </p>
+          <div class="mt-6 flex flex-wrap items-center justify-center gap-2 border-t border-cream/10 pt-6 text-xs font-semibold uppercase tracking-widest text-cream/40">
             Зроблено з
             <svg class="h-3.5 w-3.5 text-sun" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 12.572l-7.5 7.428-7.5-7.428a5 5 0 1 1 7.5-6.566 5 5 0 1 1 7.5 6.572z"></path></svg>
-            для української школи
+            для <span data-cls-num>11</span> класу
           </div>
         </div>
       </footer>
     </div>
 
     <div id="modal" class="fixed inset-0 z-[70] hidden items-end justify-center p-0 sm:items-center sm:p-6" role="dialog" aria-modal="true"></div>
+    <div id="reader" class="fixed inset-0 z-[90] hidden flex-col bg-ink/75 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true"></div>
 
     <svg xmlns="http://www.w3.org/2000/svg" class="hidden">
       <symbol id="i-sigma" viewBox="0 0 24 24"><path d="M18 7V4H6l6 8-6 8h12v-3"></path></symbol>
@@ -274,7 +347,8 @@
       <symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></symbol>
       <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></symbol>
       <symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></symbol>
-      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></symbol>
+      <symbol id="i-map" viewBox="0 0 24 24"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0l4.212 2.106a2 2 0 0 0 1.788 0Z"></path></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></symbol>
       <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M7 12h10"></path><path d="M10 18h4"></path></symbol>
       <symbol id="i-click" viewBox="0 0 24 24"><path d="M14 4.1 12 6"></path><path d="m5.1 8-2.9-.8"></path><path d="m6 12-1.9 2"></path><path d="M7.2 2.2 8 5.1"></path><path d="M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"></path></symbol>
       <symbol id="i-quote" viewBox="0 0 24 24"><path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"></path></symbol>
@@ -287,6 +361,8 @@
       <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></symbol>
       <symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></symbol>
       <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3"></path><path d="m7.5 10.5 4.5 4.5 4.5-4.5"></path><path d="M4 19h16"></path></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></symbol>
     </svg>
 
     <script>
@@ -301,6 +377,7 @@
         { id: "math", name: "Математика", desc: "Алгебра і геометрія — один підручник на два предмети", category: "exact", icon: "i-sigma", accent: "#2743d9", span: "lg:col-span-3", variant: "cobalt" },
         { id: "physics", name: "Фізика", desc: "Закони руху, електрики та світла", category: "exact", icon: "i-atom", accent: "#0ea5e9", span: "lg:col-span-3" },
         { id: "chemistry", name: "Хімія", desc: "Реакції, елементи й формули", category: "natural", icon: "i-flask", accent: "#0d9488", span: "lg:col-span-2" },
+        { id: "geography", name: "Географія", desc: "Карти, країни та процеси на планеті", category: "natural", icon: "i-map", accent: "#15803d", span: "lg:col-span-2" },
         { id: "biology", name: "Біологія", desc: "Життя — від клітини до екосистеми", category: "natural", icon: "i-dna", accent: "#16a34a", span: "lg:col-span-2" },
         { id: "astronomy", name: "Астрономія", desc: "Зорі, планети та подорожі всесвітом", category: "exact", icon: "i-telescope", accent: "#8b7cf6", span: "lg:col-span-2", variant: "night" },
         { id: "ukr-lang", name: "Українська мова", desc: "Граматика, синтаксис і краса слова", category: "humanities", icon: "i-pen", accent: "#d99f0e", span: "lg:col-span-2", variant: "sun" },
@@ -311,8 +388,10 @@
         { id: "informatics", name: "Інформатика", desc: "Код, алгоритми та цифрові технології", category: "exact", icon: "i-binary", accent: "#4f46e5", span: "lg:col-span-2" },
         { id: "world-lit", name: "Зарубіжна література", desc: "Класика та шедеври країн світу", category: "humanities", icon: "i-book-marked", accent: "#be123c", span: "lg:col-span-2" },
         { id: "art", name: "Мистецтво", desc: "Музика, образи та творчість", category: "other", icon: "i-palette", accent: "#db2777", span: "lg:col-span-2" },
-        { id: "pe", name: "Фізична культура", desc: "Рух, спорт і здорова енергія", category: "other", icon: "i-dumbbell", accent: "#dc2626", span: "lg:col-span-4" },
+        { id: "pe", name: "Фізична культура", desc: "Рух, спорт і здорова енергія — підручника не передбачено", category: "other", icon: "i-dumbbell", accent: "#dc2626", span: "lg:col-span-4", noBooks: true },
       ];
+      /* предмети з поличкою книжок (фізкультура — урок є, книги немає) */
+      const bookSubjects = subjects.filter((s) => !s.noBooks);
 
       const categoryLabel = (id) => categories.find((c) => c.id === id)?.label ?? "";
       const svg = (id, cls = "icon") => `<svg class="${cls}"><use href="#${id}"></use></svg>`;
@@ -403,7 +482,14 @@
             const req = db.transaction(STORE, "readonly").objectStore(STORE).getAll();
             req.onsuccess = () => {
               const counts = {};
-              req.result.forEach((f) => { counts[f.subjectId] = (counts[f.subjectId] || 0) + 1; });
+              req.result.forEach((f) => {
+                const key = String(f.subjectId || "");
+                const slash = key.indexOf("/");
+                let c, subj;
+                if (slash === -1) { c = "11a"; subj = key; }
+                else { c = key.slice(0, slash); subj = key.slice(slash + 1); }
+                if (c === cls && subj) counts[subj] = (counts[subj] || 0) + 1;
+              });
               resolve(counts);
             };
             req.onerror = () => reject(req.error);
@@ -427,9 +513,209 @@
         }
       }
 
+      /* ---------- Сховище: сервер школи → спільна полиця в репозиторії
+                  (library/index.json, працює навіть на GitHub Pages) → IndexedDB ---------- */
+      let sharedOK = false;
+      let staticOK = false;
+      let staticFiles = [];
+      let staticUpdated = 0;
+      async function loadStaticLib() {
+        try {
+          const r = await fetch(new URL("library/index.json", location.href), { cache: "no-store" });
+          if (!r.ok) return;
+          const j = await r.json();
+          staticFiles = (j.files || []).filter((f) => String(f.cls) === String(cls));
+          staticUpdated = Number(j.updated || 0);
+          staticOK = true;
+        } catch (e) { staticOK = false; }
+      }
+      const staticFor = (subject) =>
+        staticFiles
+          .filter((f) => f.subject === subject)
+          .map((f) => ({
+            id: f.id, subject: f.subject, name: f.name, type: f.type, size: f.size,
+            addedAt: f.addedAt || staticUpdated, url: new URL("library/" + f.path, location.href).href,
+            shared: true, isStatic: true,
+          }));
+      async function probeShared() {
+        if (!(location.protocol === "http:" || location.protocol === "https:")) { sharedOK = false; await loadStaticLib(); return; }
+        try {
+          const r = await fetch(`/api/books?cls=${cls}`, { signal: AbortSignal.timeout(2500) });
+          sharedOK = r.ok;
+        } catch (e) { sharedOK = false; }
+        if (!sharedOK) await loadStaticLib();
+      }
+      async function refreshCounts() {
+        try {
+          if (sharedOK) {
+            const all = await (await fetch(`/api/books?cls=${cls}`)).json();
+            counts = {};
+            all.forEach((f) => { counts[f.subject] = (counts[f.subject] || 0) + 1; });
+          } else {
+            try { counts = await getCounts(); } catch (e) { counts = {}; }
+            staticFiles.forEach((f) => { counts[f.subject] = (counts[f.subject] || 0) + 1; });
+          }
+        } catch (e) { counts = {}; }
+      }
+      async function listFiles(subject) {
+        if (sharedOK) {
+          const all = await (await fetch(`/api/books?cls=${cls}`)).json();
+          return all.filter((f) => f.subject === subject);
+        }
+        let personal = [];
+        try { personal = await getFiles(`${cls}/${subject}`); } catch (e) { personal = []; }
+        return staticOK ? [...staticFor(subject), ...personal] : personal;
+      }
+      async function addShared(subject, files) {
+        if (sharedOK) {
+          const fd = new FormData();
+          fd.append("cls", String(cls));
+          fd.append("subject", subject);
+          files.forEach((f) => fd.append("file", f));
+          const r = await fetch("/api/books", { method: "POST", body: fd, headers: { "x-admin-key": adminKey } });
+          if (!r.ok) throw new Error(await r.text());
+          return;
+        }
+        await addFiles(`${cls}/${subject}`, files);
+      }
+      async function removeOne(id) {
+        if (sharedOK) {
+          const r = await fetch(`/api/books/${id}`, { method: "DELETE", headers: { "x-admin-key": adminKey } });
+          if (!r.ok) throw new Error("delete failed");
+          return;
+        }
+        await removeFile(id);
+      }
+
       let filter = "all";
       let counts = {};
       let openSubject = null;
+
+      /* ---------- Розклад уроків ----------
+         subject "s" має збігатися з id предмета зі списку subjects —
+         тож до кожного урока автоматично підтягується твоя полка підручників. */
+      /* Дзвінки за розкладом школи (для дистанційного навчання):
+         15 хв перерви, після 7 уроку — 5 хв */
+      const bells = [
+        { start: "08:30", end: "09:10" },
+        { start: "09:25", end: "10:05" },
+        { start: "10:20", end: "11:00" },
+        { start: "11:15", end: "11:55" },
+        { start: "12:10", end: "12:50" },
+        { start: "13:05", end: "13:45" },
+        { start: "14:00", end: "14:40" },
+        { start: "14:45", end: "15:25" },
+      ];
+
+      const CLASSES = [{ id: "11a", label: "11-А" }];
+
+      /* Розклад 11-А — зі слів учня (точна копія). n — номер уроку за дзвінком,
+         label — назва на картці; поличка книжок усе одно по subject. */
+      const week = [
+        { name: "Понеділок", short: "Пн", lessons: [
+          { s: "physics" }, { s: "chemistry" }, { s: "ukr-lang" }, { s: "ukr-lang" },
+          { s: "history-ua" }, { s: "pe" }, { s: "world-history" },
+        ] },
+        { name: "Вівторок", short: "Вт", lessons: [
+          { s: "english" }, { s: "ukr-lit" }, { s: "history-ua" }, { s: "biology" },
+          { s: "math", label: "Алгебра" }, { s: "math", label: "Геометрія" },
+        ] },
+        { name: "Середа", short: "Ср", lessons: [
+          { s: "geography" }, { s: "informatics" }, { s: "pe" },
+          { s: "world-lit" }, { s: "physics" },
+        ] },
+        { name: "Четвер", short: "Чт", lessons: [
+          { s: "english" }, { s: "math", label: "Геометрія" }, { s: "math", label: "Алгебра" },
+          { s: "biology" }, { s: "informatics" }, { s: "art" }, { s: "astronomy" },
+        ] },
+        { name: "П'ятниця", short: "Пт", lessons: [
+          { s: "ukr-lang" }, { s: "ukr-lang" }, { s: "pe" }, { s: "physics" },
+          { s: "ukr-lit" }, { s: "chemistry" },
+        ] },
+      ];
+
+      const subjectById = Object.fromEntries(subjects.map((x) => [x.id, x]));
+      const toMin = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+      const dayIndexOf = (d) => { const g = d.getDay(); return g >= 1 && g <= 5 ? g - 1 : null; };
+      let selectedDay = dayIndexOf(new Date()) ?? 0;
+      let schedTab = "week";
+      let summaryAction = null;
+
+      /* ---------- Клас та школа ---------- */
+      const SCHOOL = { place: "смт Великодолинське", name: "Великодолинська школа №2", year: "2026 / 27" };
+      const CLS_KEY = "vdsh2-class";
+      let cls = "11a";
+      try { const v = localStorage.getItem(CLS_KEY); if (CLASSES.some((c) => c.id === v)) cls = v; } catch (e) {}
+      const classLabel = () => (CLASSES.find((c) => c.id === cls) || CLASSES[0]).label;
+
+      /* Розклад по класах — правіть тут, коли прийде справжнє розкладення */
+      const scheduleByClass = { "11a": { bells, week } };
+
+      /* ---------- Режим власника: книги додає лише адмін ---------- */
+      const ADMIN_KEY = "vdsh2-admin-key";
+      let adminKey = "";
+      try { adminKey = localStorage.getItem(ADMIN_KEY) || ""; } catch (e) {}
+      const canEdit = () => (sharedOK ? adminKey !== "" : !staticOK);
+
+      function renderClassBits() {
+        document.querySelectorAll("[data-cls-num]").forEach((el) => { el.textContent = classLabel(); });
+        const sel = document.getElementById("class-select");
+        if (sel) sel.value = cls;
+        const logo = document.getElementById("logo-num");
+        if (logo) logo.textContent = "11";
+        document.title = `Мої предмети · ${classLabel()} клас — ${SCHOOL.name}`;
+      }
+      function buildClassSelect() {
+        const sel = document.getElementById("class-select");
+        if (!sel) return;
+        sel.innerHTML = CLASSES.map((c) => `<option value="${c.id}">${c.label} клас</option>`).join("");
+        sel.onchange = () => setCls(sel.value);
+      }
+      function setCls(id) {
+        cls = id;
+        try { localStorage.setItem(CLS_KEY, id); } catch (e) {}
+        renderClassBits();
+        (async () => { await probeShared(); await refresh(); renderSchedule({ animate: true }); })();
+      }
+      function renderAdminBtn() {
+        const btn = document.getElementById("admin-btn");
+        if (!btn) return;
+        if (staticOK && !sharedOK) {
+          btn.classList.add("hidden");
+          btn.innerHTML = "";
+          btn.title = "";
+          return;
+        }
+        btn.classList.remove("hidden");
+        const on = canEdit();
+        btn.classList.toggle("bg-sun", on && sharedOK);
+        btn.innerHTML = svg(on ? "i-lock" : "i-lock", "icon h-3.5 w-3.5") +
+          `<span class="hidden sm:inline ml-0.5">${on ? (sharedOK ? "режим власника" : "локальний режим") : "код власника"}</span>`;
+        btn.title = on ? "Книги можна додавати та видаляти" : "Книги бачать усі, але додає їх лише власник сайту";
+      }
+      async function toggleAdmin() {
+        if (sharedOK && adminKey) {
+          adminKey = "";
+          try { localStorage.removeItem(ADMIN_KEY); } catch (e) {}
+          renderAdminBtn();
+          renderModal();
+          return;
+        }
+        const key = prompt("Код власника сайту (його знаєш лише ти):");
+        if (key === null) return;
+        const ok = await (async () => {
+          if (!sharedOK) return true;
+          try {
+            const r = await fetch("/api/admin/check", { headers: { "x-admin-key": key } });
+            return r.ok;
+          } catch (e) { return false; }
+        })();
+        if (!ok) { alert("Не той код — спробуй ще."); return; }
+        adminKey = key;
+        try { localStorage.setItem(ADMIN_KEY, key); } catch (e) {}
+        renderAdminBtn();
+        renderModal();
+      }
 
       function tickClock() {
         const now = new Date();
@@ -518,18 +804,276 @@
         const chip = (id, label, count) => {
           const on = filter === id;
           return `<button data-filter="${id}" class="flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
-            on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "border border-ink/10 bg-white/70 text-ink-soft backdrop-blur hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink"
+            on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "border border-ink/10 bg-white/70 text-ink-soft backdrop-blur-none sm:backdrop-blur hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink"
           }">${label}<span class="rounded-full px-1.5 py-0.5 text-[10px] leading-none ${on ? "bg-sun text-ink" : "bg-ink/10 text-ink-soft"}">${count}</span></button>`;
         };
         document.getElementById("filters").innerHTML =
-          chip("all", "Усі", subjects.length) +
-          categories.map((c) => chip(c.id, c.label, subjects.filter((s) => s.category === c.id).length)).join("");
+          chip("all", "Усі", bookSubjects.length) +
+          categories.map((c) => chip(c.id, c.label, bookSubjects.filter((s) => s.category === c.id).length)).join("");
       }
 
       function renderGrid() {
-        const visible = subjects.filter((s) => filter === "all" || s.category === filter);
+        const visible = bookSubjects.filter((s) => filter === "all" || s.category === filter);
         document.getElementById("grid").innerHTML =
           visible.map((s, i) => cardHTML(s, subjects.indexOf(s), i)).join("") + quoteTile();
+      }
+
+      function renderScheduleEmpty(animate) {
+        document.getElementById("schedule-accent").textContent = `· ${classLabel()} клас`;
+        document.getElementById("day-chips").innerHTML = "";
+        document.getElementById("schedule-body").innerHTML = `
+          <div class="${animate ? "anim-fade-up" : ""} relative flex flex-col justify-between gap-5 overflow-hidden rounded-[1.75rem] bg-ink p-6 text-cream shadow-[0_30px_60px_-25px_rgba(23,20,12,0.6)]">
+            <div class="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-sun/20 blur-2xl"></div>
+            <div class="relative flex items-start gap-4">
+              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-sun backdrop-blur-sm">${svg("i-calendar", "icon h-6 w-6")}</span>
+              <div>
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">Розклад · ${classLabel()} клас</p>
+                <p class="mt-1.5 font-display text-lg font-bold leading-snug">Для ${classLabel()} класу розклад ще не додано</p>
+                <p class="mt-1 max-w-xl text-sm leading-relaxed text-cream/60">Щойно розклад з'явиться у файлі (об'єкт <span class="font-bold text-cream/80">scheduleByClass</span>) — сайт сам почне показувати уроки та підручники за днем тижня. Полиці предметів нижче працюють уже зараз.</p>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      function renderSchedTabs() {
+        const tab = (id, label, icon) => {
+          const on = schedTab === id;
+          return `<button data-tab="${id}" class="flex items-center gap-2 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
+            on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "text-ink-soft hover:text-ink"
+          }">${svg(icon, "icon h-3.5 w-3.5")}${label}</button>`;
+        };
+        document.getElementById("sched-tabs").innerHTML =
+          tab("week", "Уроки дня", "i-calendar") + tab("bell", "Дзвінок", "i-clock");
+      }
+
+      function bellsHTML(animCls) {
+        const now = new Date();
+        const weekday = dayIndexOf(now) !== null;
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        const brkIdx = weekday ? bells.findIndex((b, i) => i < bells.length - 1 && nowMin >= toMin(b.end) && nowMin < toMin(bells[i + 1].start)) : -1;
+        const liveIdx = weekday ? bells.findIndex((b) => nowMin >= toMin(b.start) && nowMin < toMin(b.end)) : -1;
+
+        /* шапка-смужка: що триває зараз */
+        let t, sub;
+        if (!weekday) {
+          const wd = now.getDay() === 6 ? "субота" : "неділя";
+          t = `Сьогодні ${wd} — вихідний`;
+          sub = "Дзвінків немає, гарного відпочинку";
+        } else if (liveIdx >= 0) {
+          t = `Триває ${liveIdx + 1}-й урок`;
+          sub = `до ${bells[liveIdx].end} · залишилось ${toMin(bells[liveIdx].end) - nowMin} хв`;
+        } else if (brkIdx >= 0) {
+          const gap = toMin(bells[brkIdx + 1].start) - toMin(bells[brkIdx].end);
+          t = `Перерва ${gap} хв`;
+          sub = `${brkIdx + 1}-й урок завершився · ${brkIdx + 2}-й о ${bells[brkIdx + 1].start} — через ${toMin(bells[brkIdx + 1].start) - nowMin} хв`;
+        } else if (nowMin < toMin(bells[0].start)) {
+          t = "Ще до першого дзвінка";
+          sub = `перший урок о ${bells[0].start} · через ${toMin(bells[0].start) - nowMin} хв`;
+        } else {
+          t = "Уроки на сьогодні завершено";
+          sub = `останній дзвінок — ${bells[bells.length - 1].end}`;
+        }
+        const head = `
+          <div class="${animCls} relative flex flex-col justify-between gap-5 overflow-hidden rounded-[1.75rem] bg-ink p-6 text-cream shadow-[0_30px_60px_-25px_rgba(23,20,12,0.6)] sm:flex-row sm:items-center">
+            <div class="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-sun/20 blur-2xl"></div>
+            <div class="relative flex items-start gap-4">
+              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-sun backdrop-blur-sm">${svg("i-clock", "icon h-6 w-6")}</span>
+              <div>
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">Дзвінки · ${classLabel()} клас · 2026 / 27</p>
+                <p class="mt-1.5 font-display text-lg font-bold leading-snug">${t}</p>
+                <p class="mt-1 text-sm leading-relaxed text-cream/60">${sub}</p>
+              </div>
+            </div>
+            <div class="relative hidden items-center gap-1.5 rounded-full bg-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-cream/80 backdrop-blur-sm md:inline-flex">${svg("i-sigma", "icon h-3.5 w-3.5 text-sun")} 8 уроків · перерви 15 хв · після 7-го — 5 хв</div>
+          </div>`;
+
+        const rows = bells.map((b, i) => {
+          const st = toMin(b.start), en = toMin(b.end);
+          const status = !weekday ? "later" : nowMin >= st && nowMin < en ? "now" : nowMin >= en ? "done" : "later";
+          const rowCls = status === "now"
+            ? "border-sun/70 bg-sun/10 shadow-[0_18px_45px_-22px_rgba(242,183,5,0.75)]"
+            : status === "done" ? "border-ink/10 bg-paper opacity-55" : "border-ink/10 bg-paper";
+          const tag = status === "now"
+            ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-ink"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink"></span></span>триває · ${en - nowMin} хв</span>`
+            : status === "done" ? `<span class="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">дзвінок був</span>` : "";
+          return `
+            <div class="${animCls} flex items-center gap-3 rounded-3xl border p-3.5 sm:gap-4 sm:p-4 ${rowCls}" ${animCls ? `style="animation-delay:${i * 40}ms"` : ""}>
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink/5 font-display text-xs font-bold tabular-nums text-ink-soft">${i + 1}</span>
+              <p class="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5 font-display text-base font-bold tabular-nums sm:text-lg">
+                <span>${b.start}</span><span class="text-ink-soft/50">—</span><span>${b.end}</span>
+                <span class="ml-1 rounded-full border border-ink/10 bg-ink/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-ink-soft">40 хв</span>
+              </p>
+              ${tag}
+            </div>` + (i < bells.length - 1 ? (() => {
+              const gap = toMin(bells[i + 1].start) - en;
+              const onBreak = i === brkIdx;
+              return `
+            <div class="flex items-center gap-3 py-0.5 sm:pl-[3.4rem]">
+              <span class="h-px flex-1 border-t border-dashed border-ink/20"></span>
+              <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest ${
+                onBreak ? "border border-cobalt/40 bg-cobalt/10 text-cobalt" : "text-ink-soft/70"
+              }">перерва · ${gap} хв${onBreak ? ` · ${toMin(bells[i + 1].start) - nowMin} хв` : ""}</span>
+              <span class="h-px flex-1 border-t border-dashed border-ink/20"></span>
+            </div>`;
+            })() : "");
+        }).join("");
+
+        return `${head}
+          <div class="relative overflow-hidden rounded-[1.75rem] border border-ink/10 bg-cream/60 p-4 backdrop-blur-none sm:backdrop-blur sm:p-6">
+            <div class="space-y-1.5">${rows}</div>
+            <p class="mt-4 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-ink-soft/60">${classLabel()} клас · Великодолинська школа №2 · після 8-го урока — до побачення завтра</p>
+          </div>`;
+      }
+
+      function renderSchedule(opts) {
+        const animate = !!(opts && opts.animate);
+        const animCls = animate ? "anim-fade-up" : "";
+        renderSchedTabs();
+        if (schedTab === "bell") {
+          document.getElementById("schedule-accent").textContent = "дзвінки та перерви";
+          const dc = document.getElementById("day-chips");
+          dc.innerHTML = ""; dc.classList.add("hidden");
+          document.getElementById("schedule-body").innerHTML = bellsHTML(animCls);
+          return;
+        }
+        document.getElementById("day-chips").classList.remove("hidden");
+        const now = new Date();
+        const todayIdx = dayIndexOf(now);
+        const isToday = selectedDay === todayIdx;
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        const sc = scheduleByClass[cls];
+        if (!sc) { renderScheduleEmpty(animate); return; }
+        const week = sc.week;
+        const bells = sc.bells;
+        const day = week[selectedDay];
+
+        document.getElementById("schedule-accent").textContent = isToday ? "на сьогодні" : day.name.toLowerCase();
+
+        /* чипи днів */
+        document.getElementById("day-chips").innerHTML = week.map((d, i) => {
+          const on = i === selectedDay;
+          const dot = i === todayIdx ? '<span class="h-1.5 w-1.5 rounded-full bg-sun" title="сьогодні"></span>' : "";
+          return `<button data-day="${i}" class="flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+            on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "border border-ink/10 bg-white/70 text-ink-soft backdrop-blur-none sm:backdrop-blur hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink"
+          }">${dot}${d.name}<span class="rounded-full px-1.5 py-0.5 text-[10px] leading-none ${on ? "bg-sun text-ink" : "bg-ink/10 text-ink-soft"}">${d.lessons.length}</span></button>`;
+        }).join("");
+
+        const slotOf = (l, i) => l.n || i + 1;
+        const bellOf = (l, i) => bells[slotOf(l, i) - 1];
+        const ongoingIdx = isToday ? day.lessons.findIndex((l, i) => { const b = bellOf(l, i); return nowMin >= toMin(b.start) && nowMin < toMin(b.end); }) : -1;
+        const nextIdx = isToday ? day.lessons.findIndex((l, i) => nowMin < toMin(bellOf(l, i).start)) : -1;
+        const booksInDay = [...new Set(day.lessons.map((l) => l.s))].reduce((a, id) => a + (counts[id] || 0), 0);
+        const bpl = (n) => `${n} ${plural(n, "підручник", "підручники", "підручників")}`;
+
+        /* смужка: що зараз / що далі + скільки книжок */
+        let sTitle, sSub, sBtn = null;
+        summaryAction = null;
+        if (todayIdx === null) {
+          const wd = now.getDay() === 6 ? "Субота" : "Неділя";
+          sTitle = `Сьогодні ${wd.toLowerCase()} — вихідний`;
+          sSub = selectedDay === 0
+            ? `Показуємо розклад на ${week[0].name.toLowerCase()} — наступний навчальний день (${week[0].lessons.length} уроків)`
+            : `Наступні уроки — ${week[0].name.toLowerCase()} (${week[0].lessons.length} уроків)`;
+          if (selectedDay !== 0) {
+            sBtn = `Розклад на ${week[0].short}`;
+            summaryAction = { kind: "day", day: 0 };
+          }
+        } else if (isToday && ongoingIdx >= 0) {
+          const l = day.lessons[ongoingIdx];
+          const s = subjectById[l.s];
+          sTitle = `Триває ${slotOf(l, ongoingIdx)}-й урок — ${s ? (l.label || s.name) : ""}`;
+          sSub = `до ${bellOf(l, ongoingIdx).end} · залишилось ${toMin(bellOf(l, ongoingIdx).end) - nowMin} хв`;
+          if (s && !s.noBooks) {
+            sBtn = "Книги до уроку";
+            summaryAction = { kind: "open", id: l.s };
+          }
+        } else if (isToday && nextIdx >= 0) {
+          const first = nextIdx === 0;
+          const l = day.lessons[nextIdx];
+          const s = subjectById[l.s];
+          sTitle = first ? `Перший урок о ${bells[0].start} — ${l.label || s.name}` : `Наступний урок — ${l.label || s.name}`;
+          sSub = first
+            ? `До дзвінка ${toMin(bells[0].start) - nowMin} хв · у розкладі ${day.lessons.length} уроків`
+            : `${slotOf(l, nextIdx)}-й урок · ${bellOf(l, nextIdx).start} · через ${toMin(bellOf(l, nextIdx).start) - nowMin} хв`;
+          if (!s.noBooks) {
+            sBtn = first ? "Книги до першого уроку" : "Готуємо підручник";
+            summaryAction = { kind: "open", id: l.s };
+          }
+        } else if (isToday) {
+          sTitle = "Уроки на сьогодні завершено";
+          sSub = booksInDay > 0 ? `Твій день тримали ${bpl(booksInDay)} — гарного вечора!` : "Додай підручники — і вони завжди будуть під рукою.";
+        } else {
+          sTitle = `Перегляд: ${day.name}`;
+          sSub = `Сьогодні — ${week[todayIdx].name.toLowerCase()}. Повернись до актуального дня.`;
+          sBtn = "Показати сьогодні";
+          summaryAction = { kind: "day", day: todayIdx };
+        }
+
+        const partOfDay = nowMin < 720 ? "ранок" : nowMin < 1020 ? "день" : "вечір";
+        const summaryHTML = `
+          <div class="${animCls} relative flex flex-col justify-between gap-5 overflow-hidden rounded-[1.75rem] bg-ink p-6 text-cream shadow-[0_30px_60px_-25px_rgba(23,20,12,0.6)] sm:flex-row sm:items-center">
+            <div class="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-sun/20 blur-2xl"></div>
+            <div class="relative flex items-start gap-4">
+              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-sun backdrop-blur-sm">${svg(todayIdx === null ? "i-map-pin" : "i-calendar", "icon h-6 w-6")}</span>
+              <div>
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">${isToday ? "Сьогодні" : day.name} · ${partOfDay}</p>
+                <p class="mt-1.5 font-display text-lg font-bold leading-snug">${sTitle}</p>
+                <p class="mt-1 text-sm leading-relaxed text-cream/60">${sSub}</p>
+              </div>
+            </div>
+            <div class="relative flex shrink-0 items-center gap-3">
+              <span class="hidden items-center gap-1.5 rounded-full bg-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-cream/80 backdrop-blur-sm md:inline-flex">${svg("i-book-marked", "icon h-3.5 w-3.5 text-sun")} ${booksInDay > 0 ? bpl(booksInDay) + " на день" : "книг ще немає"}</span>
+              ${sBtn ? `<button data-summary-action class="rounded-full bg-sun px-5 py-2.5 font-display text-[11px] font-bold uppercase tracking-widest text-ink transition-all duration-300 hover:-translate-y-0.5 hover:bg-cream">${sBtn}</button>` : ""}
+            </div>
+          </div>`;
+
+        /* список уроків */
+        const rows = day.lessons.map((l, i) => {
+          const s = subjectById[l.s];
+          if (!s) return "";
+          const b = bellOf(l, i);
+          const slot = slotOf(l, i);
+          const status = !isToday ? "later" : i === ongoingIdx ? "now" : i === nextIdx ? "next" : nowMin >= toMin(b.end) ? "done" : "later";
+          const count = counts[l.s] || 0;
+          const shown = l.label || s.name;
+          const rowCls = status === "now"
+            ? "border-sun/70 bg-sun/10 shadow-[0_18px_45px_-22px_rgba(242,183,5,0.75)]"
+            : status === "done"
+              ? "border-ink/10 bg-paper opacity-55"
+              : "border-ink/10 bg-paper hover:-translate-y-0.5 hover:border-ink/25 hover:shadow-[0_18px_40px_-24px_rgba(23,20,12,0.4)]";
+          const stripe = status === "now" ? "#f2b705" : s.accent;
+          const pill =
+            status === "now"
+              ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-ink"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink"></span></span>зараз · ${toMin(b.end) - nowMin} хв</span>`
+              : status === "next"
+                ? `<span class="rounded-full border border-cobalt/40 bg-cobalt/10 px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-cobalt">наступний · через ${toMin(b.start) - nowMin} хв</span>`
+                : status === "done"
+                  ? `<span class="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">завершено</span>`
+                  : "";
+          const books = s.noBooks
+            ? `<span class="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-ink/5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-soft/70">${svg("i-dumbbell", "icon h-3.5 w-3.5")} без підручника</span>`
+            : count > 0
+            ? `<span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider" style="border-color:${s.accent}55;color:${s.accent};background-color:${s.accent}12">${svg("i-book-marked", "icon h-3.5 w-3.5")} ${bpl(count)}</span>`
+            : `<span class="inline-flex items-center gap-1.5 rounded-full border border-dashed border-ink/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-soft/70">${svg("i-book-marked", "icon h-3.5 w-3.5")} додати книгу</span>`;
+          return `
+            <div ${s.noBooks ? "" : `data-open="${l.s}"`} ${animate ? `style="animation-delay:${i * 50}ms"` : ""} class="group ${animCls} relative flex flex-col gap-3 overflow-hidden rounded-3xl border p-4 pl-5 transition-all duration-300 sm:flex-row sm:items-center sm:gap-4 ${rowCls}${s.noBooks ? "" : " cursor-pointer"}">
+              <span class="absolute inset-y-0 left-0 w-1.5" style="background-color:${stripe}"></span>
+              <div class="flex items-center gap-3 sm:w-[8.5rem] sm:shrink-0 sm:flex-col sm:items-start sm:gap-0.5">
+                <span class="flex h-6 w-6 items-center justify-center rounded-full bg-ink/5 font-display text-[11px] font-bold tabular-nums text-ink-soft">${slot}</span>
+                <span class="font-display text-sm font-bold tabular-nums">${b.start}</span>
+                <span class="hidden text-[11px] font-semibold tabular-nums text-ink-soft sm:inline">до ${b.end}</span>
+              </div>
+              <span class="hidden h-10 w-px bg-ink/10 sm:block"></span>
+              <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-md transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-105" style="background-color:${s.accent}">${svg(s.icon, "icon h-5 w-5")}</span>
+              <div class="min-w-0 flex-1">
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-soft">${categoryLabel(s.category)}${l.label ? ` · поличка «${s.name}»` : ""}<span class="sm:hidden"> · ${b.start}–${b.end}</span></p>
+                <h3 class="mt-1 font-display text-base font-bold leading-snug sm:text-lg">${shown}</h3>
+              </div>
+              <div class="flex flex-wrap items-center gap-2.5">${pill}${books}${svg("i-arrow-up-right", "icon hidden h-4 w-4 text-ink/40 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:block")}</div>
+            </div>`;
+        }).join("");
+
+        document.getElementById("schedule-body").innerHTML = summaryHTML + `<div class="space-y-3">${rows}</div>`;
       }
 
       function fileIcon(type) {
@@ -538,8 +1082,388 @@
         return "i-file";
       }
 
-      function openOne(file) {
-        window.open(URL.createObjectURL(file.blob), "_blank", "noopener");
+      function fileURL(f) {
+        return f.url || URL.createObjectURL(f.blob);
+      }
+      let openFile = null;
+      function openReader(f) { openFile = f; renderReader(); }
+
+      /* ---------- читалка PDF: pdf.js + свайп + повзунок + зум ---------- */
+      const PDFJS_URL = "https://unpkg.com/pdfjs-dist@3.11.174/legacy/build/";
+      let pdfjsReady = null;
+      function loadPdfjs() {
+        if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+        return (pdfjsReady = pdfjsReady || new Promise((resolve, reject) => {
+          const sc = document.createElement("script");
+          sc.src = PDFJS_URL + "pdf.min.js";
+          sc.onload = () => resolve(window.pdfjsLib);
+          sc.onerror = () => { pdfjsReady = null; reject(new Error("pdf.js not loaded")); };
+          document.head.appendChild(sc);
+        }));
+      }
+      let pdfState = null;
+      const PDF_POS_KEY = "vdsh2-read:";
+      const pdfDocCache = new Map();
+      /* документ тримаємо в кеші: повторне відкриття книги — миттєве */
+      function openPdfDoc(url) {
+        if (!pdfDocCache.has(url)) {
+          pdfDocCache.set(url, loadPdfjs().then((lib) => {
+            lib.GlobalWorkerOptions.workerSrc = PDFJS_URL + "pdf.worker.min.js";
+            return lib.getDocument({ url }).promise;
+          }).catch((e) => { pdfDocCache.delete(url); throw e; }));
+        }
+        return pdfDocCache.get(url);
+      }
+      function pdfCenter(rx, fy) {
+        const scroll = document.getElementById("pdf-scroll");
+        const canvas = document.getElementById("pdf-canvas");
+        if (!scroll || !canvas) return;
+        scroll.scrollLeft = Math.max(0, rx * canvas.clientWidth - scroll.clientWidth / 2);
+        scroll.scrollTop = Math.max(0, fy * canvas.clientHeight - scroll.clientHeight / 2 - 110);
+      }
+      function pdfZoomTo(st, z) {
+        st.zoom = Math.min(5, Math.max(0.6, z));
+        st.bits.clear();
+        return renderPdfPage(st.page);
+      }
+      function pdfToast(msg) {
+        const stage = document.getElementById("pdf-stage");
+        if (!stage) return;
+        const t = document.createElement("p");
+        t.className = "pdf-toast pointer-events-none absolute left-1/2 top-3 z-20 rounded-full bg-ink/85 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-cream";
+        t.textContent = msg;
+        stage.appendChild(t);
+        setTimeout(() => t.remove(), 2500);
+      }
+
+      function pdfStageHTML() {
+        return `
+            <div id="pdf-stage" class="relative min-h-0 flex-1 overflow-hidden bg-ink">
+              <div id="pdf-scroll" class="absolute inset-0 overflow-auto overscroll-contain px-2 py-2">
+                <canvas id="pdf-canvas" class="mx-auto block rounded-lg bg-white shadow-2xl"></canvas>
+              </div>
+              <div id="pdf-loading" class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-cream/70">
+                ${svg("i-loader", "icon h-7 w-7 animate-spin text-sun")}
+                <p class="font-display text-[10px] font-bold uppercase tracking-[0.25em]">Готую книгу…</p>
+              </div>
+              <div class="absolute right-2.5 top-2.5 z-10 flex flex-col gap-1.5">
+                <button data-pdf="in" aria-label="Наблизити" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-ink/70 text-lg font-bold text-cream backdrop-blur transition hover:bg-white/15 active:scale-95">+</button>
+                <button data-pdf="out" aria-label="Віддалити" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-ink/70 text-lg font-bold text-cream backdrop-blur transition hover:bg-white/15 active:scale-95">−</button>
+                <button data-pdf="fit" aria-label="По ширині" class="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-ink/70 text-[10px] font-bold text-cream backdrop-blur transition hover:bg-white/15 active:scale-95">1:1</button>
+              </div>
+              <div class="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center p-3 sm:p-4">
+                <div class="pointer-events-auto flex w-full max-w-md items-center gap-2.5 rounded-full border border-white/10 bg-ink/85 px-3 py-2 text-cream shadow-2xl backdrop-blur">
+                  <button data-pdf="prev" aria-label="Попередня сторінка" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm transition hover:bg-white/20 active:scale-95">◀</button>
+                  <input id="pdf-slider" type="range" min="1" max="1" value="1" class="h-1.5 min-w-0 flex-1 accent-sun" aria-label="Прогрес читання" />
+                  <span class="flex shrink-0 items-center gap-1 font-display text-[11px] font-bold tabular-nums">
+                    <input id="pdf-jump" type="number" min="1" value="1" class="w-12 rounded-full bg-white/10 px-2 py-1.5 text-center outline-none transition focus:bg-white/20" aria-label="Сторінка" />
+                    <span id="pdf-page" class="text-cream/60">/ 1</span>
+                  </span>
+                  <button data-pdf="next" aria-label="Наступна сторінка" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-sm transition hover:bg-white/20 active:scale-95">▶</button>
+                </div>
+              </div>
+            </div>`;
+      }
+
+      /* бітмапи сторінок: рендер один раз, далі — бліт без мерехтіння */
+      async function pdfBitmap(st, n) {
+        const key = n + "@" + st.zoom.toFixed(2) + "@" + st.viewW;
+        const hit = st.bits.get(key);
+        if (hit) return hit;
+        const pageObj = await st.doc.getPage(n);
+        const vp1 = pageObj.getViewport({ scale: 1 });
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const cssScale = Math.max(0.2, (st.viewW - 16) / vp1.width);
+        const vp = pageObj.getViewport({ scale: cssScale * st.zoom * dpr });
+        const bmp = document.createElement("canvas");
+        bmp.width = Math.floor(vp.width);
+        bmp.height = Math.floor(vp.height);
+        const bctx = bmp.getContext("2d", { alpha: false });
+        if (!bctx) throw new Error("canvas unavailable");
+        bctx.fillStyle = "#ffffff";
+        bctx.fillRect(0, 0, bmp.width, bmp.height);
+        await pageObj.render({ canvasContext: bctx, viewport: vp }).promise;
+        const entry = { bmp, cssW: Math.floor(vp.width / dpr), cssH: Math.floor(vp.height / dpr) };
+        st.bits.set(key, entry);
+        if (st.bits.size > 4) {
+          for (const k of st.bits.keys()) {
+            if (Math.abs(Number(k.split("@")[0]) - n) > 1) st.bits.delete(k);
+            if (st.bits.size <= 4) break;
+          }
+        }
+        return entry;
+      }
+
+      async function renderPdfPage(n, dir) {
+        const st = pdfState;
+        if (!st || !st.doc) return;
+        const total = st.doc.numPages;
+        const clamped = Math.min(Math.max(1, Math.round(n) || 1), total);
+        if (st.busy) { st.queued = [clamped, dir]; return; }
+        st.busy = true;
+        const from = st.page;
+        st.page = clamped;
+        try {
+          const scroll = document.getElementById("pdf-scroll");
+          const canvas = document.getElementById("pdf-canvas");
+          if (!scroll || !canvas) return;
+          st.viewW = scroll.clientWidth || window.innerWidth;
+          const entry = await pdfBitmap(st, clamped);
+          const ctx = canvas.getContext("2d");
+          if (!ctx) throw new Error("canvas unavailable");
+          canvas.width = entry.bmp.width;
+          canvas.height = entry.bmp.height;
+          canvas.style.width = entry.cssW + "px";
+          canvas.style.height = entry.cssH + "px";
+          ctx.drawImage(entry.bmp, 0, 0);
+          if (from !== clamped) {
+            canvas.style.setProperty("--turn-dir", (dir === -1 ? "-" : "") + "20px");
+            canvas.classList.remove("slide");
+            void canvas.offsetWidth;
+            canvas.classList.add("slide");
+            const sx = scroll.scrollLeft;
+            scroll.scrollTop = 0;
+            scroll.scrollLeft = sx;
+          }
+          try { localStorage.setItem(PDF_POS_KEY + st.fileId, String(clamped)); } catch (e) {}
+          const lbl = document.getElementById("pdf-page");
+          if (lbl) lbl.textContent = "/ " + total;
+          const slider = document.getElementById("pdf-slider");
+          if (slider) slider.value = String(clamped);
+          const jump = document.getElementById("pdf-jump");
+          if (jump && document.activeElement !== jump) jump.value = String(clamped);
+          Promise.resolve().then(async () => {
+            for (const p of [clamped + 1, clamped - 1]) {
+              if (pdfState !== st || p < 1 || p > total) continue;
+              try { await pdfBitmap(st, p); } catch (e) {}
+            }
+          });
+        } catch (e) {
+          pdfFail();
+          return;
+        } finally {
+          st.busy = false;
+          if (st.queued) { const q = st.queued; st.queued = null; renderPdfPage(q[0], q[1]); }
+        }
+      }
+
+      function pdfFail() {
+        const stage = document.getElementById("pdf-stage");
+        if (!stage) return;
+        const url = fileURL(openFile);
+        stage.innerHTML = `
+          <iframe src="${url}" title="${openFile.name}" class="h-full w-full bg-white"></iframe>
+          <p class="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-ink/80 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-cream/80">показуємо засобами браузера</p>`;
+      }
+
+      async function initPdfReader(url) {
+        try {
+          const doc = await openPdfDoc(url);
+          if (!openFile) return;
+          pdfState = { doc, page: 1, zoom: 1, busy: false, queued: null, bits: new Map(), viewW: 0, fileId: openFile.id || url };
+          const loading = document.getElementById("pdf-loading");
+          if (loading) {
+            loading.style.transition = "opacity 0.3s ease";
+            loading.style.opacity = "0";
+            setTimeout(() => loading.remove(), 320);
+          }
+          const slider = document.getElementById("pdf-slider");
+          if (slider) { slider.max = String(doc.numPages); slider.value = "1"; }
+          const jump = document.getElementById("pdf-jump");
+          if (jump) { jump.max = String(doc.numPages); jump.value = "1"; }
+          let start = 1;
+          try {
+            const saved = Number(localStorage.getItem(PDF_POS_KEY + (openFile.id || url)) || 0);
+            if (saved > 1 && saved <= doc.numPages) {
+              start = saved;
+              pdfToast(`Продовжуємо зі сторінки ${saved}`);
+            } else if (!localStorage.getItem("vdsh2-read-hint")) {
+              localStorage.setItem("vdsh2-read-hint", "1");
+              pdfToast("Свайп чи тап по краю — гортати · пінч або подвійний тап — зум");
+            }
+          } catch (e) {}
+          renderPdfPage(start);
+        } catch (e) {
+          pdfFail();
+        }
+      }
+
+      function wirePdfReader(url) {
+        const stage = document.getElementById("pdf-stage");
+        if (!stage) return;
+        document.getElementById("reader").querySelectorAll("[data-pdf]").forEach((b) => {
+          b.addEventListener("click", () => {
+            const a = b.getAttribute("data-pdf");
+            const st = pdfState;
+            if (!st) return;
+            if (a === "prev") renderPdfPage(st.page - 1, -1);
+            else if (a === "next") renderPdfPage(st.page + 1, 1);
+            else if (a === "in") pdfZoomTo(st, st.zoom * 1.25);
+            else if (a === "out") pdfZoomTo(st, st.zoom / 1.25);
+            else if (a === "fit") pdfZoomTo(st, 1);
+          });
+        });
+        const slider = document.getElementById("pdf-slider");
+        if (slider) slider.addEventListener("input", () => renderPdfPage(Number(slider.value)));
+        const jump = document.getElementById("pdf-jump");
+        if (jump) {
+          jump.addEventListener("change", () => renderPdfPage(Number(jump.value) || 1));
+          jump.addEventListener("keydown", (e) => { if (e.key === "Enter") { renderPdfPage(Number(jump.value) || 1); jump.blur(); } });
+        }
+        let tx = 0, ty = 0, tt = 0, lastTap = 0, lastTapX = 0.5, tapT = null, pinch = null;
+        const tapCancel = () => { if (tapT) { clearTimeout(tapT); tapT = null; } };
+        const cv = () => document.getElementById("pdf-canvas");
+        stage.addEventListener("touchstart", (e) => {
+          if (e.touches.length === 2) {
+            tapCancel();
+            const a = e.touches[0], b = e.touches[1];
+            pinch = pdfState ? { d0: Math.max(24, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)), z0: pdfState.zoom, k: 1, moved: false } : null;
+          } else if (e.touches.length === 1) {
+            const t = e.touches[0];
+            tx = t.clientX; ty = t.clientY; tt = Date.now();
+          }
+        }, { passive: true });
+        stage.addEventListener("touchmove", (e) => {
+          if (!pinch || e.touches.length < 2 || !pdfState) return;
+          e.preventDefault();
+          const a = e.touches[0], b = e.touches[1];
+          const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+          const zt = Math.min(5, Math.max(0.6, (pinch.z0 * d) / pinch.d0));
+          pinch.k = zt / pinch.z0;
+          pinch.moved = true;
+          const c = cv();
+          if (c) {
+            const r = stage.getBoundingClientRect();
+            c.style.transformOrigin = (a.clientX + b.clientX) / 2 - r.left + "px " + ((a.clientY + b.clientY) / 2 - r.top) + "px";
+            c.style.transform = "scale(" + pinch.k.toFixed(3) + ")";
+          }
+        }, { passive: false });
+        stage.addEventListener("touchend", (e) => {
+          if (pinch) {
+            if (e.touches.length > 0) return;
+            const pz = pinch;
+            pinch = null;
+            const st = pdfState;
+            if (st && pz.moved && Math.abs(pz.z0 * pz.k - st.zoom) > 0.02) {
+              pdfZoomTo(st, pz.z0 * pz.k).then(() => { const c = cv(); if (c) c.style.transform = ""; });
+              setTimeout(() => { const c = cv(); if (c) c.style.transform = ""; }, 700);
+            } else {
+              const c = cv();
+              if (c) c.style.transform = "";
+            }
+            return;
+          }
+          if (e.touches.length > 0) return;
+          const st = pdfState;
+          if (!st) return;
+          const t = e.changedTouches[0];
+          const dx = t.clientX - tx, dy = t.clientY - ty, dt = Math.max(Date.now() - tt, 1);
+          const zoomed = st.zoom > 1.05;
+          const fast = Math.abs(dx) / dt;
+          if (!zoomed && Math.abs(dx) > 34 && Math.abs(dx) > Math.abs(dy) * 1.1 && ((dt < 520 && fast > 0.1) || Math.abs(dx) > 90)) {
+            tapCancel();
+            const d = dx < 0 ? 1 : -1;
+            renderPdfPage(st.page + d, d);
+            return;
+          }
+          if (Math.abs(dx) < 18 && Math.abs(dy) < 18) {
+            const el = document.elementFromPoint(t.clientX, t.clientY);
+            if (el && el.closest("button,input")) return;
+            const rect = stage.getBoundingClientRect();
+            if (t.clientY > rect.bottom - 84 || (t.clientX > rect.right - 58 && t.clientY < rect.top + 205)) return;
+            const rx = (t.clientX - rect.left) / Math.max(rect.width, 1);
+            const fy = (t.clientY - rect.top) / Math.max(rect.height, 1);
+            const now = Date.now();
+            if (now - lastTap < 330 && Math.abs(rx - lastTapX) < 0.16) {
+              tapCancel();
+              lastTap = 0;
+              if (zoomed) pdfZoomTo(st, 1);
+              else pdfZoomTo(st, 2.2).then(() => pdfCenter(rx, fy));
+              return;
+            }
+            lastTap = now;
+            lastTapX = rx;
+            if (zoomed || Math.abs(rx - 0.5) < 0.26) return;
+            const dir = rx > 0.5 ? 1 : -1;
+            tapT = setTimeout(() => { tapT = null; if (pdfState) renderPdfPage(pdfState.page + dir, dir); }, 290);
+          }
+        }, { passive: true });
+        stage.addEventListener("touchcancel", () => {
+          pinch = null;
+          const c = cv();
+          if (c) c.style.transform = "";
+        });
+        initPdfReader(url);
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (!pdfState || !openFile) return;
+        if (e.key === "ArrowRight" || e.key === "PageDown") renderPdfPage(pdfState.page + 1, 1);
+        else if (e.key === "ArrowLeft" || e.key === "PageUp") renderPdfPage(pdfState.page - 1, -1);
+        else if (e.key === "+" || e.key === "=") pdfZoomTo(pdfState, pdfState.zoom * 1.25);
+        else if (e.key === "-" || e.key === "_") pdfZoomTo(pdfState, pdfState.zoom / 1.25);
+        else if (e.key === "0") pdfZoomTo(pdfState, 1);
+      });
+      let pdfResizeT = null;
+      window.addEventListener("resize", () => {
+        if (!pdfState || !document.getElementById("pdf-canvas")) return;
+        clearTimeout(pdfResizeT);
+        pdfResizeT = setTimeout(() => {
+          if (pdfState && document.getElementById("pdf-canvas")) {
+            pdfState.bits.clear();
+            renderPdfPage(pdfState.page);
+          }
+        }, 250);
+      });
+      function closeReader() {
+        openFile = null;
+        pdfState = null;
+        const el = document.getElementById("reader");
+        el.classList.add("hidden");
+        el.classList.remove("flex");
+        el.innerHTML = "";
+        document.body.style.overflow = openSubject ? "hidden" : "";
+      }
+      function renderReader() {
+        const el = document.getElementById("reader");
+        if (!openFile) { closeReader(); return; }
+        const f = openFile;
+        const s = subjectById[f.subject] || (openSubject && subjectById[openSubject.id]) || subjects[0];
+        const url = fileURL(f);
+        const isPdf = f.type === "application/pdf";
+        const inline = isPdf || f.type.startsWith("image/") || f.type.startsWith("text/");
+        el.classList.remove("hidden");
+        el.classList.add("flex");
+        document.body.style.overflow = "hidden";
+        el.innerHTML = `
+          <div class="absolute inset-0" data-reader-close></div>
+          <div class="anim-fade-up relative mx-auto flex h-full w-full max-w-5xl flex-col overflow-hidden bg-paper shadow-2xl sm:my-6 sm:h-[calc(100%-3rem)] sm:rounded-[2rem]" style="animation-duration:0.3s">
+            <div class="flex items-center gap-3 border-b border-ink/10 p-3 sm:p-4">
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white" style="background-color:${s.accent}">${svg(s.icon, "icon h-4 w-4")}</span>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-bold">${f.name}</p>
+                <p class="truncate text-[11px] text-ink-soft">${cls} клас · ${s.name} · ${formatSize(f.size)}</p>
+              </div>
+              <a href="${url}" target="_blank" rel="noopener" title="У новій вкладці" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:border-cobalt hover:bg-cobalt hover:text-white">${svg("i-external", "icon h-4 w-4")}</a>
+              <a href="${url}" download="${f.name}" title="Завантажити" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:border-ink/30 hover:text-ink">${svg("i-download", "icon h-4 w-4")}</a>
+              <button data-reader-close aria-label="Закрити читалку" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:rotate-90 hover:border-ink/30 hover:text-ink">${svg("i-x", "icon h-[18px] w-[18px]")}</button>
+            </div>
+            ${isPdf
+              ? pdfStageHTML()
+              : f.type.startsWith("image/")
+              ? `<div class="flex-1 overflow-auto bg-ink p-2"><img src="${url}" alt="${f.name}" class="mx-auto block max-w-full rounded-lg"></div>`
+              : inline
+              ? `<iframe src="${url}" title="${f.name}" class="h-full w-full flex-1 bg-white"></iframe>`
+              : `<div class="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+                  <span class="flex h-16 w-16 items-center justify-center rounded-3xl bg-ink/5 text-ink-soft">${svg("i-file", "icon h-8 w-8")}</span>
+                  <p class="max-w-sm text-sm leading-relaxed text-ink-soft">Формат «${f.type || "unknown"}» браузер не показує всередині сторінки (так вміють PDF та зображення). Відкрий файл у новій вкладці або завантаж — і перечитай у зручному рідері.</p>
+                  <div class="flex flex-wrap justify-center gap-3">
+                    <a href="${url}" target="_blank" rel="noopener" class="rounded-full bg-ink px-5 py-2.5 font-display text-[11px] font-bold uppercase tracking-widest text-cream transition-all hover:bg-cobalt">Відкрити</a>
+                    <a href="${url}" download="${f.name}" class="rounded-full border border-ink/15 px-5 py-2.5 font-display text-[11px] font-bold uppercase tracking-widest transition-all hover:border-ink/40">Завантажити</a>
+                  </div>
+                </div>`}
+          </div>`;
+        if (isPdf) wirePdfReader(url);
       }
 
       async function renderModal() {
@@ -561,68 +1485,82 @@
             <div class="flex items-start gap-4 border-b border-ink/10 p-6 pb-5">
               <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg" style="background-color:${s.accent}">${svg(s.icon, "icon h-7 w-7")}</span>
               <div class="min-w-0 flex-1">
-                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-soft">${categoryLabel(s.category)}</p>
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-soft">${classLabel()} клас · ${categoryLabel(s.category)}</p>
                 <h3 class="mt-1 font-display text-xl font-bold leading-tight">${s.name}</h3>
                 <p class="mt-1 line-clamp-2 text-sm text-ink-soft">${s.desc}</p>
               </div>
               <button data-close aria-label="Закрити" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:rotate-90 hover:border-ink/30 hover:text-ink">${svg("i-x", "icon h-[18px] w-[18px]")}</button>
             </div>
             <div class="flex-1 overflow-y-auto p-6 pt-5">
+              ${canEdit() ? `
+              ${sharedOK || staticOK ? "" : `<div class="mb-3 flex items-start gap-2.5 rounded-2xl border border-sun bg-sun/20 px-4 py-3 text-left text-[11px] font-bold leading-snug text-ink">${svg("i-lock", "icon mt-0.5 h-4 w-4 shrink-0 text-amber-600")}<span>Увага: сайт відкрито без сервера (наприклад, GitHub Pages). Книга збережеться <u>лише в цьому браузері</u> — з іншого пристрою її не буде видно. Спільна база працює тільки коли сайт відкрито з адреси запущеного <span class="font-mono">node server.mjs</span>.</span></div>`}
               <button id="dropzone" class="group flex w-full flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-ink/20 bg-white/60 px-6 py-8 text-center transition-all duration-300 hover:border-cobalt/50 hover:bg-white">
                 <span id="drop-icon" class="flex h-12 w-12 items-center justify-center rounded-2xl bg-ink/5 text-ink-soft transition-all duration-300 group-hover:bg-cobalt group-hover:text-white">${svg("i-upload", "icon h-6 w-6")}</span>
                 <span id="drop-title" class="text-sm font-bold">Перетягни підручник сюди</span>
                 <span class="text-xs text-ink-soft">або натисни, щоб обрати — PDF, EPUB, DJVU, фото, документи</span>
                 <input id="file-input" type="file" multiple class="hidden" />
-              </button>
+              </button>` : `
+              <div class="flex flex-col items-center gap-2.5 rounded-3xl border border-ink/10 bg-white/60 px-6 py-7 text-center">
+                <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-cobalt/10 text-cobalt">${svg("i-book-open", "icon h-5 w-5")}</span>
+                <p class="text-sm font-bold">Це шкільна поличка — книжки додає власник сайту</p>
+                <p class="text-xs text-ink-soft">${staticOK ? "Усі підручники класу вже тут — просто натискай і читай." : "Тут уже лежать підручники класу " + classLabel() + ". Просто натискай і читай."}</p>
+              </div>`}
               <div class="mt-6">
                 <div class="flex items-center justify-between">
                   <p id="files-label" class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-soft">Мої файли</p>
-                  <button id="open-all" class="hidden items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-cream transition-all hover:-translate-y-0.5 hover:bg-cobalt">${svg("i-external", "icon h-3 w-3")} Відкрити всі</button>
+                  <button id="open-all" class="hidden items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-cream transition-all hover:-translate-y-0.5 hover:bg-cobalt">${svg("i-book-open", "icon h-3 w-3")} Читати всередині</button>
                 </div>
                 <div id="files-list" class="mt-4 flex items-center gap-2 text-sm text-ink-soft">${svg("i-loader", "icon h-4 w-4 animate-spin")} Завантажую…</div>
               </div>
             </div>
-            <div class="flex items-center justify-center gap-2 border-t border-ink/10 py-3.5 text-[10px] font-bold uppercase tracking-widest text-ink-soft/70">
-              ${svg("i-lock", "icon h-3 w-3")} Файли зберігаються лише у твоєму браузері
+            <div class="flex flex-wrap items-center justify-center gap-2 border-t border-ink/10 px-4 py-3.5 text-center text-[10px] font-bold uppercase tracking-widest text-ink-soft/70">
+              ${sharedOK
+                ? `${svg("i-sparkles", "icon h-3 w-3 text-cobalt")} Спільна бібліотека · ${classLabel()} клас · ${SCHOOL.name} · ${canEdit() ? "ти у режимі власника" : "додає книжки лише власник"}`
+                : staticOK
+                ? `${svg("i-book-open", "icon h-3 w-3 text-cobalt")} Спільна полиця з репозиторію · ${classLabel()} клас · оновлено ${staticUpdated ? new Date(staticUpdated).toLocaleDateString("uk") : "нещодавно"} · додає книги лише власник`
+                : `<span class="text-amber-600">${svg("i-lock", "icon h-3 w-3")} Локальний режим: файли лише у твоєму браузері — з іншого пристрою їх не видно</span>`}
             </div>
           </div>`;
 
         const listEl = document.getElementById("files-list");
-        const files = await getFiles(s.id);
+        let files = [];
+        try { files = await listFiles(s.id); } catch (e) { files = []; }
+        if (files.some((f) => f.type === "application/pdf")) loadPdfjs().catch(() => {});
         if (openSubject !== s) return;
         document.getElementById("files-label").textContent = files.length ? `Мої файли · ${files.length}` : "Мої файли";
         const openAll = document.getElementById("open-all");
-        if (files.length > 1) {
+        if (files.length > 0) {
           openAll.classList.remove("hidden");
           openAll.classList.add("flex");
-          openAll.onclick = () => files.forEach((f, i) => setTimeout(() => openOne(f), i * 150));
+          openAll.onclick = () => openReader(files[0]);
         }
         if (!files.length) {
           listEl.className = "mt-4 rounded-2xl bg-ink/5 px-4 py-5 text-center text-sm text-ink-soft";
-          listEl.textContent = "Поки що порожньо. Додай підручник — і він завжди буде під рукою.";
+          listEl.textContent = canEdit() ? "Поки що порожньо. Додай підручник — і він завжди буде під рукою." : "Тут ще немає книжок — власник сайту щойно їх додасть, і вони з'являться у всіх.";
         } else {
           listEl.className = "mt-4 space-y-2";
           listEl.innerHTML = files.map((f) => `
-            <div class="anim-fade-up flex items-center gap-3 rounded-2xl border border-ink/10 bg-white/70 p-3 transition-all hover:border-ink/20 hover:bg-white" style="animation-duration:0.35s">
+            <div data-open-file="${f.id}" class="anim-fade-up flex cursor-pointer items-center gap-3 rounded-2xl border border-ink/10 bg-white/70 p-3 transition-all hover:border-ink/20 hover:bg-white" style="animation-duration:0.35s">
               <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white" style="background-color:${s.accent}">${svg(fileIcon(f.type), "icon h-5 w-5")}</span>
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-bold">${f.name}</p>
-                <p class="text-xs text-ink-soft">${formatSize(f.size)}</p>
+                <p class="text-xs text-ink-soft">${formatSize(f.size)} · читати всередині сайту</p>
               </div>
-              <button data-open-file="${f.id}" title="Відкрити в новій вкладці" class="flex h-9 w-9 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:border-cobalt hover:bg-cobalt hover:text-white">${svg("i-external", "icon h-4 w-4")}</button>
-              <button data-remove-file="${f.id}" title="Видалити" class="flex h-9 w-9 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:border-red-500 hover:bg-red-500 hover:text-white">${svg("i-trash", "icon h-4 w-4")}</button>
+              ${canEdit() ? `<button data-remove-file="${f.id}" title="Видалити" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 text-ink-soft transition-all hover:border-red-500 hover:bg-red-500 hover:text-white">${svg("i-trash", "icon h-4 w-4")}</button>` : ""}
             </div>`).join("");
           listEl.querySelectorAll("[data-open-file]").forEach((btn) => {
             btn.onclick = () => {
               const file = files.find((x) => x.id === btn.getAttribute("data-open-file"));
-              if (file) openOne(file);
+              if (file) openReader(file);
             };
           });
           listEl.querySelectorAll("[data-remove-file]").forEach((btn) => {
-            btn.onclick = async () => {
-              await removeFile(btn.getAttribute("data-remove-file"));
-              counts = await getCounts();
+            btn.onclick = async (ev) => {
+              ev.stopPropagation();
+              try { await removeOne(btn.getAttribute("data-remove-file")); } catch (e) {}
+              await refreshCounts();
               renderGrid();
+              renderSchedule({ animate: false });
               renderModal();
             };
           });
@@ -635,37 +1573,102 @@
           const iconWrap = document.getElementById("drop-icon");
           title.textContent = "Зберігаю файли…";
           iconWrap.innerHTML = svg("i-loader", "icon h-6 w-6 animate-spin");
-          await addFiles(s.id, arr);
-          counts = await getCounts();
+          try {
+            await addShared(s.id, arr);
+          } catch (err) {
+            const t2 = document.getElementById("drop-title");
+            if (t2) {
+              t2.textContent = "Не вдалося зберегти на сервер — перев'яжись і спробуй ще";
+              document.getElementById("drop-icon").innerHTML = svg("i-upload", "icon h-6 w-6");
+            }
+            return;
+          }
+          await refreshCounts();
           renderGrid();
+          renderSchedule({ animate: false });
           await renderModal();
         }
 
         const zone = document.getElementById("dropzone");
         const input = document.getElementById("file-input");
-        zone.onclick = () => input.click();
-        input.onchange = () => { upload(input.files); input.value = ""; };
-        zone.ondragover = (e) => { e.preventDefault(); zone.classList.add("scale-[1.02]", "border-cobalt", "bg-cobalt/5"); };
-        zone.ondragleave = () => zone.classList.remove("scale-[1.02]", "border-cobalt", "bg-cobalt/5");
-        zone.ondrop = (e) => {
-          e.preventDefault();
-          zone.classList.remove("scale-[1.02]", "border-cobalt", "bg-cobalt/5");
-          upload(e.dataTransfer.files);
-        };
+        if (zone && input) {
+          zone.onclick = () => input.click();
+          input.onchange = () => { upload(input.files); input.value = ""; };
+          zone.ondragover = (e) => { e.preventDefault(); zone.classList.add("scale-[1.02]", "border-cobalt", "bg-cobalt/5"); };
+          zone.ondragleave = () => zone.classList.remove("scale-[1.02]", "border-cobalt", "bg-cobalt/5");
+          zone.ondrop = (e) => {
+            e.preventDefault();
+            zone.classList.remove("scale-[1.02]", "border-cobalt", "bg-cobalt/5");
+            upload(e.dataTransfer.files);
+          };
+        }
       }
 
       async function refresh() {
-        try { counts = await getCounts(); } catch (e) { counts = {}; }
+        await refreshCounts();
         renderFilters();
         renderGrid();
       }
 
       document.getElementById("greeting").innerHTML = greeting(new Date().getHours()) + " —<br class=\"sm:hidden\" /> ось мої";
-      document.getElementById("subject-count").textContent = subjects.length;
+      document.getElementById("subject-count").textContent = bookSubjects.length;
+      document.getElementById("subject-count2").textContent = bookSubjects.length;
+      buildClassSelect();
+      renderClassBits();
+      if (CLASSES.length === 1) document.getElementById("cls-hint").textContent = `поки що лише ${CLASSES[0].label}`;
+      const _wd = new Date().getDay();
+      if (_wd === 0 || _wd === 6) {
+        /* субота/неділя — уроків немає, кнопки «Розклад на …» не показуємо */
+        const b = document.getElementById("today-sched-btn");
+        if (b) b.remove();
+      } else {
+        document.getElementById("today-word").textContent = ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота"][_wd];
+      }
+      document.getElementById("admin-btn").onclick = toggleAdmin;
       tickClock();
       setInterval(tickClock, 1000);
       renderMarquee();
-      refresh();
+      (async () => {
+        await probeShared();
+        renderAdminBtn();
+        await refresh();
+        renderSchedule({ animate: true });
+      })();
+      setInterval(() => renderSchedule({ animate: false }), 20000);
+
+      document.getElementById("day-chips").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-day]");
+        if (!btn) return;
+        selectedDay = Number(btn.getAttribute("data-day"));
+        renderSchedule({ animate: true });
+      });
+
+      document.getElementById("sched-tabs").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-tab]");
+        if (!btn) return;
+        schedTab = btn.getAttribute("data-tab");
+        renderSchedule({ animate: true });
+      });
+
+      document.getElementById("schedule-body").addEventListener("click", (e) => {
+        const act = e.target.closest("[data-summary-action]");
+        if (act) {
+          if (!summaryAction) return;
+          if (summaryAction.kind === "open") {
+            openSubject = subjects.find((s) => s.id === summaryAction.id);
+            renderModal();
+          } else {
+            selectedDay = summaryAction.day;
+            renderSchedule({ animate: true });
+          }
+          return;
+        }
+        const row = e.target.closest("[data-open]");
+        if (row) {
+          openSubject = subjects.find((s) => s.id === row.getAttribute("data-open"));
+          renderModal();
+        }
+      });
 
       document.getElementById("filters").addEventListener("click", (e) => {
         const btn = e.target.closest("[data-filter]");
@@ -689,7 +1692,12 @@
         }
       });
 
+      document.getElementById("reader").addEventListener("click", (e) => {
+        if (e.target.closest("[data-reader-close]")) closeReader();
+      });
+
       window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && openFile) { closeReader(); return; }
         if (e.key === "Escape" && openSubject) {
           openSubject = null;
           renderModal();
