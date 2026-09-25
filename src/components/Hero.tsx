@@ -212,7 +212,7 @@ export default function Hero() {
                 <MapPin className="h-3.5 w-3.5 text-cobalt" />
                 Великодолинська школа №2
               </span>
-              <span className="rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur-none sm:backdrop-blur">
+              <span className="hidden rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur-none sm:inline-flex sm:backdrop-blur">
                 2026 / 27
               </span>
             </div>
@@ -245,9 +245,9 @@ export default function Hero() {
               </span>
             </h1>
 
-            <p className="anim-fade-up mt-9 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg" style={{ animationDelay: "0.3s" }}>
+            <p className="anim-fade-up mt-7 max-w-xl text-[15.5px] leading-[1.65] text-ink-soft sm:mt-9 sm:text-lg sm:leading-relaxed" style={{ animationDelay: "0.3s" }}>
               Усі дисципліни {clsLabel} класу в одному затишному місці — від математики,
-              де <span className="font-bold text-ink underline decoration-sun decoration-4 underline-offset-4">алгебра й геометрія живуть в одному підручнику</span>,
+              де <span className="font-bold text-ink underline decoration-sun decoration-2 underline-offset-[3px] sm:decoration-4 sm:underline-offset-4">алгебра й геометрія живуть в одному підручнику</span>,
               до астрономії та мистецтва.
             </p>
 
@@ -268,9 +268,12 @@ export default function Hero() {
                   Розклад на {todayShort()}
                 </a>
               )}
-              <div className="flex items-center gap-2 text-sm font-semibold text-ink-soft">
-                <Sparkles className="h-4 w-4 text-sun" />
-                {clsLabel} клас · {bookSubjects.length} предметів · спільна поличка підручників
+              <div className="flex items-center gap-2 text-[13px] font-semibold leading-snug text-ink-soft sm:text-sm">
+                <Sparkles className="h-4 w-4 shrink-0 text-sun" />
+                <span>
+                  {clsLabel} клас · {bookSubjects.length} предметів
+                  <span className="hidden sm:inline"> · спільна поличка підручників</span>
+                </span>
               </div>
             </div>
           </div>

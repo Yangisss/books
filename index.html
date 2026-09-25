@@ -57,6 +57,10 @@
       @media (max-width: 639px) {
         /* на телефонах зерно робить текст «мильним» — вимикаємо разом з анімацією */
         .grain::after { display: none; }
+        /* заголовки й абзаци не «комкаються»: рівні рядки без одиноких слів */
+        h1, h2, h3 { text-wrap: balance; }
+        p, li, span { text-wrap: pretty; }
+        .font-display { letter-spacing: -0.01em; }
       }
       .grain::after {
         content: "";
@@ -168,7 +172,7 @@
                   <svg class="icon h-3.5 w-3.5 text-cobalt"><use href="#i-map-pin"></use></svg>
                   <span id="chip-school">Великодолинська школа №2</span>
                 </span>
-                <span id="chip-year" class="rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur-none sm:backdrop-blur">2026 / 27</span>
+                <span id="chip-year" class="hidden rounded-full border border-ink/10 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur-none sm:backdrop-blur sm:inline-flex">2026 / 27</span>
               </div>
 
               <h1 class="mt-7">
@@ -181,9 +185,9 @@
                 </span>
               </h1>
 
-              <p class="anim-fade-up mt-9 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg" style="animation-delay: 0.3s">
+              <p class="anim-fade-up mt-7 max-w-xl text-[15.5px] leading-[1.65] text-ink-soft sm:mt-9 sm:text-lg sm:leading-relaxed" style="animation-delay: 0.3s">
                 Усі дисципліни <span class="text-ink underline decoration-cobalt decoration-2 underline-offset-4"><span data-cls-num>11</span> класу</span> в одному затишному місці — від математики,
-                де <span class="font-bold text-ink underline decoration-sun decoration-4 underline-offset-4">алгебра й геометрія живуть в одному підручнику</span>,
+                де <span class="font-bold text-ink underline decoration-sun decoration-2 underline-offset-[3px] sm:decoration-4 sm:underline-offset-4">алгебра й геометрія живуть в одному підручнику</span>,
                 до астрономії та мистецтва.
               </p>
 
@@ -196,9 +200,9 @@
                   <svg class="icon h-4 w-4 text-cobalt"><use href="#i-calendar"></use></svg>
                   Розклад на <span id="today-word">сьогодні</span>
                 </a>
-                <div class="flex items-center gap-2 text-sm font-semibold text-ink-soft">
-                  <svg class="icon h-4 w-4 text-sun"><use href="#i-sparkles"></use></svg>
-                  <span data-cls-num>11</span> клас · <span id="subject-count2">14</span> предметів · завантаж свої підручники
+                <div class="flex items-center gap-2 text-[13px] font-semibold leading-snug text-ink-soft sm:text-sm">
+                  <svg class="icon h-4 w-4 shrink-0 text-sun"><use href="#i-sparkles"></use></svg>
+                  <span><span data-cls-num>11</span> клас · <span id="subject-count2">14</span> предметів<span class="hidden sm:inline"> · завантаж свої підручники</span></span>
                 </div>
               </div>
             </div>

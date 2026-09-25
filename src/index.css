@@ -43,6 +43,22 @@ body {
   color: var(--color-ink);
 }
 
+@media (max-width: 639px) {
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p,
+  li,
+  span {
+    text-wrap: pretty;
+  }
+  .font-display {
+    letter-spacing: -0.01em;
+  }
+}
+
 /* ---- paper grain over everything ---- */
 @media (max-width: 639px) {
   .grain::after {
