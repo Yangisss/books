@@ -57,6 +57,7 @@
       /* «11-А» — мітка, вона не ламатися на дві частини */
       [data-cls-num] { white-space: nowrap; }
       /* читалка: м'яке перелистування та підказки */
+      #pdf-scroll { touch-action: pan-x pan-y; }
       #pdf-canvas.slide { animation: pdf-slide 0.26s cubic-bezier(0.22, 0.8, 0.3, 1); }
       @keyframes pdf-slide {
         from { opacity: 0.25; transform: translateX(var(--turn-dir, 18px)) scale(0.985); }
@@ -1113,6 +1114,18 @@
         }
         return pdfDocCache.get(url);
       }
+      function pdfCenter(rx, fy) {
+        const scroll = document.getElementById("pdf-scroll");
+        const canvas = document.getElementById("pdf-canvas");
+        if (!scroll || !canvas) return;
+        scroll.scrollLeft = Math.max(0, rx * canvas.clientWidth - scroll.clientWidth / 2);
+        scroll.scrollTop = Math.max(0, fy * canvas.clientHeight - scroll.clientHeight / 2 - 110);
+      }
+      function pdfZoomTo(st, z) {
+        st.zoom = Math.min(5, Math.max(0.6, z));
+        st.bits.clear();
+        return renderPdfPage(st.page);
+      }
       function pdfToast(msg) {
         const stage = document.getElementById("pdf-stage");
         if (!stage) return;
@@ -1266,7 +1279,7 @@
               pdfToast(`Продовжуємо зі сторінки ${saved}`);
             } else if (!localStorage.getItem("vdsh2-read-hint")) {
               localStorage.setItem("vdsh2-read-hint", "1");
-              pdfToast("Свайп — гортати · подвійний тап — зум");
+              pdfToast("Свайп чи тап по краю — гортати · пінч або подвійний тап — зум");
             }
           } catch (e) {}
           renderPdfPage(start);
@@ -1285,9 +1298,9 @@
             if (!st) return;
             if (a === "prev") renderPdfPage(st.page - 1, -1);
             else if (a === "next") renderPdfPage(st.page + 1, 1);
-            else if (a === "in") { st.zoom = Math.min(4, st.zoom * 1.35); st.bits.clear(); renderPdfPage(st.page); }
-            else if (a === "out") { st.zoom = Math.max(0.6, st.zoom / 1.35); st.bits.clear(); renderPdfPage(st.page); }
-            else if (a === "fit") { st.zoom = 1; st.bits.clear(); renderPdfPage(st.page); }
+            else if (a === "in") pdfZoomTo(st, st.zoom * 1.25);
+            else if (a === "out") pdfZoomTo(st, st.zoom / 1.25);
+            else if (a === "fit") pdfZoomTo(st, 1);
           });
         });
         const slider = document.getElementById("pdf-slider");
@@ -1297,25 +1310,89 @@
           jump.addEventListener("change", () => renderPdfPage(Number(jump.value) || 1));
           jump.addEventListener("keydown", (e) => { if (e.key === "Enter") { renderPdfPage(Number(jump.value) || 1); jump.blur(); } });
         }
-        let tx = 0, ty = 0, tt = 0, lastTap = 0;
-        stage.addEventListener("touchstart", (e) => { const t = e.touches[0]; tx = t.clientX; ty = t.clientY; tt = Date.now(); }, { passive: true });
-        stage.addEventListener("touchend", (e) => {
-          const t = e.changedTouches[0];
-          const dx = t.clientX - tx, dy = t.clientY - ty, dt = Math.max(Date.now() - tt, 1);
-          const fast = Math.abs(dx) / dt;
-          if (Math.abs(dx) > 46 && Math.abs(dx) > Math.abs(dy) * 1.2 && (dt < 420 && fast > 0.15 || Math.abs(dx) > 110)) {
-            const d = dx < 0 ? 1 : -1;
-            renderPdfPage((pdfState?.page || 1) + d, d);
-          } else if (Math.abs(dx) < 14 && Math.abs(dy) < 14 && pdfState) {
-            const now = Date.now();
-            if (now - lastTap < 330) {
-              pdfState.zoom = pdfState.zoom > 1.1 ? 1 : 1.8;
-              pdfState.bits.clear();
-              renderPdfPage(pdfState.page);
-              lastTap = 0;
-            } else lastTap = now;
+        let tx = 0, ty = 0, tt = 0, lastTap = 0, lastTapX = 0.5, tapT = null, pinch = null;
+        const tapCancel = () => { if (tapT) { clearTimeout(tapT); tapT = null; } };
+        const cv = () => document.getElementById("pdf-canvas");
+        stage.addEventListener("touchstart", (e) => {
+          if (e.touches.length === 2) {
+            tapCancel();
+            const a = e.touches[0], b = e.touches[1];
+            pinch = pdfState ? { d0: Math.max(24, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)), z0: pdfState.zoom, k: 1, moved: false } : null;
+          } else if (e.touches.length === 1) {
+            const t = e.touches[0];
+            tx = t.clientX; ty = t.clientY; tt = Date.now();
           }
         }, { passive: true });
+        stage.addEventListener("touchmove", (e) => {
+          if (!pinch || e.touches.length < 2 || !pdfState) return;
+          e.preventDefault();
+          const a = e.touches[0], b = e.touches[1];
+          const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+          const zt = Math.min(5, Math.max(0.6, (pinch.z0 * d) / pinch.d0));
+          pinch.k = zt / pinch.z0;
+          pinch.moved = true;
+          const c = cv();
+          if (c) {
+            const r = stage.getBoundingClientRect();
+            c.style.transformOrigin = (a.clientX + b.clientX) / 2 - r.left + "px " + ((a.clientY + b.clientY) / 2 - r.top) + "px";
+            c.style.transform = "scale(" + pinch.k.toFixed(3) + ")";
+          }
+        }, { passive: false });
+        stage.addEventListener("touchend", (e) => {
+          if (pinch) {
+            if (e.touches.length > 0) return;
+            const pz = pinch;
+            pinch = null;
+            const st = pdfState;
+            if (st && pz.moved && Math.abs(pz.z0 * pz.k - st.zoom) > 0.02) {
+              pdfZoomTo(st, pz.z0 * pz.k).then(() => { const c = cv(); if (c) c.style.transform = ""; });
+              setTimeout(() => { const c = cv(); if (c) c.style.transform = ""; }, 700);
+            } else {
+              const c = cv();
+              if (c) c.style.transform = "";
+            }
+            return;
+          }
+          if (e.touches.length > 0) return;
+          const st = pdfState;
+          if (!st) return;
+          const t = e.changedTouches[0];
+          const dx = t.clientX - tx, dy = t.clientY - ty, dt = Math.max(Date.now() - tt, 1);
+          const zoomed = st.zoom > 1.05;
+          const fast = Math.abs(dx) / dt;
+          if (!zoomed && Math.abs(dx) > 34 && Math.abs(dx) > Math.abs(dy) * 1.1 && ((dt < 520 && fast > 0.1) || Math.abs(dx) > 90)) {
+            tapCancel();
+            const d = dx < 0 ? 1 : -1;
+            renderPdfPage(st.page + d, d);
+            return;
+          }
+          if (Math.abs(dx) < 18 && Math.abs(dy) < 18) {
+            const el = document.elementFromPoint(t.clientX, t.clientY);
+            if (el && el.closest("button,input")) return;
+            const rect = stage.getBoundingClientRect();
+            if (t.clientY > rect.bottom - 84 || (t.clientX > rect.right - 58 && t.clientY < rect.top + 205)) return;
+            const rx = (t.clientX - rect.left) / Math.max(rect.width, 1);
+            const fy = (t.clientY - rect.top) / Math.max(rect.height, 1);
+            const now = Date.now();
+            if (now - lastTap < 330 && Math.abs(rx - lastTapX) < 0.16) {
+              tapCancel();
+              lastTap = 0;
+              if (zoomed) pdfZoomTo(st, 1);
+              else pdfZoomTo(st, 2.2).then(() => pdfCenter(rx, fy));
+              return;
+            }
+            lastTap = now;
+            lastTapX = rx;
+            if (zoomed || Math.abs(rx - 0.5) < 0.26) return;
+            const dir = rx > 0.5 ? 1 : -1;
+            tapT = setTimeout(() => { tapT = null; if (pdfState) renderPdfPage(pdfState.page + dir, dir); }, 290);
+          }
+        }, { passive: true });
+        stage.addEventListener("touchcancel", () => {
+          pinch = null;
+          const c = cv();
+          if (c) c.style.transform = "";
+        });
         initPdfReader(url);
       }
 
@@ -1323,6 +1400,9 @@
         if (!pdfState || !openFile) return;
         if (e.key === "ArrowRight" || e.key === "PageDown") renderPdfPage(pdfState.page + 1, 1);
         else if (e.key === "ArrowLeft" || e.key === "PageUp") renderPdfPage(pdfState.page - 1, -1);
+        else if (e.key === "+" || e.key === "=") pdfZoomTo(pdfState, pdfState.zoom * 1.25);
+        else if (e.key === "-" || e.key === "_") pdfZoomTo(pdfState, pdfState.zoom / 1.25);
+        else if (e.key === "0") pdfZoomTo(pdfState, 1);
       });
       let pdfResizeT = null;
       window.addEventListener("resize", () => {

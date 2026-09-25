@@ -157,6 +157,9 @@ body {
 }
 
 /* ---------- читалка: м'яке перелистування ---------- */
+.pdf-scroll-zone {
+  touch-action: pan-x pan-y;
+}
 .pdf-page-canvas.slide {
   animation: pdf-slide 0.26s cubic-bezier(0.22, 0.8, 0.3, 1);
 }
