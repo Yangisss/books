@@ -24,7 +24,9 @@ export type SharedStatus = "unknown" | "on" | "off";
 
 /** Хто може змінювати полицю: у спільному режимі — лише власник із кодом */
 export function canEdit(): boolean {
-  return sharedState !== "on" || getAdminKey() !== "";
+  // сервер школи — лише власник з кодом; статична полиця (GitHub) — тільки через скрипт;
+  // чистий локальний режим — редагувати можна всім (лише для себе)
+  return sharedState === "on" ? getAdminKey() !== "" : staticState !== "on";
 }
 
 export async function checkAdminKey(k: string): Promise<boolean> {
@@ -38,6 +40,50 @@ export async function checkAdminKey(k: string): Promise<boolean> {
 
 let sharedState: SharedStatus = "unknown";
 export const isShared = () => sharedState === "on";
+
+/* -------- спільна полиця в репозиторії (працює й на GitHub Pages) -------- */
+interface StaticEntry {
+  id: string;
+  cls: string;
+  subject: string;
+  name: string;
+  type: string;
+  size: number;
+  addedAt: number;
+  path: string;
+}
+let staticState: SharedStatus = "unknown";
+let staticFiles: StoredFile[] = [];
+let staticUpdated = 0;
+export const isStatic = () => staticState === "on";
+export const staticDate = () => staticUpdated;
+
+async function loadStaticLib(cls: string) {
+  try {
+    const r = await fetch(new URL("library/index.json", location.href), { cache: "no-store" });
+    if (!r.ok) {
+      staticState = "off";
+      return;
+    }
+    const j = (await r.json()) as { updated?: number; files?: StaticEntry[] };
+    staticFiles = (j.files || [])
+      .filter((f) => String(f.cls) === String(cls))
+      .map((f) => ({
+        id: f.id,
+        subject: f.subject,
+        name: f.name,
+        type: f.type,
+        size: f.size,
+        addedAt: f.addedAt || Number(j.updated || 0),
+        url: new URL("library/" + f.path, location.href).href,
+        shared: true,
+      }));
+    staticUpdated = Number(j.updated || 0);
+    staticState = "on";
+  } catch {
+    staticState = "off";
+  }
+}
 
 const DB_NAME = "moi-pidruchnyky";
 const STORE = "textbooks";
@@ -79,6 +125,7 @@ export async function probeShared(cls: string): Promise<boolean> {
   } catch {
     sharedState = "off";
   }
+  if (sharedState !== "on") await loadStaticLib(cls);
   return sharedState === "on";
 }
 
@@ -99,17 +146,23 @@ export async function listFiles(cls: string, subjectId: string): Promise<StoredF
       sharedState = "off";
     }
   }
-  const db = await openDB();
+  let out: StoredFile[] = [];
   try {
-    const out = await new Promise<StoredFile[]>((resolve, reject) => {
-      const req = db.transaction(STORE, "readonly").objectStore(STORE).index("bySubject").getAll(`${cls}/${subjectId}`);
-      req.onsuccess = () => resolve(req.result as StoredFile[]);
-      req.onerror = () => reject(req.error);
-    });
-    return out.sort((a, b) => b.addedAt - a.addedAt);
-  } finally {
-    db.close();
+    const db = await openDB();
+    try {
+      out = await new Promise<StoredFile[]>((resolve, reject) => {
+        const req = db.transaction(STORE, "readonly").objectStore(STORE).index("bySubject").getAll(`${cls}/${subjectId}`);
+        req.onsuccess = () => resolve(req.result as StoredFile[]);
+        req.onerror = () => reject(req.error);
+      });
+    } finally {
+      db.close();
+    }
+  } catch {
+    out = [];
   }
+  const merged = staticState === "on" ? [...staticFiles.filter((f) => f.subject === subjectId), ...out] : out;
+  return merged.sort((a, b) => b.addedAt - a.addedAt);
 }
 
 export async function addFiles(cls: string, subjectId: string, files: File[]): Promise<void> {
@@ -184,9 +237,12 @@ export async function getCounts(cls: string): Promise<Record<string, number>> {
       sharedState = "off";
     }
   }
+  const counts: Record<string, number> = {};
+  if (staticState === "on") staticFiles.forEach((f) => { if (f.subject) counts[f.subject] = (counts[f.subject] ?? 0) + 1; });
+  try {
   const db = await openDB();
   try {
-    return await new Promise<Record<string, number>>((resolve, reject) => {
+    const local = await new Promise<Record<string, number>>((resolve, reject) => {
       const req = db.transaction(STORE, "readonly").objectStore(STORE).getAll();
       req.onsuccess = () => {
         const counts: Record<string, number> = {};
@@ -208,9 +264,14 @@ export async function getCounts(cls: string): Promise<Record<string, number>> {
       };
       req.onerror = () => reject(req.error);
     });
+    Object.assign(counts, local);
   } finally {
     db.close();
   }
+  } catch {
+    /* немає IndexedDB (приватний режим) — спільна полиця все одно працює */
+  }
+  return counts;
 }
 
 export function fileURL(f: StoredFile): string {

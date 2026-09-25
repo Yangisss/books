@@ -44,7 +44,7 @@
       };
     </script>
     <style>
-      html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+      html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; overflow-x: hidden; overflow-x: clip; }
       body {
         font-family: Manrope, system-ui, sans-serif;
         background: #f6f3ea;
@@ -173,7 +173,7 @@
 
               <h1 class="mt-7">
                 <span id="greeting" class="anim-fade-up block font-accent text-4xl italic text-ink/80 sm:text-5xl" style="animation-delay: 0.12s"></span>
-                <span class="anim-fade-up relative mt-1 inline-block font-display text-[17vw] font-extrabold uppercase leading-[0.95] tracking-tight sm:text-7xl lg:text-[5.6rem]" style="animation-delay: 0.2s">
+                <span class="anim-fade-up relative mt-1 inline-block font-display text-[12.6vw] whitespace-nowrap font-extrabold uppercase leading-[0.95] tracking-tight sm:text-7xl lg:text-[5.6rem]" style="animation-delay: 0.2s">
                   предмети
                   <svg class="absolute -bottom-3 left-0 h-5 w-full text-sun sm:-bottom-4" viewBox="0 0 300 22" fill="none" preserveAspectRatio="none">
                     <path d="M4 15C60 7 120 5 168 9C216 13 262 15 296 8" stroke="currentColor" stroke-width="7" stroke-linecap="round"></path>
@@ -496,14 +496,37 @@
         }
       }
 
-      /* ---------- Сховище: спільний сервер школи → фолбек на IndexedDB ---------- */
+      /* ---------- Сховище: сервер школи → спільна полиця в репозиторії
+                  (library/index.json, працює навіть на GitHub Pages) → IndexedDB ---------- */
       let sharedOK = false;
+      let staticOK = false;
+      let staticFiles = [];
+      let staticUpdated = 0;
+      async function loadStaticLib() {
+        try {
+          const r = await fetch(new URL("library/index.json", location.href), { cache: "no-store" });
+          if (!r.ok) return;
+          const j = await r.json();
+          staticFiles = (j.files || []).filter((f) => String(f.cls) === String(cls));
+          staticUpdated = Number(j.updated || 0);
+          staticOK = true;
+        } catch (e) { staticOK = false; }
+      }
+      const staticFor = (subject) =>
+        staticFiles
+          .filter((f) => f.subject === subject)
+          .map((f) => ({
+            id: f.id, subject: f.subject, name: f.name, type: f.type, size: f.size,
+            addedAt: f.addedAt || staticUpdated, url: new URL("library/" + f.path, location.href).href,
+            shared: true, isStatic: true,
+          }));
       async function probeShared() {
-        if (!(location.protocol === "http:" || location.protocol === "https:")) { sharedOK = false; return; }
+        if (!(location.protocol === "http:" || location.protocol === "https:")) { sharedOK = false; await loadStaticLib(); return; }
         try {
           const r = await fetch(`/api/books?cls=${cls}`, { signal: AbortSignal.timeout(2500) });
           sharedOK = r.ok;
         } catch (e) { sharedOK = false; }
+        if (!sharedOK) await loadStaticLib();
       }
       async function refreshCounts() {
         try {
@@ -512,7 +535,8 @@
             counts = {};
             all.forEach((f) => { counts[f.subject] = (counts[f.subject] || 0) + 1; });
           } else {
-            counts = await getCounts();
+            try { counts = await getCounts(); } catch (e) { counts = {}; }
+            staticFiles.forEach((f) => { counts[f.subject] = (counts[f.subject] || 0) + 1; });
           }
         } catch (e) { counts = {}; }
       }
@@ -521,7 +545,9 @@
           const all = await (await fetch(`/api/books?cls=${cls}`)).json();
           return all.filter((f) => f.subject === subject);
         }
-        return getFiles(`${cls}/${subject}`);
+        let personal = [];
+        try { personal = await getFiles(`${cls}/${subject}`); } catch (e) { personal = []; }
+        return staticOK ? [...staticFor(subject), ...personal] : personal;
       }
       async function addShared(subject, files) {
         if (sharedOK) {
@@ -612,7 +638,7 @@
       const ADMIN_KEY = "vdsh2-admin-key";
       let adminKey = "";
       try { adminKey = localStorage.getItem(ADMIN_KEY) || ""; } catch (e) {}
-      const canEdit = () => !sharedOK || adminKey !== "";
+      const canEdit = () => (sharedOK ? adminKey !== "" : !staticOK);
 
       function renderClassBits() {
         document.querySelectorAll("[data-cls-num]").forEach((el) => { el.textContent = classLabel(); });
@@ -637,6 +663,13 @@
       function renderAdminBtn() {
         const btn = document.getElementById("admin-btn");
         if (!btn) return;
+        if (staticOK && !sharedOK) {
+          btn.classList.add("hidden");
+          btn.innerHTML = "";
+          btn.title = "";
+          return;
+        }
+        btn.classList.remove("hidden");
         const on = canEdit();
         btn.classList.toggle("bg-sun", on && sharedOK);
         btn.innerHTML = svg(on ? "i-lock" : "i-lock", "icon h-3.5 w-3.5") +
@@ -1104,7 +1137,7 @@
             </div>
             <div class="flex-1 overflow-y-auto p-6 pt-5">
               ${canEdit() ? `
-              ${sharedOK ? "" : `<div class="mb-3 flex items-start gap-2.5 rounded-2xl border border-sun bg-sun/20 px-4 py-3 text-left text-[11px] font-bold leading-snug text-ink">${svg("i-lock", "icon mt-0.5 h-4 w-4 shrink-0 text-amber-600")}<span>Увага: сайт відкрито без сервера (наприклад, GitHub Pages). Книга збережеться <u>лише в цьому браузері</u> — з іншого пристрою її не буде видно. Спільна база працює тільки коли сайт відкрито з адреси запущеного <span class="font-mono">node server.mjs</span>.</span></div>`}
+              ${sharedOK || staticOK ? "" : `<div class="mb-3 flex items-start gap-2.5 rounded-2xl border border-sun bg-sun/20 px-4 py-3 text-left text-[11px] font-bold leading-snug text-ink">${svg("i-lock", "icon mt-0.5 h-4 w-4 shrink-0 text-amber-600")}<span>Увага: сайт відкрито без сервера (наприклад, GitHub Pages). Книга збережеться <u>лише в цьому браузері</u> — з іншого пристрою її не буде видно. Спільна база працює тільки коли сайт відкрито з адреси запущеного <span class="font-mono">node server.mjs</span>.</span></div>`}
               <button id="dropzone" class="group flex w-full flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-ink/20 bg-white/60 px-6 py-8 text-center transition-all duration-300 hover:border-cobalt/50 hover:bg-white">
                 <span id="drop-icon" class="flex h-12 w-12 items-center justify-center rounded-2xl bg-ink/5 text-ink-soft transition-all duration-300 group-hover:bg-cobalt group-hover:text-white">${svg("i-upload", "icon h-6 w-6")}</span>
                 <span id="drop-title" class="text-sm font-bold">Перетягни підручник сюди</span>
@@ -1114,7 +1147,7 @@
               <div class="flex flex-col items-center gap-2.5 rounded-3xl border border-ink/10 bg-white/60 px-6 py-7 text-center">
                 <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-cobalt/10 text-cobalt">${svg("i-book-open", "icon h-5 w-5")}</span>
                 <p class="text-sm font-bold">Це шкільна поличка — книжки додає власник сайту</p>
-                <p class="text-xs text-ink-soft">Тут уже лежать підручники класу ${classLabel()}. Просто натискай і читай.</p>
+                <p class="text-xs text-ink-soft">${staticOK ? "Усі підручники класу вже тут — просто натискай і читай." : "Тут уже лежать підручники класу " + classLabel() + ". Просто натискай і читай."}</p>
               </div>`}
               <div class="mt-6">
                 <div class="flex items-center justify-between">
@@ -1127,6 +1160,8 @@
             <div class="flex flex-wrap items-center justify-center gap-2 border-t border-ink/10 px-4 py-3.5 text-center text-[10px] font-bold uppercase tracking-widest text-ink-soft/70">
               ${sharedOK
                 ? `${svg("i-sparkles", "icon h-3 w-3 text-cobalt")} Спільна бібліотека · ${classLabel()} клас · ${SCHOOL.name} · ${canEdit() ? "ти у режимі власника" : "додає книжки лише власник"}`
+                : staticOK
+                ? `${svg("i-book-open", "icon h-3 w-3 text-cobalt")} Спільна полиця з репозиторію · ${classLabel()} клас · оновлено ${staticUpdated ? new Date(staticUpdated).toLocaleDateString("uk") : "нещодавно"} · додає книги лише власник`
                 : `<span class="text-amber-600">${svg("i-lock", "icon h-3 w-3")} Локальний режим: файли лише у твоєму браузері — з іншого пристрою їх не видно</span>`}
             </div>
           </div>`;

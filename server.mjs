@@ -224,6 +224,22 @@ const server = createServer(async (req, res) => {
       return createReadStream(abs).pipe(res);
     }
 
+    /* -------- статика: полиця з репозиторію /library/ (GitHub Pages-режим) -------- */
+    if ((req.method === "GET" || req.method === "HEAD") && route.startsWith("/library/")) {
+      const rel = normalize(decodeURIComponent(route.slice("/library/".length))).replace(/^(?:\.\.[/\\])+/, "");
+      const abs = join(ROOT, "library", rel);
+      if (!abs.startsWith(join(ROOT, "library")) || !existsSync(abs)) return text404(res);
+      const st = await stat(abs);
+      const isIndex = rel === "index.json";
+      const ext = extname(abs).toLowerCase();
+      res.writeHead(200, {
+        "content-type": MIME[ext] || "application/octet-stream",
+        "content-length": st.size,
+        "cache-control": isIndex ? "no-cache" : "public, max-age=31536000, immutable",
+      });
+      return createReadStream(abs).pipe(res);
+    }
+
     /* -------- статика сайту -------- */
     if (req.method === "GET" && (route === "/" || route === "/index.html")) {
       const html = await readFile(join(ROOT, "index.html"));

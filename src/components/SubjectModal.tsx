@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { categoryLabel, type Subject } from "../data/subjects";
-import { addFiles, canEdit, formatSize, isShared, listFiles, plural, removeFile, type StoredFile } from "../lib/storage";
+import { addFiles, canEdit, formatSize, isShared, isStatic, listFiles, plural, removeFile, staticDate, type StoredFile } from "../lib/storage";
 import { useClassInfo } from "../lib/cls";
 import Reader from "./Reader";
 
@@ -142,7 +142,7 @@ export default function SubjectModal({
 
         {/* body */}
         <div className="flex-1 overflow-y-auto p-6 pt-5">
-          {editable && !isShared() && (
+          {editable && !isShared() && !isStatic() && (
             <div className="mb-3 flex items-start gap-2.5 rounded-2xl border border-sun bg-sun/20 px-4 py-3 text-left text-[11px] font-bold leading-snug text-ink">
               <Lock className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
               <span>
@@ -297,6 +297,12 @@ export default function SubjectModal({
             <>
               <Sparkles className="h-3 w-3 text-cobalt" />
               Спільна бібліотека · {clsLabel} клас · Великодолинська школа №2 · {editable ? "ти у режимі власника" : "додає книжки лише власник"}
+            </>
+          ) : isStatic() ? (
+            <>
+              <BookOpen className="h-3 w-3 text-cobalt" />
+              Спільна полиця з репозиторію · {clsLabel} клас · оновлено{" "}
+              {staticDate() ? new Date(staticDate()).toLocaleDateString("uk") : "нещодавно"} · додає книги лише власник
             </>
           ) : (
             <>

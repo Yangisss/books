@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { ArrowDown, Atom, BookOpen, CalendarDays, Clock3, Lock, MapPin, Palette, Sigma, Sparkles, Telescope } from "lucide-react";
 import { bookSubjects, subjects } from "../data/subjects";
 import { CLASSES, getAdminKey, setAdminKey, setClass, useClassInfo } from "../lib/cls";
-import { checkAdminKey, isShared } from "../lib/storage";
+import { checkAdminKey, isShared, isStatic } from "../lib/storage";
 
 function ClassSelect() {
   const { id: cls } = useClassInfo();
@@ -45,6 +45,7 @@ function AdminButton() {
       window.removeEventListener("vdsh2-probed", h);
     };
   }, []);
+  if (isStatic() && !isShared()) return null; // спільна полиця з GitHub — додає лише власник скриптом
   const toggle = async () => {
     if (isShared() && getAdminKey()) {
       setAdminKey("");
@@ -224,7 +225,7 @@ export default function Hero() {
                 {greeting} —<br className="sm:hidden" /> ось мої
               </span>
               <span
-                className="anim-fade-up relative mt-1 inline-block font-display text-[17vw] font-extrabold uppercase leading-[0.95] tracking-tight sm:text-7xl lg:text-[5.6rem]"
+                className="anim-fade-up relative mt-1 inline-block whitespace-nowrap font-display text-[12.6vw] font-extrabold uppercase leading-[0.95] tracking-tight sm:text-7xl lg:text-[5.6rem]"
                 style={{ animationDelay: "0.2s" }}
               >
                 предмети
