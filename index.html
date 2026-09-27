@@ -2121,8 +2121,27 @@
           const raw = localStorage.getItem(HIST_KEY);
           if (!raw) return [];
           const arr = JSON.parse(raw);
-          const cutoff = Date.now() - 24 * 3600 * 1000;
-          return arr.filter((e) => e && typeof e.at === "number" && e.at > cutoff).slice(-HIST_MAX);
+          const cutoff = Date.now() - 48 * 3600 * 1000;
+          return arr
+            .filter((e) => e && typeof e.at === "number" && e.at > cutoff)
+            // відфільтровуємо старий спам, коли тривоги не було, а просто літав дрон
+            .filter((e) => e.type || e.alertRaion || e.alertOblast || e.kind === "start" || e.kind === "end")
+            .map((e) => {
+              if (e.title) return e;
+              // конвертуємо старий формат
+              const isR = !!e.alertRaion;
+              const isO = !!e.alertOblast;
+              return {
+                at: e.at,
+                kind: isR ? "danger" : (isO ? "warn" : "ok"),
+                type: isR ? "air" : (isO ? "oblast" : "clear"),
+                title: isR ? "Повітряна тривога" : (isO ? "Тривога в Одеській області" : "Відбій тривоги"),
+                reason: isR ? "Офіційна повітряна тривога в Одеському районі" : (isO ? "Тривога в межах області" : "Небезпека минула"),
+                duration: "",
+                targets: []
+              };
+            })
+            .slice(-HIST_MAX);
         } catch { return []; }
       }
       function saveHistory() {
@@ -2183,47 +2202,131 @@
       function verdict() {
         const inRaion = !!state.raion;
         const inOblast = !!state.oblast;
-        const hard = state.threats.filter((t) => !t.advisory && (t.type === "ballistic" || t.type === "missile" || t.type === "kab"));
-        const soft = state.threats.filter((t) => !t.advisory && (t.type === "uav" || t.type === "mig31k" || t.type === "unknown"));
-        if (inRaion) return { code: "raion", tone: "danger", title: "Тривога в Одеському районі",
-          sub: "Повітряна тривога лунає у центрі Одеси та у Великодолинському — йти в укриття.",
-          goto: "no", strong: "До школи НЕ йти", soft: "Прямуй в укриття або лишайся вдома. Слухай офіційні сигнали." };
-        if (hard.length) return { code: "active", tone: "danger", title: "Загроза в напрямку Одещини",
-          sub: "Фіксуються ракети / балістика / КАБи — не йди до школи, слідкуй за тривогою.",
-          goto: "no", strong: "До школи НЕ йти", soft: "Прямуй в укриття або лишайся вдома." };
-        if (inOblast) return { code: "oblast", tone: "warn", title: "Тривога в Одеській області",
-          sub: "У межах області оголошено тривоги — до школи зараз краще не виходити.",
-          goto: "wait", strong: "Поки що не виходь", soft: "Зачекай відбою." };
-        if (soft.length) return { code: "watching", tone: "watch", title: "Небо напружене — стежимо",
-          sub: "Фіксуються БпЛА або МіГ-31К — тривоги в районі ще немає, але будь напоготові.",
-          goto: "wait", strong: "Не виходь завчасно", soft: "Стеж за оновленнями." };
-        return { code: "clear", tone: "ok", title: "Тривоги в Одесі немає",
-          sub: "Можна збиратися до школи. Якщо щось зміниться — сторінка оновиться сама.",
-          goto: "yes", strong: "Можна йти на урок", soft: "Проте телефон тримай поруч." };
+        const odesaThreats = (state.threats || []).filter(isOdesaThreat);
+
+        const missiles = odesaThreats.filter((t) => !t.advisory && (t.type === "ballistic" || t.type === "missile" || t.type === "kab"));
+        const drones = odesaThreats.filter((t) => !t.advisory && (t.type === "uav"));
+
+        // Останні повідомлення моніторингу конкретно по Одеському регіону
+        const odesaRe = /одес|великодолин|чорноморськ|южне|південн|теплодар|біляївк|овідіопол|іллічівськ|сухий лиман|тайрове|крижанівка|фонтанка|ліски/;
+        const odesaMsgs = (state.messages || []).filter((m) => odesaRe.test(((m && m.text) || "").toLowerCase())).slice(0, 5);
+        const hasDroneMsg = odesaMsgs.some((m) => /шахед|шахід|дрон|бпла|мопед|дронов/.test((m.text || "").toLowerCase()));
+        const hasMissileMsg = odesaMsgs.some((m) => /ракет|баліст|каб|пуск|швидкісн/.test((m.text || "").toLowerCase()));
+
+        // 1. ОФІЦІЙНА ТРИВОГА В ОДЕСЬКОМУ РАЙОНІ (Великодолинське та Одеса):
+        if (inRaion) {
+          // Якщо небезпека викликана суто дронами (Шахедами) без ракет:
+          const isDronesOnly = (drones.length > 0 || hasDroneMsg) && (missiles.length === 0 && !hasMissileMsg);
+
+          if (isDronesOnly) {
+            // ЖОВТИЙ СТАТУС: ДРОНОВА НЕБЕЗПЕКА
+            const dCount = drones.length ? `${drones.length} ударних БпЛА` : "групу ударних БпЛА (Шахедів)";
+            const dLoc = drones.map((d) => d.locality || d.district || "Одеський напрямок").filter(Boolean).join(", ");
+            const reason = `Зафіксовано ${dCount}${dLoc ? " у районі: " + dLoc : " курсом на Одеський район"}.`;
+
+            return {
+              code: "drone",
+              tone: "warn", // ЖОВТИЙ
+              kind: "drone",
+              title: "Дронова небезпека · Одеський район",
+              shortTitle: "Дронова небезпека",
+              badge: "Дронова небезпека",
+              reason: reason,
+              sub: "Оголошено тривогу через ударні дрони (Шахеди). Перебувайте в безпечному місці, подалі від вікон або в укритті.",
+              strong: "Увага: дронова небезпека",
+              soft: "До школи зараз не йти. Не перебувайте на вулиці біля відкритих ділянок.",
+              goto: "no",
+              threats: drones,
+            };
+          }
+
+          // ЧЕРВОНИЙ СТАТУС: ПОВІТРЯНА ТРИВОГА (ракети, балістика, комбінований удар, сирена)
+          const mList = missiles.map((m) => threatLabel(m.type) + (m.locality ? " (" + m.locality + ")" : "")).join(", ");
+          const reason = missiles.length
+            ? `Загроза ударів: ${mList}. Небезпека для Одеського району!`
+            : (hasMissileMsg ? "Ракетна небезпека / загроза застосування балістичного озброєння." : "Офіційний сигнал повітряної тривоги ДСНС.");
+
+          return {
+            code: "raion",
+            tone: "danger", // ЧЕРВОНИЙ
+            kind: "air",
+            title: "Повітряна тривога · Одеський район",
+            shortTitle: "Повітряна тривога",
+            badge: "Повітряна тривога",
+            reason: reason,
+            sub: "Офіційна повітряна тривога у центрі Одеси та смт Великодолинське. Лунає сирена — негайно в укриття!",
+            strong: "До школи НЕ йти — в укриття!",
+            soft: "Негайно прямуйте до найближчого сховища або дотримуйтесь правила двох стін.",
+            goto: "no",
+            threats: missiles.length ? missiles : odesaThreats,
+          };
+        }
+
+        // 2. ТРИВОГА В МЕЖАХ ОБЛАСТІ (але в Одеському районі відбій):
+        if (inOblast) {
+          const isDroneOb = drones.length > 0 || hasDroneMsg;
+          const reason = isDroneOb
+            ? `Дронова небезпека в Одеській області (${drones.length ? drones.length + " БпЛА" : "Шахеди"}).`
+            : "Тривога в окремих районах Одеської області.";
+
+          return {
+            code: "oblast",
+            tone: "warn", // ЖОВТИЙ
+            kind: "oblast",
+            title: isDroneOb ? "Дронова небезпека в області" : "Тривога в Одеській області",
+            shortTitle: "Тривога в області",
+            badge: "Тривога в області",
+            reason: reason + " В Одеському районі наразі тихо, але зберігається загроза поширення.",
+            sub: "У межах області триває тривога. В Одеському районі сирени немає, але будьте готові до сигналу.",
+            strong: "Поки що не виходь завчасно",
+            soft: "Зачекай відбою по області та слідкуй за оновленнями.",
+            goto: "wait",
+            threats: odesaThreats,
+          };
+        }
+
+        // 3. ТРИВОГИ В РАЙОНІ ТА ОБЛАСТІ НЕМАЄ:
+        // ВАЖЛИВО: КОЛІР ЗАВЖДИ ЗЕЛЕНИЙ!
+        // Навіть якщо в небі щось літає (розвідники, літаки, віддалені цілі), сайт НЕ ставить жовтий колір!
+        const hasSurveillance = odesaThreats.length > 0;
+        const skyInfo = hasSurveillance
+          ? `У небі фіксуються цілі (${odesaThreats.map((t) => threatLabel(t.type)).join(", ")}), але тривоги в Одесі немає.`
+          : "У межах Одещини та Одеського району спокійно. Зафіксованих цілей немає.";
+
+        return {
+          code: "clear",
+          tone: "ok", // ЗЕЛЕНИЙ
+          kind: "clear",
+          title: "Тривоги в Одесі немає",
+          shortTitle: "Тривоги немає",
+          badge: "Безпечно",
+          reason: skyInfo,
+          sub: "В Одеському районі та смт Великодолинське спокійно. Сигналу тривоги немає — можна йти до школи.",
+          strong: "Можна йти на урок",
+          soft: "Сигналу тривоги немає. Якщо щось зміниться — сторінка оновиться сама.",
+          goto: "yes",
+          threats: odesaThreats,
+        };
       }
 
       const TONES = {
-        ok:     { barBg:"bg-emerald-600", cardBorder:"border-emerald-500/20", cardGrad:"from-emerald-500/10 via-paper to-paper",
+        ok:     { barBg:"bg-emerald-600 text-white", cardBorder:"border-emerald-500/20", cardGrad:"from-emerald-500/10 via-paper to-paper",
                   badge:"bg-emerald-500 text-white", dot:"bg-emerald-500", glow:"#10b981",
                   pillBorder:"border-emerald-500/25", pillBg:"bg-emerald-500/10", pillText:"text-emerald-800",
                   pillLabel:"Тихо" },
-        watch:  { barBg:"bg-sun text-ink", cardBorder:"border-sun/50", cardGrad:"from-sun/20 via-paper to-paper",
-                  badge:"bg-sun text-ink", dot:"bg-sun", glow:"#f2b705",
-                  pillBorder:"border-sun/50", pillBg:"bg-sun/20", pillText:"text-ink",
-                  pillLabel:"Стежимо" },
         warn:   { barBg:"bg-amber-500 text-ink", cardBorder:"border-amber-500/40", cardGrad:"from-amber-400/20 via-paper to-paper",
                   badge:"bg-amber-500 text-ink", dot:"bg-amber-500", glow:"#f59e0b",
-                  pillBorder:"border-amber-500/30", pillBg:"bg-amber-400/20", pillText:"text-amber-800",
-                  pillLabel:"Увага" },
+                  pillBorder:"border-amber-500/30", pillBg:"bg-amber-400/20", pillText:"text-amber-900",
+                  pillLabel:"Дронова небезпека" },
         danger: { barBg:"bg-red-600 text-white", cardBorder:"border-red-500/40", cardGrad:"from-red-500/15 via-paper to-paper",
                   badge:"bg-red-600 text-white", dot:"bg-red-600", glow:"#ef4444",
                   pillBorder:"border-red-500/30", pillBg:"bg-red-500/15", pillText:"text-red-700",
-                  pillLabel:"Тривога" },
+                  pillLabel:"Повітряна тривога" },
       };
 
       function apply() {
         const v = verdict();
-        const t = TONES[v.tone];
+        const t = TONES[v.tone] || TONES.ok;
         const started = state.raion?.since || state.oblast?.since;
         const now = Date.now();
         const stale = state.lastOkAt !== null && now - state.lastOkAt > 90000;
@@ -2237,9 +2340,9 @@
           pillPulse.classList.remove("hidden");
           pillPulse.className = "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 " + t.dot;
         }
-        pillText.textContent = v.goto === "no" ? "Тривога · в укриття" : v.goto === "wait" ? "Стежимо · зачекай" : "Тривоги немає";
+        pillText.textContent = v.tone === "danger" ? "🔴 Повітряна тривога" : (v.tone === "warn" ? "🟡 Дронова небезпека" : "Тривоги немає");
 
-        // bar (лише не-ok)
+        // bar (тільки коли тривога активна — жодна фальшива смуга при ok не з'являється!)
         if (v.tone === "ok") {
           airbar.classList.add("hidden");
         } else {
@@ -2250,7 +2353,7 @@
             : "pointer-events-none absolute inset-0";
           airbarDot.className = "relative inline-flex h-2.5 w-2.5 rounded-full bg-white";
           airbarPulse.className = "absolute inline-flex h-full w-full animate-ping rounded-full opacity-80 bg-white";
-          airbarText.textContent = v.title;
+          airbarText.textContent = (v.tone === "danger" ? "🔴 " : "🟡 ") + v.title + " — " + v.reason;
           if (started) {
             airbarSince.classList.remove("hidden");
             airbarSince.textContent = "триває " + dur(started, now);
@@ -2263,25 +2366,21 @@
         card.className = "anim-fade-up relative mt-8 overflow-hidden rounded-[1.75rem] border p-7 shadow-[0_18px_50px_-30px_rgba(23,20,12,0.6)] " + t.cardBorder + " " + t.cardGrad;
         cardGlow.style.backgroundColor = t.glow;
         cardBadge.className = "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest " + t.badge;
-        cardBadge.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-white"></span>' + ({
-          danger: "Небезпечно", warn: "Увага", watch: "Моніторимо", ok: "Безпечно"
-        })[v.tone];
+        cardBadge.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-white"></span>' + escHtml(v.badge);
         cardIconBox.className = "relative flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-lg " + t.badge.split(" ")[0];
         cardIconBox.innerHTML = v.tone === "ok"
           ? '<svg class="icon h-8 w-8"><use href="#i-shield"></use></svg>'
-          : v.tone === "watch"
-            ? '<svg class="icon h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
-            : v.tone === "warn"
-              ? '<svg class="icon h-8 w-8"><use href="#i-shield"></use></svg>'
-              : '<svg class="icon h-8 w-8"><use href="#i-alert"></use></svg>';
+          : (v.kind === "drone"
+            ? '<svg viewBox="0 0 24 24" class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"></circle><circle cx="18" cy="6" r="2.5"></circle><circle cx="6" cy="18" r="2.5"></circle><circle cx="18" cy="18" r="2.5"></circle><path d="M8 8l8 8M8 16l8-8"></path><circle cx="12" cy="12" r="1.2" fill="currentColor"></circle></svg>'
+            : '<svg class="icon h-8 w-8"><use href="#i-alert"></use></svg>');
         if (v.tone === "ok") { cardPulse.classList.add("hidden"); } else {
           cardPulse.classList.remove("hidden");
-          cardPulse.className = "absolute inset-0 animate-ping rounded-full " + (v.tone === "danger" ? "bg-red-600/40" : v.tone === "warn" ? "bg-amber-500/40" : "bg-sun/50");
+          cardPulse.className = "absolute inset-0 animate-ping rounded-full " + (v.tone === "danger" ? "bg-red-600/40" : "bg-amber-500/40");
         }
         cardTitle.textContent = v.title;
-        cardSub.textContent = v.sub;
+        cardSub.innerHTML = '<span class="font-bold text-ink block">' + escHtml(v.reason) + '</span><span class="mt-1 block text-ink-soft text-sm leading-relaxed">' + escHtml(v.sub) + '</span>';
 
-        // connection badge — оновлюємо акуратно, з id, щоб не смикати картку щосекунди
+        // connection badge
         let connClass = "inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest ";
         let connIcon = "#i-radio", connText = "реальний час", connColor = "border-emerald-500/30 bg-emerald-500/10 text-emerald-700";
         if (state.connected === "polling") {
@@ -2313,13 +2412,11 @@
           lastOk.textContent = stale ? "дані застаріли — перевір з'єднання" : "підключення…";
         }
 
-        // оновлюємо панелі ТІЛЬКИ коли змінилися дані; щосекунди — лише таймери
         tickPanes(now);
         if (state._panesDirty) {
           state._panesDirty = false;
           renderPanes();
         }
-        // спостереження для анімації reveal (одноразово)
         if (!state._revealObserved) {
           state._revealObserved = true;
           const io = new IntersectionObserver((ents) => {
@@ -2370,9 +2467,6 @@
 
       /** щосекундне оновлення (лише текст/таймери), без innerHTML — не смикає DOM */
       function tickPanes(now) {
-        const started = state.raion?.since || state.oblast?.since;
-        // таймер на головній картці оновлюється вище (sinceBig.textContent), тому тут нічого робити не треба.
-        // якщо панель «Зараз» ще не відрендерена — змусимо повний рендер
         if (!paneNow.dataset.rendered) state._panesDirty = true;
       }
 
@@ -2383,25 +2477,26 @@
 
         // Now pane — для телефонів 1 колонка, для десктопа 3
         const statRaion = state.raion
-          ? miniStat("Одеський район", "центр Одеси · Великодолинське", "ТРИВОГА", "danger", started ? "триває " + dur(started, now) : "тривога")
-          : miniStat("Одеський район", "центр Одеси · Великодолинське", "тихо", "ok", "тривоги немає");
+          ? miniStat("Одеський район", "центр Одеси · Великодолинське", (v.kind === "drone" ? "ДРОНИ" : "ТРИВОГА"), v.tone, started ? "триває " + dur(started, now) : (v.kind === "drone" ? "дронова небезпека" : "сирена ДСНС"))
+          : miniStat("Одеський район", "центр Одеси · Великодолинське", "ТИХО", "ok", "тривоги немає");
         const statOblast = state.oblast
-          ? miniStat("Одеська область", "загалом", "частково", "warn", started ? "з " + fmtTime(started) : "часткова тривога")
-          : miniStat("Одеська область", "загалом", "тихо", "ok", "тривоги по області немає");
+          ? miniStat("Одеська область", "загалом", (v.kind === "drone" ? "ДРОНИ" : "ТРИВОГА"), "warn", started ? "з " + fmtTime(started) : "часткова тривога")
+          : miniStat("Одеська область", "загалом", "ТИХО", "ok", "тривоги в області немає");
         const statThreats = state.threats.length
-          ? miniStat("Повітряні цілі", "БпЛА, ракети, МіГи поруч", String(state.threats.length), "warn", "стеж за повітрям")
-          : miniStat("Повітряні цілі", "БпЛА, ракети, МіГи поруч", "0", "ok", "зафіксованих цілей немає");
+          ? miniStat("Повітряні цілі", "БпЛА, ракети поруч", String(state.threats.length), (v.tone === "danger" ? "danger" : (v.tone === "warn" ? "warn" : "ok")), state.threats.map((t) => threatLabel(t.type)).slice(0, 2).join(", "))
+          : miniStat("Повітряні цілі", "БпЛА, ракети поруч", "0", "ok", "небо чисте");
 
         const verdictBox =
           '<div class="relative overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-ink/10 bg-paper p-4 sm:p-6 lg:col-span-3">' +
           '<div class="flex flex-col sm:flex-row items-start gap-3">' +
           '<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white ' +
-            (v.tone === "danger" ? "bg-red-600" : v.tone === "warn" ? "bg-amber-500" : v.tone === "watch" ? "bg-sun text-ink" : "bg-emerald-500") + '">' +
+            (v.tone === "danger" ? "bg-red-600" : v.tone === "warn" ? "bg-amber-500" : "bg-emerald-500") + '">' +
             (v.goto === "yes" ? '<svg class="icon h-5 w-5"><use href="#i-check"></use></svg>' : '<svg class="icon h-5 w-5"><use href="#i-alert"></use></svg>') +
           '</span>' +
-          '<div><p class="font-display text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-soft">Рішення на сьогодні</p>' +
+          '<div><p class="font-display text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-soft">Рішення для учнів</p>' +
           '<p class="mt-1 font-display text-lg font-bold leading-snug">' + escHtml(v.strong) + '.</p>' +
-          '<p class="mt-2 text-sm leading-relaxed text-ink-soft">Пам\'ятай: сторінка — помічник, а не офіційне джерело. Головне — сигнал сирени, повідомлення ДСНС та вчителі.</p>' +
+          '<p class="mt-1.5 text-sm font-semibold text-ink">' + escHtml(v.reason) + '</p>' +
+          '<p class="mt-2 text-xs leading-relaxed text-ink-soft">Пам\'ятай: головний орієнтир — офіційний сигнал сирени, повідомлення ДСНС та розпорядження вчителів.</p>' +
           '</div></div></div>';
 
         paneNow.innerHTML = '<div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">' + statRaion + statOblast + statThreats + verdictBox + '</div>';
@@ -2410,13 +2505,13 @@
         if (!state.threats.length) {
           paneThreats.innerHTML = '<div class="flex flex-col items-center gap-3 rounded-[1.75rem] border border-ink/10 bg-paper p-10 text-center">' +
             '<svg class="icon h-10 w-10 text-emerald-500"><use href="#i-check"></use></svg>' +
-            '<p class="font-display text-lg font-bold">Повітряних цілей поруч не видно</p>' +
-            '<p class="max-w-md text-sm text-ink-soft">У межах Одещини зараз не фіксуються БпЛА, ракети чи вильоти МіГ-31К.</p></div>';
+            '<p class="font-display text-lg font-bold">Повітряних цілей поруч не зафіксовано</p>' +
+            '<p class="max-w-md text-sm text-ink-soft">У межах Одещини та Одеського району наразі не фіксуються БпЛА, ракети чи бойова авіація.</p></div>';
         } else {
           paneThreats.innerHTML = '<div class="grid gap-3 sm:grid-cols-2">' + state.threats.map((t) => {
             const danger = t.type === "ballistic" || t.type === "missile" || t.type === "kab";
-            const bg = danger ? "border-red-500/30 bg-red-500/5" : "border-ink/10 bg-paper";
-            const iconBg = danger ? "bg-red-600" : t.type === "mig31k" ? "bg-night" : t.type === "uav" ? "bg-sun text-ink" : "bg-cobalt";
+            const bg = danger ? "border-red-500/30 bg-red-500/5" : (t.type === "uav" ? "border-amber-500/30 bg-amber-500/5" : "border-ink/10 bg-paper");
+            const iconBg = danger ? "bg-red-600" : (t.type === "mig31k" ? "bg-night" : (t.type === "uav" ? "bg-amber-500 text-ink" : "bg-cobalt text-white"));
             const title = t.locality || t.district || t.region || "Невідома локація";
             const sub = t.explanationShort || (t.district ? (t.district + ", " + t.region) : t.region) || "";
             const conf = t.confidenceLevel === "high" ? "впевнено" : t.confidenceLevel === "medium" ? "імовірно" : "не точно";
@@ -2434,15 +2529,14 @@
           }).join("") + '</div>';
         }
 
-        // News pane — ЛИШЕ Одеса/Одеський район/Великодолинське/Чорноморськ/Південне
-        // (щоб не тягло Миколаїв/Херсон і не змішувалось)
-        const odesaRe = /одес|великодолинськ|чорноморськ|чорноморськ|южне|південн|теплодар|біляївк|овідіопол|іллічівськ|сухий лиман|тайрове|крижанівка|фонтанка|ліски/;
+        // News pane
+        const odesaRe = /одес|великодолинськ|чорноморськ|южне|південн|теплодар|біляївк|овідіопол|іллічівськ|сухий лиман|тайрове|крижанівка|фонтанка|ліски/;
         const odesaMsgs = state.messages.filter((m) => odesaRe.test((m && m.text) || ""));
         if (!odesaMsgs.length) {
           paneNews.innerHTML = '<div class="rounded-[1.75rem] border border-ink/10 bg-paper p-6 sm:p-8 text-center">' +
             '<svg class="icon mx-auto h-8 w-8 text-ink-soft/50"><use href="#i-megaphone"></use></svg>' +
-            '<p class="mt-3 font-display text-base font-bold text-ink-soft">Новин по Одесі наразі немає</p>' +
-            '<p class="mx-auto mt-1 max-w-sm text-[13px] leading-relaxed text-ink-soft/80">Щойно в офіційних або моніторингових каналах з\'являться повідомлення про Одесу чи Одеський район — вони з\'являться тут.</p></div>';
+            '<p class="mt-3 font-display text-base font-bold text-ink-soft">Повідомлень по Одесі наразі немає</p>' +
+            '<p class="mx-auto mt-1 max-w-sm text-[13px] leading-relaxed text-ink-soft/80">Офіційні повідомлення Повітряних Сил та ДСНС щодо Одеси з\'являться тут миттєво.</p></div>';
         } else {
           paneNews.innerHTML = '<ul class="space-y-2 sm:space-y-3">' + odesaMsgs.map((m, i) =>
             '<li class="anim-fade-up rounded-2xl sm:rounded-3xl border border-ink/10 bg-paper p-4 sm:p-5" style="animation-delay:' + (i*50) + 'ms;word-break:break-word;overflow-wrap:anywhere">' +
@@ -2455,53 +2549,40 @@
           ).join("") + '</ul>';
         }
 
-        // History pane
+        // History pane (повна детальна історія)
         if (!state.history.length) {
           paneHistory.innerHTML = '<div class="rounded-[1.75rem] border border-ink/10 bg-paper p-8 text-center">' +
             '<svg class="icon mx-auto h-8 w-8 text-ink-soft/50"><use href="#i-clock-history"></use></svg>' +
-            '<p class="mt-3 font-display text-base font-bold text-ink-soft">Історія накопичується</p>' +
-            '<p class="mx-auto mt-1 max-w-md text-sm text-ink-soft/80">Щойно статус тривоги зміниться — тут з\'являться записи. Історія зберігається у твоєму браузері 24 години.</p></div>';
+            '<p class="mt-3 font-display text-base font-bold text-ink-soft">Історія тривог формується</p>' +
+            '<p class="mx-auto mt-1 max-w-md text-sm text-ink-soft/80">Тут фіксується кожен сигнал: 🔴 Повітряна тривога, 🟡 Дронова небезпека та 🟢 Відбій з повною інформацією про цілі та тривалість.</p></div>';
         } else {
-          const rows = buildHistoryRows();
+          const rows = [...state.history].reverse().slice(0, 30);
           paneHistory.innerHTML = '<div class="relative overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-ink/10 bg-paper p-4 sm:p-6">' +
-            '<ol class="relative space-y-3 sm:space-y-4 border-l-2 border-dashed border-ink/15 pl-4 sm:pl-5 min-w-0">' + rows.map((r) => {
+            '<ol class="relative space-y-4 border-l-2 border-dashed border-ink/15 pl-4 sm:pl-5 min-w-0">' + rows.map((r) => {
               const d = new Date(r.at);
-              const dot = r.kind === "start" ? "bg-red-600" : r.kind === "end" ? "bg-emerald-500" : r.kind === "threat" ? "bg-sun" : "bg-ink/30";
-              const icon = r.kind === "start" ? "🔴 " : r.kind === "end" ? "🟢 " : r.kind === "threat" ? "🟡 " : "⚪️ ";
-              return '<li class="relative min-w-0"><span class="absolute -left-[23px] sm:-left-[27px] top-1.5 h-3 w-3 rounded-full ring-4 ring-paper ' + dot + '"></span>' +
+              const isDanger = r.kind === "danger" || r.type === "air";
+              const isWarn = r.kind === "warn" || r.type === "drone" || r.type === "oblast";
+              const dot = isDanger ? "bg-red-600" : isWarn ? "bg-amber-500" : "bg-emerald-500";
+              const icon = isDanger ? "🔴" : isWarn ? "🟡" : "🟢";
+              const dateStr = d.toLocaleDateString("uk-UA", { day:"numeric", month:"long" });
+              const timeStr = d.toLocaleTimeString("uk-UA", { hour:"2-digit", minute:"2-digit" });
+
+              return '<li class="relative min-w-0 pb-1">' +
+                '<span class="absolute -left-[23px] sm:-left-[27px] top-1.5 h-3 w-3 rounded-full ring-4 ring-paper ' + dot + '"></span>' +
                 '<div class="flex flex-wrap items-baseline justify-between gap-2 min-w-0">' +
-                  '<p class="font-display text-sm font-bold break-words">' + icon + escHtml(r.label) + '</p>' +
-                  '<p class="font-display text-xs font-semibold tabular-nums text-ink-soft">' +
-                    d.toLocaleDateString("uk-UA", { day:"2-digit", month:"2-digit" }) + " · " +
-                    d.toLocaleTimeString("uk-UA", { hour:"2-digit", minute:"2-digit" }) +
-                  '</p>' +
-                '</div></li>';
+                  '<div class="flex items-center gap-2 flex-wrap">' +
+                    '<span class="font-display text-sm font-bold">' + icon + ' ' + escHtml(r.title) + '</span>' +
+                    (r.duration ? '<span class="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-800">' + escHtml(r.duration) + '</span>' : '') +
+                  '</div>' +
+                  '<p class="font-display text-xs font-semibold tabular-nums text-ink-soft">' + dateStr + ', ' + timeStr + '</p>' +
+                '</div>' +
+                (r.reason ? '<p class="mt-1.5 text-[13px] leading-relaxed text-ink-soft">' + escHtml(r.reason) + '</p>' : '') +
+                (r.threats && r.threats.length ? '<div class="mt-2 flex flex-wrap gap-1.5">' + r.threats.map(tg => '<span class="rounded-md border border-ink/10 bg-cream/70 px-2 py-0.5 text-[10px] font-semibold text-ink-soft">' + escHtml(tg) + '</span>').join("") + '</div>' : '') +
+              '</li>';
             }).join("") + '</ol></div>';
         }
-        paneNow.dataset.rendered = "1";
-      }
 
-      function buildHistoryRows() {
-        const h = [...state.history].reverse();
-        const rows = [];
-        let prev = null;
-        for (const e of h) {
-          const cur = { r: !!e.alertRaion, o: !!e.alertOblast, t: e.threatCount > 0 };
-          if (!prev) {
-            if (cur.r) rows.push({ at:e.at, kind:"start", label:"Тривога в Одеському районі" });
-            else if (cur.o) rows.push({ at:e.at, kind:"start", label:"Тривога в Одеській області" });
-            else if (cur.t) rows.push({ at:e.at, kind:"threat", label:"Загрози в напрямку області" });
-            else rows.push({ at:e.at, kind:"clear", label:"Тривоги немає" });
-          } else {
-            if (cur.r && !prev.r) rows.push({ at:e.at, kind:"start", label:"Тривога в Одеському районі" });
-            else if (!cur.r && cur.o && !prev.o) rows.push({ at:e.at, kind:"start", label:"Тривога в області" });
-            else if (!cur.r && !cur.o && (prev.r || prev.o)) rows.push({ at:e.at, kind:"end", label:"Відбій тривоги" });
-            if (cur.t && !prev.t && !cur.r && !cur.o) rows.push({ at:e.at, kind:"threat", label:"Загрози в напрямку області" });
-            if (!cur.t && !cur.r && !cur.o && (prev.t || prev.r || prev.o)) rows.push({ at:e.at, kind:"clear", label:"Небо чисте" });
-          }
-          prev = cur;
-        }
-        return rows.slice(0, 20);
+        paneNow.dataset.rendered = "1";
       }
 
       function threatIcon(type) {
@@ -2532,7 +2613,6 @@
             const p = document.getElementById("air-pane-" + n);
             if (p) p.classList.toggle("hidden", n !== id);
           });
-          // ніякої прокрутки: просто міняємо панелі, щоб екран не стрибав
         });
       });
 
@@ -2544,7 +2624,6 @@
         const nextMessages = messages || state.messages;
         markDirtyIfChanged(nextRaion, nextOblast, nextThreats, nextMessages, source);
 
-        const prevKey = (!!state.raion) + "|" + (!!state.oblast) + "|" + ((state.threats.some((t)=>!t.advisory)) ? "t" : "");
         state.raion = nextRaion;
         state.oblast = nextOblast;
         state.threats = nextThreats;
@@ -2552,18 +2631,53 @@
         state.lastOkAt = Date.now();
         state.connected = source;
 
-        const nextKey = (!!state.raion) + "|" + (!!state.oblast) + "|" + (state.threats.some((t)=>!t.advisory) ? "t" : "");
-        if (prevKey !== nextKey) {
-          state.history.push({
-            at: Date.now(),
-            alertRaion: !!state.raion,
-            alertOblast: !!state.oblast,
-            threatCount: state.threats.filter((t)=>!t.advisory).length,
-          });
-          state.history._lastKey = nextKey;
+        // Перевірка зміни статусу тривоги для історії:
+        const v = verdict();
+        const currentKind = v.kind; // "air" | "drone" | "oblast" | "clear"
+
+        if (state._lastKind !== undefined && state._lastKind !== currentKind) {
+          // Якщо тривога завершилась
+          if (currentKind === "clear") {
+            const startAt = state._alertStartedAt || (Date.now() - 60000);
+            const durationStr = dur(startAt, Date.now());
+            state.history.push({
+              at: Date.now(),
+              kind: "ok",
+              type: "clear",
+              title: "Відбій тривоги",
+              reason: "Небезпека минула. Офіційний відбій для Одеси та Одеського району.",
+              duration: durationStr ? "Тривала " + durationStr : "",
+              targets: []
+            });
+            state._alertStartedAt = null;
+          } else {
+            // Почалася тривога (або змінився тип)
+            if (!state._alertStartedAt) {
+              const startIso = state.raion?.since || state.oblast?.since;
+              state._alertStartedAt = startIso ? new Date(startIso).getTime() : Date.now();
+            }
+            const threatNames = (v.threats || []).map((t) => threatLabel(t.type) + (t.locality ? " · " + t.locality : ""));
+            state.history.push({
+              at: Date.now(),
+              kind: v.tone,
+              type: v.kind,
+              title: v.kind === "drone" ? "Дронова небезпека" : (v.kind === "air" ? "Повітряна тривога" : "Тривога в області"),
+              reason: v.reason,
+              duration: "",
+              targets: threatNames
+            });
+          }
           saveHistory();
           state._panesDirty = true;
+        } else if (state._lastKind === undefined) {
+          // Ініціалізація першого запуску
+          if (currentKind !== "clear") {
+            const startIso = state.raion?.since || state.oblast?.since;
+            state._alertStartedAt = startIso ? new Date(startIso).getTime() : Date.now();
+          }
         }
+        state._lastKind = currentKind;
+
         apply();
       }
 
