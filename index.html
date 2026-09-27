@@ -833,6 +833,13 @@
 
       const subjectById = Object.fromEntries(subjects.map((x) => [x.id, x]));
       const toMin = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+      const fmtMin = (min) => {
+        const m = Math.max(0, Math.round(min));
+        if (m < 60) return `${m} хв`;
+        const h = Math.floor(m / 60);
+        const rem = m % 60;
+        return rem === 0 ? `${h} год` : `${h} год ${rem} хв`;
+      };
       const dayIndexOf = (d) => { const g = d.getDay(); return g >= 1 && g <= 5 ? g - 1 : null; };
       let selectedDay = dayIndexOf(new Date()) ?? 0;
       let schedTab = "week";
@@ -1050,14 +1057,14 @@
           sub = "Дзвінків немає, гарного відпочинку";
         } else if (liveIdx >= 0) {
           t = `Триває ${liveIdx + 1}-й урок`;
-          sub = `до ${bells[liveIdx].end} · залишилось ${toMin(bells[liveIdx].end) - nowMin} хв`;
+          sub = `до ${bells[liveIdx].end} · залишилось ${fmtMin(toMin(bells[liveIdx].end) - nowMin)}`;
         } else if (brkIdx >= 0) {
           const gap = toMin(bells[brkIdx + 1].start) - toMin(bells[brkIdx].end);
           t = `Перерва ${gap} хв`;
-          sub = `${brkIdx + 1}-й урок завершився · ${brkIdx + 2}-й о ${bells[brkIdx + 1].start} — через ${toMin(bells[brkIdx + 1].start) - nowMin} хв`;
+          sub = `${brkIdx + 1}-й урок завершився · ${brkIdx + 2}-й о ${bells[brkIdx + 1].start} — через ${fmtMin(toMin(bells[brkIdx + 1].start) - nowMin)}`;
         } else if (nowMin < toMin(bells[0].start)) {
           t = "Ще до першого дзвінка";
-          sub = `перший урок о ${bells[0].start} · через ${toMin(bells[0].start) - nowMin} хв`;
+          sub = `перший урок о ${bells[0].start} · через ${fmtMin(toMin(bells[0].start) - nowMin)}`;
         } else {
           t = "Уроки на сьогодні завершено";
           sub = `останній дзвінок — ${bells[bells.length - 1].end}`;
@@ -1083,7 +1090,7 @@
             ? "border-sun/70 bg-sun/10 shadow-[0_18px_45px_-22px_rgba(242,183,5,0.75)]"
             : status === "done" ? "border-ink/10 bg-paper opacity-55" : "border-ink/10 bg-paper";
           const tag = status === "now"
-            ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-ink"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink"></span></span>триває · ${en - nowMin} хв</span>`
+            ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-ink"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink"></span></span>триває · ${fmtMin(en - nowMin)}</span>`
             : status === "done" ? `<span class="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">дзвінок був</span>` : "";
           return `
             <div class="${animCls} flex items-center gap-3 rounded-3xl border p-3.5 sm:gap-4 sm:p-4 ${rowCls}" ${animCls ? `style="animation-delay:${i * 40}ms"` : ""}>
@@ -1101,7 +1108,7 @@
               <span class="h-px flex-1 border-t border-dashed border-ink/20"></span>
               <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest ${
                 onBreak ? "border border-cobalt/40 bg-cobalt/10 text-cobalt" : "text-ink-soft/70"
-              }">перерва · ${gap} хв${onBreak ? ` · ${toMin(bells[i + 1].start) - nowMin} хв` : ""}</span>
+              }">перерва · ${gap} хв${onBreak ? ` · ${fmtMin(toMin(bells[i + 1].start) - nowMin)}` : ""}</span>
               <span class="h-px flex-1 border-t border-dashed border-ink/20"></span>
             </div>`;
             })() : "");
@@ -1171,7 +1178,7 @@
           const l = day.lessons[ongoingIdx];
           const s = subjectById[l.s];
           sTitle = `Триває ${slotOf(l, ongoingIdx)}-й урок — ${s ? (l.label || s.name) : ""}`;
-          sSub = `до ${bellOf(l, ongoingIdx).end} · залишилось ${toMin(bellOf(l, ongoingIdx).end) - nowMin} хв`;
+          sSub = `до ${bellOf(l, ongoingIdx).end} · залишилось ${fmtMin(toMin(bellOf(l, ongoingIdx).end) - nowMin)}`;
           if (s && !s.noBooks) {
             sBtn = "Книги до уроку";
             summaryAction = { kind: "open", id: l.s };
@@ -1182,8 +1189,8 @@
           const s = subjectById[l.s];
           sTitle = first ? `Перший урок о ${bells[0].start} — ${l.label || s.name}` : `Наступний урок — ${l.label || s.name}`;
           sSub = first
-            ? `До дзвінка ${toMin(bells[0].start) - nowMin} хв · у розкладі ${day.lessons.length} уроків`
-            : `${slotOf(l, nextIdx)}-й урок · ${bellOf(l, nextIdx).start} · через ${toMin(bellOf(l, nextIdx).start) - nowMin} хв`;
+            ? `До дзвінка ${fmtMin(toMin(bells[0].start) - nowMin)} · у розкладі ${day.lessons.length} уроків`
+            : `${slotOf(l, nextIdx)}-й урок · ${bellOf(l, nextIdx).start} · через ${fmtMin(toMin(bellOf(l, nextIdx).start) - nowMin)}`;
           if (!s.noBooks) {
             sBtn = first ? "Книги до першого уроку" : "Готуємо підручник";
             summaryAction = { kind: "open", id: l.s };
@@ -1233,9 +1240,9 @@
           const stripe = status === "now" ? "#f2b705" : s.accent;
           const pill =
             status === "now"
-              ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-ink"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink"></span></span>зараз · ${toMin(b.end) - nowMin} хв</span>`
+              ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-ink"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink"></span></span>зараз · ${fmtMin(toMin(b.end) - nowMin)}</span>`
               : status === "next"
-                ? `<span class="rounded-full border border-cobalt/40 bg-cobalt/10 px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-cobalt">наступний · через ${toMin(b.start) - nowMin} хв</span>`
+                ? `<span class="rounded-full border border-cobalt/40 bg-cobalt/10 px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-cobalt">наступний · через ${fmtMin(toMin(b.start) - nowMin)}</span>`
                 : status === "done"
                   ? `<span class="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">завершено</span>`
                   : "";
