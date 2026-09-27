@@ -328,7 +328,7 @@
 
       <main>
         <!-- Секція повітряної тривоги (вставлено) -->
-        <section id="trygoga" class="relative mx-auto max-w-7xl overflow-hidden px-4 sm:px-6 pb-16 pt-14 sm:pt-20">
+        <section id="trygoga" class="relative mx-auto max-w-7xl px-4 sm:px-6 pb-20 sm:pb-16 pt-14 sm:pt-20 min-w-0">
           <div class="reveal flex flex-wrap items-end justify-between gap-6">
             <div>
               <p id="trygoga-sub" class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-red-600">
@@ -395,9 +395,10 @@
             </div>
           </div>
 
-          <!-- Таби (sticky при прокрутці, на телефоні — горизонтальний скрол без виламування сторінки) -->
-          <div class="reveal mt-8 sticky top-2 z-30 -mx-1 overflow-x-auto no-scrollbar sm:mx-0 sm:overflow-visible" id="air-tabs-wrap">
-            <div class="inline-flex min-w-full sm:min-w-0 gap-1 rounded-full border border-ink/10 bg-cream/85 p-1 shadow-sm backdrop-blur sm:bg-white/70 sm:shadow-none sm:backdrop-blur-none sm:backdrop-blur" id="air-tabs">
+          <!-- Внутрішні таби секції тривоги: на телефоні липнуть до верху, на десктопі — під основною навігацією.
+               Жодної прокрутки при натисканні — просто міняють вміст на місці. -->
+          <div class="reveal mt-8 sticky top-0 sm:top-[48px] z-20 -mx-1 -mt-1 pt-1 overflow-x-auto no-scrollbar sm:mx-0 sm:mt-8 sm:sticky sm:top-2 sm:z-30" id="air-tabs-wrap">
+            <div class="inline-flex min-w-full sm:min-w-0 gap-1 rounded-full border border-ink/10 bg-cream/95 p-1 shadow-sm backdrop-blur sm:bg-white/70 sm:shadow-none sm:backdrop-blur-none sm:backdrop-blur" id="air-tabs">
               <button data-atab="now" class="air-tab shrink-0 flex items-center gap-1.5 rounded-full bg-ink px-3.5 sm:px-4 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-cream transition-all duration-300">
                 <svg class="icon h-3.5 w-3.5"><use href="#i-shield"></use></svg><span class="sm:inline">Зараз</span>
               </button>
@@ -413,7 +414,7 @@
             </div>
           </div>
 
-          <div id="air-panes" class="mt-4 sm:mt-6 min-w-0">
+          <div id="air-panes" class="mt-4 pt-2 sm:mt-6 sm:pt-0 min-w-0">
             <div id="air-pane-now" class="space-y-4"></div>
             <div id="air-pane-threats" class="hidden"></div>
             <div id="air-pane-news" class="hidden"></div>
@@ -2402,11 +2403,7 @@
             const p = document.getElementById("air-pane-" + n);
             if (p) p.classList.toggle("hidden", n !== id);
           });
-          // на телефоні — плавно підгортаємо до початку панелі, щоб не було порожнечі
-          const wrap = document.getElementById("air-tabs-wrap");
-          if (wrap && window.innerWidth < 640) {
-            wrap.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
+          // ніякої прокрутки: просто міняємо панелі, щоб екран не стрибав
         });
       });
 
