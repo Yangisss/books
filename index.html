@@ -137,6 +137,10 @@
       .no-scrollbar { scrollbar-width: none; }
       #day-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
       #day-chips button { flex-shrink: 0; }
+      #trygoga, #trygoga * { min-width: 0; }
+      #trygoga .break-words { overflow-wrap: anywhere; word-break: break-word; }
+      #air-tabs-wrap { -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+      #air-tabs-wrap::-webkit-scrollbar { display: none; }
       @media (min-width: 640px) {
         #day-chips { flex-wrap: wrap; overflow: visible; }
       }
@@ -282,7 +286,7 @@
 
       <main>
         <!-- Секція повітряної тривоги (вставлено) -->
-        <section id="trygoga" class="relative mx-auto max-w-7xl px-6 pb-16 pt-20">
+        <section id="trygoga" class="relative mx-auto max-w-7xl overflow-hidden px-4 sm:px-6 pb-16 pt-14 sm:pt-20">
           <div class="reveal flex flex-wrap items-end justify-between gap-6">
             <div>
               <p id="trygoga-sub" class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-red-600">
@@ -349,23 +353,25 @@
             </div>
           </div>
 
-          <!-- Таби -->
-          <div class="reveal mt-8 inline-flex rounded-full border border-ink/10 bg-white/70 p-1 backdrop-blur-none sm:backdrop-blur" id="air-tabs">
-            <button data-atab="now" class="air-tab flex items-center gap-2 rounded-full bg-ink px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest text-cream transition-all duration-300">
-              <svg class="icon h-3.5 w-3.5"><use href="#i-shield"></use></svg>Зараз
-            </button>
-            <button data-atab="threats" class="air-tab flex items-center gap-2 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest text-ink-soft transition-all duration-300 hover:text-ink">
-              <svg class="icon h-3.5 w-3.5"><use href="#i-alert"></use></svg>Загрози
-            </button>
-            <button data-atab="news" class="air-tab flex items-center gap-2 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest text-ink-soft transition-all duration-300 hover:text-ink">
-              <svg class="icon h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-4 18-5-8-9-2z"></path></svg>Новини
-            </button>
-            <button data-atab="history" class="air-tab flex items-center gap-2 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest text-ink-soft transition-all duration-300 hover:text-ink">
-              <svg class="icon h-3.5 w-3.5"><use href="#i-calendar"></use></svg>Історія
-            </button>
+          <!-- Таби (sticky при прокрутці, на телефоні — горизонтальний скрол без виламування сторінки) -->
+          <div class="reveal mt-8 sticky top-2 z-30 -mx-1 overflow-x-auto no-scrollbar sm:mx-0 sm:overflow-visible" id="air-tabs-wrap">
+            <div class="inline-flex min-w-full sm:min-w-0 gap-1 rounded-full border border-ink/10 bg-cream/85 p-1 shadow-sm backdrop-blur sm:bg-white/70 sm:shadow-none sm:backdrop-blur-none sm:backdrop-blur" id="air-tabs">
+              <button data-atab="now" class="air-tab shrink-0 flex items-center gap-1.5 rounded-full bg-ink px-3.5 sm:px-4 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-cream transition-all duration-300">
+                <svg class="icon h-3.5 w-3.5"><use href="#i-shield"></use></svg><span class="sm:inline">Зараз</span>
+              </button>
+              <button data-atab="threats" class="air-tab shrink-0 flex items-center gap-1.5 rounded-full px-3.5 sm:px-4 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-ink-soft transition-all duration-300 hover:text-ink">
+                <svg class="icon h-3.5 w-3.5"><use href="#i-alert"></use></svg><span class="sm:inline">Загрози</span>
+              </button>
+              <button data-atab="news" class="air-tab shrink-0 flex items-center gap-1.5 rounded-full px-3.5 sm:px-4 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-ink-soft transition-all duration-300 hover:text-ink">
+                <svg class="icon h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-4 18-5-8-9-2z"></path></svg><span class="sm:inline">Новини</span>
+              </button>
+              <button data-atab="history" class="air-tab shrink-0 flex items-center gap-1.5 rounded-full px-3.5 sm:px-4 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-ink-soft transition-all duration-300 hover:text-ink">
+                <svg class="icon h-3.5 w-3.5"><use href="#i-clock-history"></use></svg><span class="sm:inline">Історія</span>
+              </button>
+            </div>
           </div>
 
-          <div id="air-panes" class="mt-6">
+          <div id="air-panes" class="mt-4 sm:mt-6 min-w-0">
             <div id="air-pane-now" class="space-y-4"></div>
             <div id="air-pane-threats" class="hidden"></div>
             <div id="air-pane-news" class="hidden"></div>
@@ -917,12 +923,12 @@
 
       function quoteTile() {
         return `
-          <aside class="anim-fade-up relative flex min-h-[15rem] flex-col justify-between overflow-hidden rounded-[1.75rem] bg-ink p-6 text-cream shadow-[0_30px_60px_-25px_rgba(23,20,12,0.6)] sm:min-h-[16rem] lg:col-span-2">
-            <div class="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-sun/20 blur-2xl"></div>
-            ${svg("i-quote", "icon h-7 w-7 text-sun")}
+          <aside class="anim-fade-up relative flex min-h-[11rem] sm:min-h-[12rem] flex-col justify-between overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-ink/10 bg-paper p-5 text-ink shadow-[0_18px_40px_-28px_rgba(23,20,12,0.3)] lg:col-span-2">
+            <div class="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-sun/15 blur-2xl"></div>
+            ${svg("i-quote", "icon h-5 w-5 text-sun/70")}
             <div>
-              <p class="font-accent text-lg italic leading-snug text-cream/95">«Освіта — найпотужніша зброя, якою можна змінити світ»</p>
-              <p class="mt-3 font-display text-[10px] font-semibold uppercase tracking-[0.25em] text-cream/50">Нельсон Мандела</p>
+              <p class="font-accent text-base italic leading-snug text-ink/80">«Книга вчить, як на світі жить»</p>
+              <p class="mt-2 font-display text-[10px] font-semibold uppercase tracking-[0.25em] text-ink-soft/60">українське прислів'я</p>
             </div>
           </aside>`;
       }
@@ -2252,14 +2258,14 @@
             '<p class="mx-auto mt-1 max-w-md text-sm text-ink-soft/80">Щойно статус тривоги зміниться — тут з\'являться записи. Історія зберігається у твоєму браузері 24 години.</p></div>';
         } else {
           const rows = buildHistoryRows();
-          paneHistory.innerHTML = '<div class="relative overflow-hidden rounded-[1.75rem] border border-ink/10 bg-paper p-4 sm:p-6">' +
-            '<ol class="relative space-y-4 border-l-2 border-dashed border-ink/15 pl-5">' + rows.map((r) => {
+          paneHistory.innerHTML = '<div class="relative overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-ink/10 bg-paper p-4 sm:p-6">' +
+            '<ol class="relative space-y-3 sm:space-y-4 border-l-2 border-dashed border-ink/15 pl-4 sm:pl-5 min-w-0">' + rows.map((r) => {
               const d = new Date(r.at);
               const dot = r.kind === "start" ? "bg-red-600" : r.kind === "end" ? "bg-emerald-500" : r.kind === "threat" ? "bg-sun" : "bg-ink/30";
               const icon = r.kind === "start" ? "🔴 " : r.kind === "end" ? "🟢 " : r.kind === "threat" ? "🟡 " : "⚪️ ";
-              return '<li class="relative"><span class="absolute -left-[27px] top-1.5 h-3 w-3 rounded-full ring-4 ring-paper ' + dot + '"></span>' +
-                '<div class="flex flex-wrap items-baseline justify-between gap-2">' +
-                  '<p class="font-display text-sm font-bold">' + icon + escHtml(r.label) + '</p>' +
+              return '<li class="relative min-w-0"><span class="absolute -left-[23px] sm:-left-[27px] top-1.5 h-3 w-3 rounded-full ring-4 ring-paper ' + dot + '"></span>' +
+                '<div class="flex flex-wrap items-baseline justify-between gap-2 min-w-0">' +
+                  '<p class="font-display text-sm font-bold break-words">' + icon + escHtml(r.label) + '</p>' +
                   '<p class="font-display text-xs font-semibold tabular-nums text-ink-soft">' +
                     d.toLocaleDateString("uk-UA", { day:"2-digit", month:"2-digit" }) + " · " +
                     d.toLocaleTimeString("uk-UA", { hour:"2-digit", minute:"2-digit" }) +
@@ -2321,6 +2327,11 @@
             const p = document.getElementById("air-pane-" + n);
             if (p) p.classList.toggle("hidden", n !== id);
           });
+          // на телефоні — плавно підгортаємо до початку панелі, щоб не було порожнечі
+          const wrap = document.getElementById("air-tabs-wrap");
+          if (wrap && window.innerWidth < 640) {
+            wrap.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
         });
       });
 
