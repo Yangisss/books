@@ -3,6 +3,7 @@ import { ArrowDown, Atom, BookOpen, CalendarDays, Clock3, Lock, MapPin, Palette,
 import { bookSubjects, subjects } from "../data/subjects";
 import { CLASSES, getAdminKey, setAdminKey, setClass, useClassInfo } from "../lib/cls";
 import { checkAdminKey, isShared, isStatic } from "../lib/storage";
+import { AirAlertPill } from "./AirAlertSection";
 
 function ClassSelect() {
   const { id: cls } = useClassInfo();
@@ -198,6 +199,7 @@ export default function Hero() {
           <div className="flex items-center gap-2">
             <ClassSelect />
             <AdminButton />
+            <AirAlertPill />
             <div className="hidden lg:block">
               <LiveClock />
             </div>
