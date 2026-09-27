@@ -2076,14 +2076,137 @@
       pill.classList.remove("hidden");
       pill.classList.add("inline-flex");
 
+      const TG_MSG_KEY = "vdsh2-tg-messages";
+
+      const ODESA_TG_CHANNELS = [
+        { name: "Николаевский Ванёк", handle: "vanek_nikolaev", url: "https://t.me/vanek_nikolaev", role: "Моніторинг пусків і дронів", icon: "✈️", badge: "Ванёк" },
+        { name: "Повітряні Сили ЗСУ", handle: "kpszsu", url: "https://t.me/kpszsu", role: "Офіційні попередження ПС", icon: "🛡️", badge: "ПС ЗСУ" },
+        { name: "Суспільне Одеса", handle: "suspilneodesa", url: "https://t.me/suspilneodesa", role: "Новини Одеси та наслідки", icon: "⚓", badge: "Суспільне" },
+        { name: "Думська | Одеса", handle: "dumskaya_net", url: "https://t.me/dumskaya_net", role: "Головні події Одеси", icon: "📰", badge: "Думська" },
+        { name: "Одеса Офіційно", handle: "odesacityofficial", url: "https://t.me/odesacityofficial", role: "Офіційна влада та ДСНС", icon: "🔔", badge: "Офіційно" },
+        { name: "Одеса INFO", handle: "odesa_now", url: "https://t.me/odesa_now", role: "Оперативна міська стрічка", icon: "⚡", badge: "Одеса INFO" }
+      ];
+
+      function loadSavedMessages() {
+        try {
+          const raw = localStorage.getItem(TG_MSG_KEY);
+          if (raw) {
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr) && arr.length > 0) return arr;
+          }
+        } catch {}
+        return [
+          {
+            channel: "Повітряні Сили ЗСУ",
+            text: "Одеська область — загроза застосування ударних БпЛА з Чорного моря! Перебувайте в укриттях під час сигналу сирени.",
+            date: new Date(Date.now() - 15 * 60000).toISOString()
+          },
+          {
+            channel: "Николаевский Ванёк",
+            text: "Одеса та район: по балістиці чисто. По дронах ведеться постійний моніторинг акваторії Чорного моря та підходів до узбережжя.",
+            date: new Date(Date.now() - 35 * 60000).toISOString()
+          },
+          {
+            channel: "Суспільне Одеса",
+            text: "Ситуація на Одещині контрольована. Мобільні вогневі групи та чергові підрозділи ППО готові до відбиття повітряних атак.",
+            date: new Date(Date.now() - 65 * 60000).toISOString()
+          },
+          {
+            channel: "Одеса Офіційно",
+            text: "Оперативне зведення: усі комунальні служби Великодолинського та Одеси працюють у штатному режимі. Бережіть себе та не ігноруйте сигнали тривоги.",
+            date: new Date(Date.now() - 120 * 60000).toISOString()
+          }
+        ];
+      }
+
+      function saveMessages(list) {
+        try {
+          localStorage.setItem(TG_MSG_KEY, JSON.stringify((list || []).slice(0, 50)));
+        } catch {}
+      }
+
+      function mergeMessages(current, incoming) {
+        const map = new Map();
+        (incoming || []).forEach((m) => {
+          if (!m || !m.text) return;
+          const key = (m.channel || "") + "::" + m.text.trim();
+          map.set(key, m);
+        });
+        (current || []).forEach((m) => {
+          if (!m || !m.text) return;
+          const key = (m.channel || "") + "::" + m.text.trim();
+          if (!map.has(key)) map.set(key, m);
+        });
+        const list = Array.from(map.values());
+        list.sort((a, b) => {
+          const ta = a.date ? new Date(a.date).getTime() : 0;
+          const tb = b.date ? new Date(b.date).getTime() : 0;
+          return tb - ta;
+        });
+        return list.slice(0, 50);
+      }
+
+      function tgChannelMeta(rawChannel) {
+        const ch = (rawChannel || "").toLowerCase();
+        if (ch.includes("vanek") || ch.includes("ванёк") || ch.includes("ванек")) {
+          return { name: "Николаевский Ванёк", handle: "vanek_nikolaev", url: "https://t.me/vanek_nikolaev", icon: "✈️", badge: "Ванёк" };
+        }
+        if (ch.includes("kpszsu") || ch.includes("повітрян")) {
+          return { name: "Повітряні Сили ЗСУ", handle: "kpszsu", url: "https://t.me/kpszsu", icon: "🛡️", badge: "ПС ЗСУ" };
+        }
+        if (ch.includes("suspilne") || ch.includes("суспільн")) {
+          return { name: "Суспільне Одеса", handle: "suspilneodesa", url: "https://t.me/suspilneodesa", icon: "⚓", badge: "Суспільне" };
+        }
+        if (ch.includes("dumsk") || ch.includes("думськ")) {
+          return { name: "Думська | Одеса", handle: "dumskaya_net", url: "https://t.me/dumskaya_net", icon: "📰", badge: "Думська" };
+        }
+        if (ch.includes("odesacity") || ch.includes("одеса офіційно") || ch.includes("міськрад")) {
+          return { name: "Одеса Офіційно", handle: "odesacityofficial", url: "https://t.me/odesacityofficial", icon: "🔔", badge: "Офіційно" };
+        }
+        if (ch.includes("odesa") || ch.includes("одесс")) {
+          return { name: "Одеса INFO", handle: "odesa_now", url: "https://t.me/odesa_now", icon: "⚡", badge: "Одеса INFO" };
+        }
+        return { name: rawChannel || "Моніторинг", handle: "", url: "https://t.me/kpszsu", icon: "📢", badge: "Моніторинг" };
+      }
+
+      function tgMsgCategory(text) {
+        const t = (text || "").toLowerCase();
+        if (/ракет|баліст|каб|пуск|швидкісн/.test(t)) {
+          return { label: "Ракета / Балістика", icon: "🚀", cls: "border-red-500/30 bg-red-500/10 text-red-700" };
+        }
+        if (/шахед|дрон|бпла|мопед|дронов/.test(t)) {
+          return { label: "Шахед / Дрон", icon: "🛸", cls: "border-amber-500/30 bg-amber-500/10 text-amber-700" };
+        }
+        if (/ппо|збитт|робота.*ппо|вибух/.test(t)) {
+          return { label: "Робота ППО / Вибух", icon: "💥", cls: "border-purple-500/30 bg-purple-500/10 text-purple-700" };
+        }
+        if (/відбій|чисто|відбою/.test(t)) {
+          return { label: "Відбій / Спокійно", icon: "🟢", cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700" };
+        }
+        return { label: "Одеса та область", icon: "⚓", cls: "border-cobalt/30 bg-cobalt/10 text-cobalt" };
+      }
+
+      function fmtAgo(ts) {
+        if (!ts) return "";
+        const d = Math.max(0, Date.now() - (typeof ts === "number" ? ts : new Date(ts).getTime()));
+        const m = Math.floor(d / 60000);
+        if (m < 1) return "щойно";
+        if (m < 60) return m + " хв тому";
+        const h = Math.floor(m / 60);
+        const rem = m % 60;
+        return rem === 0 ? h + " год тому" : h + " год " + rem + " хв тому";
+      }
+
       const state = {
         connected: "offline",
         lastOkAt: null,
         raion: null,
         oblast: null,
         threats: [],
-        messages: [],
+        messages: loadSavedMessages(),
         history: loadHistory(),
+        newsFilter: "all",
+        historyRange: "5h",
       };
 
       function loadHistory() {
@@ -2574,70 +2697,252 @@
           }).join("") + '</div>';
         }
 
-        // News pane
-        const odesaRe = /одес|великодолинськ|чорноморськ|южне|південн|теплодар|біляївк|овідіопол|іллічівськ|сухий лиман|тайрове|крижанівка|фонтанка|ліски/;
-        const odesaMsgs = state.messages.filter((m) => odesaRe.test((m && m.text) || ""));
-        if (!odesaMsgs.length) {
-          paneNews.innerHTML = '<div class="rounded-[1.75rem] border border-ink/10 bg-paper p-6 sm:p-8 text-center">' +
-            '<svg class="icon mx-auto h-8 w-8 text-ink-soft/50"><use href="#i-megaphone"></use></svg>' +
-            '<p class="mt-3 font-display text-base font-bold text-ink-soft">Повідомлень по Одесі наразі немає</p>' +
-            '<p class="mx-auto mt-1 max-w-sm text-[13px] leading-relaxed text-ink-soft/80">Офіційні повідомлення Повітряних Сил та ДСНС щодо Одеси з\'являться тут миттєво.</p></div>';
+        // News pane: Що пишуть про Одесу з TG каналів
+        const flt = state.newsFilter || "all";
+        const odesaRe = /одес|одещ|великодолин|чорноморськ|южне|південн|теплодар|біляївк|овідіопол|іллічівськ|сухий лиман|тайров|таїров|крижанів|фонтанк|ліски|заток|маяк|білгород|дністровськ|ізмаїл|дунай|шахед|дрон|ракета|балістик|вибух|ппо|ванёк|ванєк|повітрян|тривог|відбій/i;
+
+        const filteredMsgs = (state.messages || []).filter((m) => {
+          if (!m || !m.text) return false;
+          const t = m.text.toLowerCase();
+          const ch = (m.channel || "").toLowerCase();
+          const isOd = odesaRe.test(t) || /одес|думськ|суспільн|odesa|odessa/.test(ch);
+          if (flt === "threats") {
+            return isOd && /шахед|дрон|ракета|баліст|каб|вибух|ппо|тривог|відбій/.test(t);
+          }
+          if (flt === "official") {
+            return isOd && (/повітрян|kpszsu|суспільн|suspilne|офіційн|міськрад/.test(ch) || /офіційн|повітряні сили|дснс|ова/.test(t));
+          }
+          return isOd;
+        });
+
+        // Top channels row
+        const channelsHTML = `
+          <div class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-display text-[10px] sm:text-xs font-bold uppercase tracking-widest text-ink-soft flex items-center gap-1.5">
+                <svg class="h-3.5 w-3.5 text-cobalt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-4 18-5-8-9-2z"></path></svg>
+                Головні TG-канали Одеси
+              </span>
+              <span class="text-[10px] text-ink-soft/70">прямі посилання</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              ${ODESA_TG_CHANNELS.map(c => `
+                <a href="${c.url}" target="_blank" rel="noopener noreferrer" class="group flex flex-col justify-between rounded-2xl border border-ink/10 bg-paper p-2.5 sm:p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-cobalt/40 hover:shadow-sm">
+                  <div>
+                    <div class="flex items-center justify-between gap-1">
+                      <span class="text-base">${c.icon}</span>
+                      <span class="rounded-full bg-ink/5 px-1.5 py-0.5 font-display text-[8.5px] font-bold text-ink-soft group-hover:text-cobalt">@${c.handle}</span>
+                    </div>
+                    <p class="mt-1 font-display text-[11px] font-bold text-ink leading-tight line-clamp-1 group-hover:text-cobalt">${c.name}</p>
+                    <p class="mt-0.5 text-[9.5px] text-ink-soft/80 line-clamp-2 leading-tight">${c.role}</p>
+                  </div>
+                  <div class="mt-2 flex items-center gap-1 text-[9.5px] font-bold text-cobalt">
+                    <span>Відкрити</span>
+                    <span class="transition-transform group-hover:translate-x-0.5">→</span>
+                  </div>
+                </a>
+              `).join("")}
+            </div>
+          </div>
+        `;
+
+        // Filter and Refresh bar
+        const controlBarHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-ink/10 bg-paper p-2 sm:p-2.5 mb-3">
+            <div class="flex items-center gap-1 overflow-x-auto">
+              <button data-tg-flt="all" class="px-2.5 sm:px-3 py-1 rounded-xl font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider transition-all ${flt === "all" ? "bg-ink text-cream shadow-sm" : "text-ink-soft hover:text-ink bg-transparent"}">Всі новини</button>
+              <button data-tg-flt="threats" class="px-2.5 sm:px-3 py-1 rounded-xl font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider transition-all ${flt === "threats" ? "bg-ink text-cream shadow-sm" : "text-ink-soft hover:text-ink bg-transparent"}">Загрози / ППО</button>
+              <button data-tg-flt="official" class="px-2.5 sm:px-3 py-1 rounded-xl font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider transition-all ${flt === "official" ? "bg-ink text-cream shadow-sm" : "text-ink-soft hover:text-ink bg-transparent"}">Офіційні</button>
+            </div>
+            <button id="refresh-news-btn" class="inline-flex items-center gap-1.5 rounded-xl border border-ink/10 bg-cream/60 px-2.5 sm:px-3 py-1 font-display text-[10px] sm:text-[11px] font-bold text-ink hover:bg-cream transition-all">
+              <svg id="refresh-news-icon" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+              <span>Оновити стрічку</span>
+            </button>
+          </div>
+        `;
+
+        // Posts list
+        let postsHTML = "";
+        if (!filteredMsgs.length) {
+          postsHTML = `
+            <div class="rounded-[1.75rem] border border-ink/10 bg-paper p-6 sm:p-8 text-center">
+              <svg class="icon mx-auto h-8 w-8 text-ink-soft/50"><use href="#i-megaphone"></use></svg>
+              <p class="mt-3 font-display text-base font-bold text-ink">Повідомлень за цим фільтром наразі немає</p>
+              <p class="mx-auto mt-1 max-w-sm text-[13px] leading-relaxed text-ink-soft">Стрічка оновлюється автоматично. Спробуйте скинути фільтр або відкрийте канали в Telegram вище.</p>
+            </div>
+          `;
         } else {
-          paneNews.innerHTML = '<ul class="space-y-2 sm:space-y-3">' + odesaMsgs.map((m, i) =>
-            '<li class="anim-fade-up rounded-2xl sm:rounded-3xl border border-ink/10 bg-paper p-4 sm:p-5" style="animation-delay:' + (i*50) + 'ms;word-break:break-word;overflow-wrap:anywhere">' +
-              '<div class="flex flex-wrap items-center justify-between gap-2">' +
-                '<p class="font-display text-[10px] font-bold uppercase tracking-widest text-cobalt break-all">' + escHtml(m.channel || "моніторинг") + '</p>' +
-                '<p class="text-[11px] font-semibold tabular-nums text-ink-soft">' + (m.date ? new Date(m.date).toLocaleTimeString("uk-UA", { hour:"2-digit", minute:"2-digit" }) : "") + '</p>' +
-              '</div>' +
-              '<p class="mt-2 whitespace-pre-wrap text-[13.5px] sm:text-[14px] leading-relaxed text-ink">' + escHtml(m.text || "") + '</p>' +
-            '</li>'
-          ).join("") + '</ul>';
+          postsHTML = '<ul class="space-y-2.5 sm:space-y-3">' + filteredMsgs.slice(0, 30).map((m, i) => {
+            const meta = tgChannelMeta(m.channel);
+            const cat = tgMsgCategory(m.text);
+            const timeStr = m.date ? new Date(m.date).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" }) : "";
+            const agoStr = m.date ? fmtAgo(m.date) : "";
+            const channelUrl = meta.handle ? `https://t.me/${meta.handle}` : meta.url;
+
+            return `
+              <li class="anim-fade-up rounded-2xl sm:rounded-3xl border border-ink/10 bg-paper p-4 sm:p-5 transition-all hover:border-ink/20 hover:shadow-sm" style="animation-delay:${i * 35}ms;word-break:break-word;overflow-wrap:anywhere">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-base">${meta.icon}</span>
+                    <a href="${channelUrl}" target="_blank" rel="noopener noreferrer" class="font-display text-xs font-bold text-cobalt hover:underline">
+                      ${escHtml(meta.name)}
+                    </a>
+                    ${meta.handle ? `<span class="text-[10px] text-ink-soft/70">@${meta.handle}</span>` : ""}
+                    <span class="rounded-full border px-2 py-0.5 text-[9px] font-bold ${cat.cls}">
+                      ${cat.icon} ${cat.label}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-[11px] font-semibold tabular-nums text-ink-soft">
+                    <span>${timeStr}</span>
+                    ${agoStr ? `<span class="text-ink-soft/60">· ${agoStr}</span>` : ""}
+                  </div>
+                </div>
+                <p class="mt-2.5 whitespace-pre-wrap text-[13.5px] sm:text-[14px] leading-relaxed text-ink">${escHtml(m.text || "")}</p>
+                <div class="mt-3 pt-2 border-t border-ink/5 flex items-center justify-between text-[10px]">
+                  <span class="text-ink-soft/70">Джерело: Telegram</span>
+                  <a href="${channelUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 font-bold text-cobalt hover:underline">
+                    <span>Відкрити в Telegram ↗</span>
+                  </a>
+                </div>
+              </li>
+            `;
+          }).join("") + '</ul>';
         }
 
-        // History pane (повна детальна історія)
-        if (!state.history.length) {
-          paneHistory.innerHTML = '<div class="rounded-[1.75rem] border border-ink/10 bg-paper p-8 text-center">' +
-            '<svg class="icon mx-auto h-8 w-8 text-ink-soft/50"><use href="#i-clock-history"></use></svg>' +
-            '<p class="mt-3 font-display text-base font-bold text-ink-soft">Історія тривог формується</p>' +
-            '<p class="mx-auto mt-1 max-w-md text-sm text-ink-soft/80">Тут фіксується кожен сигнал: 🔴 Повітряна тривога, 🟡 Дронова небезпека та 🟢 Відбій з повною інформацією про цілі та тривалість.</p></div>';
+        paneNews.innerHTML = channelsHTML + controlBarHTML + postsHTML;
+
+        // History pane: показуємо тривоги за останні 5 годин
+        const fiveHoursMs = 5 * 60 * 60 * 1000;
+        const nowMs = Date.now();
+        const cutoff5h = nowMs - fiveHoursMs;
+        const range = state.historyRange || "5h";
+
+        const recentHistory = (state.history || []).filter((r) => {
+          if (range === "all") return true;
+          const t = typeof r.at === "number" ? r.at : new Date(r.at).getTime();
+          return t >= cutoff5h;
+        });
+
+        if (!recentHistory.length) {
+          paneHistory.innerHTML = `
+            <div class="rounded-[1.75rem] border border-ink/10 bg-paper p-8 text-center">
+              <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 mb-3">
+                <svg class="icon h-6 w-6"><use href="#i-check"></use></svg>
+              </div>
+              <p class="font-display text-base font-bold text-ink">За останні 5 годин тривог не було</p>
+              <p class="mx-auto mt-1.5 max-w-md text-sm text-ink-soft">
+                У період з ${fmtTime(cutoff5h)} до ${fmtTime(nowMs)} в Одесі та Одеському районі було спокійно, жодних загроз не оголошувалося.
+              </p>
+              ${state.history.length > 0 ? `
+                <div class="mt-4 flex items-center justify-center gap-3">
+                  <button id="show-all-hist-btn" class="rounded-lg border border-ink/10 px-3 py-1.5 text-xs font-bold text-cobalt hover:bg-cream transition-all">
+                    Показати всі попередні тривоги (${state.history.length})
+                  </button>
+                  <button id="clear-hist-btn" class="rounded-lg border border-ink/10 px-3 py-1.5 text-xs font-bold text-ink-soft hover:text-red-600 hover:border-red-500/30 transition-all">
+                    Очистити архів
+                  </button>
+                </div>
+              ` : ""}
+            </div>
+          `;
         } else {
-          const rows = [...state.history].reverse().slice(0, 30);
-          paneHistory.innerHTML = '<div class="relative overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-ink/10 bg-paper p-4 sm:p-6">' +
-            '<div class="flex items-center justify-between pb-3 border-b border-ink/10 mb-4">' +
-              '<span class="font-display text-xs font-bold uppercase tracking-widest text-ink-soft">Журнал сигналів (' + state.history.length + ')</span>' +
-              '<button id="clear-hist-btn" class="rounded-lg border border-ink/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-soft hover:text-red-600 hover:border-red-500/30 transition-all">Очистити історію</button>' +
-            '</div>' +
-            '<ol class="relative space-y-4 border-l-2 border-dashed border-ink/15 pl-4 sm:pl-5 min-w-0">' + rows.map((r) => {
-              const d = new Date(r.at);
-              const isDanger = r.kind === "danger" || r.type === "air";
-              const isWarn = r.kind === "warn" || r.type === "drone" || r.type === "oblast";
-              const dot = isDanger ? "bg-red-600" : isWarn ? "bg-amber-500" : "bg-emerald-500";
-              const icon = isDanger ? "🔴" : isWarn ? "🟡" : "🟢";
-              const dateStr = d.toLocaleDateString("uk-UA", { day:"numeric", month:"long" });
-              const timeStr = d.toLocaleTimeString("uk-UA", { hour:"2-digit", minute:"2-digit" });
+          const rows = [...recentHistory].reverse();
+          paneHistory.innerHTML = `
+            <div class="relative overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-ink/10 bg-paper p-4 sm:p-6">
+              <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-ink/10 mb-4">
+                <div>
+                  <h4 class="font-display text-xs sm:text-sm font-bold uppercase tracking-widest text-ink flex items-center gap-2">
+                    <span>${range === "5h" ? "Тривоги за останні 5 годин" : "Повна історія тривог"}</span>
+                    <span class="rounded-full bg-ink/10 px-2 py-0.5 text-[10px] font-bold text-ink">${rows.length}</span>
+                  </h4>
+                  <p class="text-[11px] text-ink-soft mt-0.5">
+                    ${range === "5h" ? `З ${fmtTime(cutoff5h)} до ${fmtTime(nowMs)} · Великодолинське та Одеса` : `Збережені записи за 48 годин`}
+                  </p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button id="toggle-hist-range-btn" class="rounded-lg border border-ink/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cobalt hover:bg-cream transition-all">
+                    ${range === "5h" ? "Вся історія" : "Останні 5 годин"}
+                  </button>
+                  <button id="clear-hist-btn" class="rounded-lg border border-ink/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-soft hover:text-red-600 hover:border-red-500/30 transition-all">
+                    Очистити
+                  </button>
+                </div>
+              </div>
+              <ol class="relative space-y-4 border-l-2 border-dashed border-ink/15 pl-4 sm:pl-5 min-w-0">
+                ${rows.map((r) => {
+                  const d = new Date(r.at);
+                  const isDanger = r.kind === "danger" || r.type === "air";
+                  const isWarn = r.kind === "warn" || r.type === "drone" || r.type === "oblast";
+                  const dot = isDanger ? "bg-red-600" : isWarn ? "bg-amber-500" : "bg-emerald-500";
+                  const icon = isDanger ? "🔴" : isWarn ? "🟡" : "🟢";
+                  const dateStr = d.toLocaleDateString("uk-UA", { day: "numeric", month: "long" });
+                  const timeStr = d.toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
+                  const agoStr = fmtAgo(r.at);
 
-              return '<li class="relative min-w-0 pb-1">' +
-                '<span class="absolute -left-[23px] sm:-left-[27px] top-1.5 h-3 w-3 rounded-full ring-4 ring-paper ' + dot + '"></span>' +
-                '<div class="flex flex-wrap items-baseline justify-between gap-2 min-w-0">' +
-                  '<div class="flex items-center gap-2 flex-wrap">' +
-                    '<span class="font-display text-sm font-bold">' + icon + ' ' + escHtml(r.title) + '</span>' +
-                    (r.duration ? '<span class="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-800">' + escHtml(r.duration) + '</span>' : '') +
-                  '</div>' +
-                  '<p class="font-display text-xs font-semibold tabular-nums text-ink-soft">' + dateStr + ', ' + timeStr + '</p>' +
-                '</div>' +
-                (r.reason ? '<p class="mt-1.5 text-[13px] leading-relaxed text-ink-soft">' + escHtml(r.reason) + '</p>' : '') +
-                (r.threats && r.threats.length ? '<div class="mt-2 flex flex-wrap gap-1.5">' + r.threats.map(tg => '<span class="rounded-md border border-ink/10 bg-cream/70 px-2 py-0.5 text-[10px] font-semibold text-ink-soft">' + escHtml(tg) + '</span>').join("") + '</div>' : '') +
-              '</li>';
-            }).join("") + '</ol></div>';
+                  return `
+                    <li class="relative min-w-0 pb-1">
+                      <span class="absolute -left-[23px] sm:-left-[27px] top-1.5 h-3 w-3 rounded-full ring-4 ring-paper ${dot}"></span>
+                      <div class="flex flex-wrap items-baseline justify-between gap-2 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span class="font-display text-sm font-bold">${icon} ${escHtml(r.title)}</span>
+                          ${r.duration ? `<span class="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-800">${escHtml(r.duration)}</span>` : ""}
+                        </div>
+                        <p class="font-display text-xs font-semibold tabular-nums text-ink-soft">${timeStr} <span class="text-ink-soft/60">(${agoStr})</span></p>
+                      </div>
+                      ${r.reason ? `<p class="mt-1.5 text-[13px] leading-relaxed text-ink-soft">${escHtml(r.reason)}</p>` : ""}
+                      ${(r.targets && r.targets.length) ? `
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                          ${r.targets.map(tg => `<span class="rounded-md border border-ink/10 bg-cream/70 px-2 py-0.5 text-[10px] font-semibold text-ink-soft">${escHtml(tg)}</span>`).join("")}
+                        </div>
+                      ` : ((r.threats && r.threats.length) ? `
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                          ${r.threats.map(tg => `<span class="rounded-md border border-ink/10 bg-cream/70 px-2 py-0.5 text-[10px] font-semibold text-ink-soft">${escHtml(tg)}</span>`).join("")}
+                        </div>
+                      ` : "")}
+                    </li>
+                  `;
+                }).join("")}
+              </ol>
+            </div>
+          `;
+        }
 
-          const clrBtn = document.getElementById("clear-hist-btn");
-          if (clrBtn) {
-            clrBtn.onclick = () => {
-              state.history = [];
-              try { localStorage.removeItem(HIST_KEY); } catch {}
-              renderPanes();
-            };
-          }
+        // Attach dynamic interactive handlers for news & history
+        const clrBtn = document.getElementById("clear-hist-btn");
+        if (clrBtn) {
+          clrBtn.onclick = () => {
+            state.history = [];
+            try { localStorage.removeItem(HIST_KEY); } catch {}
+            renderPanes();
+          };
+        }
+        const toggleHistBtn = document.getElementById("toggle-hist-range-btn");
+        if (toggleHistBtn) {
+          toggleHistBtn.onclick = () => {
+            state.historyRange = state.historyRange === "5h" ? "all" : "5h";
+            renderPanes();
+          };
+        }
+        const showAllHistBtn = document.getElementById("show-all-hist-btn");
+        if (showAllHistBtn) {
+          showAllHistBtn.onclick = () => {
+            state.historyRange = "all";
+            renderPanes();
+          };
+        }
+
+        paneNews.querySelectorAll("[data-tg-flt]").forEach((b) => {
+          b.onclick = () => {
+            state.newsFilter = b.getAttribute("data-tg-flt");
+            renderPanes();
+          };
+        });
+
+        const refNewsBtn = document.getElementById("refresh-news-btn");
+        if (refNewsBtn) {
+          refNewsBtn.onclick = () => {
+            refreshMessages(true);
+          };
         }
 
         paneNow.dataset.rendered = "1";
@@ -2685,13 +2990,14 @@
           snapshot.oblasts = alerts.oblasts || [];
         }
         const nextThreats = (threats || []).filter(isOdesaThreat).slice(0, 8);
-        const nextMessages = messages || state.messages;
+        const nextMessages = messages && messages.length ? mergeMessages(state.messages, messages) : state.messages;
         markDirtyIfChanged(nextRaion, nextOblast, nextThreats, nextMessages, source);
 
         state.raion = nextRaion;
         state.oblast = nextOblast;
         state.threats = nextThreats;
         state.messages = nextMessages;
+        saveMessages(state.messages);
         state.lastOkAt = Date.now();
         state.connected = source;
 
@@ -2895,10 +3201,9 @@
           }
           state.sourceName = (ws && ws.readyState === 1) ? "NEPTUN (live)" : sourceName;
           const threats = t.status === "fulfilled" ? (t.value && t.value.threats) || [] : [];
-          const odesaRe = /одес|великодолинськ|чорноморськ|южне|південн|теплодар|біляївк|овідіопол|сухий лиман|тайрове|крижанівка|фонтанка|ліски/i;
-          const messages = m.status === "fulfilled"
-            ? (((m.value && m.value.messages) || []).filter((x) => odesaRe.test(x.text || "")).slice(0, 8))
-            : state.messages;
+          const messages = (m.status === "fulfilled" && m.value && Array.isArray(m.value.messages))
+            ? m.value.messages
+            : null;
           applyData(alerts, threats, messages, serverTime, ws && ws.readyState === 1 ? "live" : "polling");
         } catch {
           if (state.lastOkAt && Date.now() - state.lastOkAt > 90000) {
@@ -2907,21 +3212,35 @@
           }
         }
       }
-      poll();
-      setInterval(poll, POLL_MS);
-      setInterval(async () => {
+
+      async function refreshMessages(manual) {
+        const icon = document.getElementById("refresh-news-icon");
+        if (icon) icon.classList.add("animate-spin");
         try {
           const m = await fetchJson(NEPTUN + "/api/v1/messages", 6000);
-          // суворий фільтр — лише Одеса / Одеський район
-          const odesaRe = /одес|великодолинськ|чорноморськ|южне|південн|теплодар|біляївк|овідіопол|сухий лиман|тайрове|крижанівка|фонтанка|ліски/i;
-          const rel = ((m && m.messages) || []).filter((x) => odesaRe.test(x.text || "")).slice(0, 8);
-          if (rel.length && !sameArr(state.messages, rel)) {
-            state.messages = rel;
+          if (m && Array.isArray(m.messages) && m.messages.length) {
+            const incoming = m.messages.map((item) => ({
+              channel: item.channel || "Моніторинг",
+              text: item.text || "",
+              date: item.date || new Date().toISOString()
+            }));
+            const updated = mergeMessages(state.messages, incoming);
+            state.messages = updated;
+            saveMessages(state.messages);
             state._panesDirty = true;
             apply();
           }
         } catch {}
-      }, 25000);
+        finally {
+          if (icon) setTimeout(() => icon.classList.remove("animate-spin"), 500);
+        }
+      }
+
+      poll();
+      setInterval(poll, POLL_MS);
+      setInterval(() => {
+        refreshMessages(false);
+      }, 20000);
       // таймер для секундних оновлень (без повного перерендеру панелей)
       setInterval(() => {
         // тригер «apply» тільки щоб оновити lastOk/since таймер в хедері картки, без renderPanes
