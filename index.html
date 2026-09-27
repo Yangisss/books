@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <meta name="description" content="Мої предмети, розклад і підручники · Великодолинська школа №2 · 2026/2027" />
     <title>Мої предмети · Великодолинська школа №2</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -2096,6 +2099,14 @@
       const sinceBig = el("air-since-big");
       const sinceSmall = el("air-since-small");
       const lastOk = el("air-last-ok");
+      if (lastOk) {
+        lastOk.style.cursor = "pointer";
+        lastOk.title = "Натисніть для негайного оновлення";
+        lastOk.addEventListener("click", () => {
+          lastOk.textContent = "оновлюємо…";
+          poll();
+        });
+      }
 
       const paneNow = el("air-pane-now");
       const paneThreats = el("air-pane-threats");
@@ -2177,15 +2188,30 @@
         const r = (t.region || "").toLowerCase();
         const d = (t.district || "").toLowerCase();
         const l = (t.locality || "").toLowerCase();
-        if (r.includes("одес")) return true;
-        if (d.includes("одес")) return true;
-        if (/одес|чорномор|южне|білгор/.test(l)) return true;
+        const desc = (t.explanationShort || t.explanation || "").toLowerCase();
+        const odesaKeywords = /одес|великодол|чорномор|южне|південн|теплодар|біляїв|овідіопол|сухий лиман|тайров|фонтанка/;
+        if (odesaKeywords.test(r) || odesaKeywords.test(d) || odesaKeywords.test(l) || odesaKeywords.test(desc)) return true;
         if (t.areaOnly && (r.includes("микола") || r.includes("херсон"))) return true;
         return false;
       }
-      function matchAlert(list, key) {
+      function matchRaionAlert(list) {
         if (!Array.isArray(list)) return null;
-        return list.find((r) => r && r.key === key) || null;
+        return list.find((r) => {
+          if (!r) return false;
+          const k = String(r.key || r.id || "").toLowerCase();
+          const n = String(r.name || "").toLowerCase();
+          return k === "odeska:odeskyi" || k === "odeskyi" || k === "odesa" ||
+                 (n.includes("одеськ") && (n.includes("район") || n.includes("громад") || n.includes("одеса")));
+        }) || null;
+      }
+      function matchOblastAlert(list) {
+        if (!Array.isArray(list)) return null;
+        return list.find((r) => {
+          if (!r) return false;
+          const k = String(r.key || r.id || "").toLowerCase();
+          const n = String(r.name || "").toLowerCase();
+          return k === "odeska" || k === "odesa" || n.includes("одеськ");
+        }) || null;
       }
       function threatLabel(type) {
         const map = {
@@ -2262,27 +2288,41 @@
           };
         }
 
-        // 2. ТРИВОГА В МЕЖАХ ОБЛАСТІ (але в Одеському районі відбій):
+        // 2. ТРИВОГА В МЕЖАХ ОБЛАСТІ:
         if (inOblast) {
-          const isDroneOb = drones.length > 0 || hasDroneMsg;
-          const reason = isDroneOb
-            ? `Дронова небезпека в Одеській області (${drones.length ? drones.length + " БпЛА" : "Шахеди"}).`
-            : "Тривога в окремих районах Одеської області.";
-
-          return {
-            code: "oblast",
-            tone: "warn", // ЖОВТИЙ
-            kind: "oblast",
-            title: isDroneOb ? "Дронова небезпека в області" : "Тривога в Одеській області",
-            shortTitle: "Тривога в області",
-            badge: "Тривога в області",
-            reason: reason + " В Одеському районі наразі тихо, але зберігається загроза поширення.",
-            sub: "У межах області триває тривога. В Одеському районі сирени немає, але будьте готові до сигналу.",
-            strong: "Поки що не виходь завчасно",
-            soft: "Зачекай відбою по області та слідкуй за оновленнями.",
-            goto: "wait",
-            threats: odesaThreats,
-          };
+          const isDroneOb = (drones.length > 0 || hasDroneMsg) && (missiles.length === 0 && !hasMissileMsg);
+          if (isDroneOb) {
+            return {
+              code: "drone",
+              tone: "warn", // ЖОВТИЙ
+              kind: "drone",
+              title: "Дронова небезпека · Одеська область",
+              shortTitle: "Дронова небезпека",
+              badge: "Дронова небезпека",
+              reason: `Дронова небезпека в Одеській області (${drones.length ? drones.length + " БпЛА" : "Шахеди"}). Загроза для Одеського району.`,
+              sub: "Оголошено сигнал через ударні дрони (Шахеди). Перебувайте в безпечному місці, подалі від вікон.",
+              strong: "Увага: дронова небезпека",
+              soft: "До школи зараз не йти. Не перебувайте на відкритій місцевості.",
+              goto: "no",
+              threats: drones.length ? drones : odesaThreats,
+            };
+          } else {
+            const mList = missiles.map((m) => threatLabel(m.type)).join(", ");
+            return {
+              code: "air",
+              tone: "danger", // ЧЕРВОНИЙ
+              kind: "air",
+              title: "Повітряна тривога · Одеська область",
+              shortTitle: "Повітряна тривога",
+              badge: "Повітряна тривога",
+              reason: missiles.length ? `Ракетна загроза (${mList}) в Одеській області.` : "Офіційний сигнал повітряної тривоги в Одеській області.",
+              sub: "У межах області оголошено тривогу. Лунає сирена — негайно переходьте в укриття!",
+              strong: "До школи НЕ йти — в укриття!",
+              soft: "Прямуйте до сховища або дотримуйтесь правила двох стін.",
+              goto: "no",
+              threats: missiles.length ? missiles : odesaThreats,
+            };
+          }
         }
 
         // 3. ТРИВОГИ В РАЙОНІ ТА ОБЛАСТІ НЕМАЄ:
@@ -2407,7 +2447,8 @@
           sinceWrap.classList.add("hidden");
         }
         if (state.lastOkAt) {
-          lastOk.textContent = "оновлено " + new Date(state.lastOkAt).toLocaleTimeString("uk-UA", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+          const src = state.sourceName ? " · " + state.sourceName : "";
+          lastOk.textContent = "оновлено " + new Date(state.lastOkAt).toLocaleTimeString("uk-UA", { hour:"2-digit", minute:"2-digit", second:"2-digit" }) + src;
         } else {
           lastOk.textContent = stale ? "дані застаріли — перевір з'єднання" : "підключення…";
         }
@@ -2618,8 +2659,8 @@
 
       // ---- networking ----
       function applyData(alerts, threats, messages, serverTime, source) {
-        const nextRaion = matchAlert(alerts.raions, WATCH.raionKey);
-        const nextOblast = matchAlert(alerts.oblasts, WATCH.oblastKey);
+        const nextRaion = matchRaionAlert(alerts?.raions);
+        const nextOblast = matchOblastAlert(alerts?.oblasts);
         const nextThreats = (threats || []).filter(isOdesaThreat).slice(0, 8);
         const nextMessages = messages || state.messages;
         markDirtyIfChanged(nextRaion, nextOblast, nextThreats, nextMessages, source);
@@ -2694,9 +2735,12 @@
         try {
           const j = await fetchJson(UBILLING, 7000);
           const ob = j && j.states && j.states["Одеська область"];
+          const isAlert = !!(ob && ob.alertnow);
           return {
-            raions: [],
-            oblasts: ob && ob.alertnow
+            raions: isAlert
+              ? [{ key: WATCH.raionKey, name: "Одеський район", oblast: "Одеська область", since: ob.changed }]
+              : [],
+            oblasts: isAlert
               ? [{ key: WATCH.oblastKey, name: "Одеська область", oblast: "", since: ob.changed }]
               : [],
           };
@@ -2754,6 +2798,7 @@
           ]);
           let alerts;
           let serverTime = null;
+          let sourceName = "NEPTUN";
           if (a.status === "fulfilled") {
             alerts = { raions: (a.value && a.value.raions) || [], oblasts: (a.value && a.value.oblasts) || [] };
             serverTime = a.value && a.value.serverTime;
@@ -2761,7 +2806,9 @@
             const fb = await ubillFallback();
             if (!fb) throw new Error("alerts down");
             alerts = fb;
+            sourceName = "UBilling";
           }
+          state.sourceName = (ws && ws.readyState === 1) ? "NEPTUN (live)" : sourceName;
           const threats = t.status === "fulfilled" ? (t.value && t.value.threats) || [] : [];
           const odesaRe = /одес|великодолинськ|чорноморськ|южне|південн|теплодар|біляївк|овідіопол|сухий лиман|тайрове|крижанівка|фонтанка|ліски/i;
           const messages = m.status === "fulfilled"
