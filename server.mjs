@@ -241,9 +241,10 @@ const server = createServer(async (req, res) => {
     }
 
     /* -------- статика сайту -------- */
-    if (req.method === "GET" && (route === "/" || route === "/index.html")) {
+    if ((req.method === "GET" || req.method === "HEAD") && (route === "/" || route === "/index.html")) {
       const html = await readFile(join(ROOT, "index.html"));
       res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
+      if (req.method === "HEAD") return res.end();
       return res.end(html);
     }
 
