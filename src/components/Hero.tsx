@@ -34,7 +34,6 @@ function ClassSelect() {
   );
 }
 
-/* Режим власника: лише з кодом можна додавати/видаляти книги на спільному сервері */
 function AdminButton() {
   const [on, setOn] = useState(() => !!getAdminKey() || !isShared());
   useEffect(() => {
@@ -46,7 +45,7 @@ function AdminButton() {
       window.removeEventListener("vdsh2-probed", h);
     };
   }, []);
-  if (isStatic() && !isShared()) return null; // спільна полиця з GitHub — додає лише власник скриптом
+  if (isStatic() && !isShared()) return null;
   const toggle = async () => {
     if (isShared() && getAdminKey()) {
       setAdminKey("");
@@ -81,7 +80,6 @@ function AdminButton() {
 const todayShort = () =>
   ["Неділя", "Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота"][new Date().getDay()];
 
-/* субота/неділя — уроків немає, тому кнопки «Розклад на …» не існує */
 const isWeekend = () => {
   const g = new Date().getDay();
   return g === 0 || g === 6;
@@ -162,7 +160,13 @@ function Marquee() {
   );
 }
 
-export default function Hero() {
+export default function Hero({
+  onNavigate,
+  hideTopBar = false,
+}: {
+  onNavigate?: (tab: "alerts" | "schedule" | "subjects") => void;
+  hideTopBar?: boolean;
+}) {
   const { label: clsLabel } = useClassInfo();
   const greeting = getGreeting(new Date().getHours());
 
@@ -180,31 +184,35 @@ export default function Hero() {
         }}
       />
 
-      <div className="relative mx-auto flex min-h-svh max-w-7xl flex-col px-6 pb-16 pt-6">
-        {/* top bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-ink shadow-lg">
-              <span className="absolute left-0 top-0 h-1/2 w-full bg-cobalt/90" />
-              <span className="absolute bottom-0 left-0 h-1/2 w-full bg-sun/90" />
-              <span className="relative font-display text-sm font-bold text-white mix-blend-difference">11</span>
+      <div
+        className={`relative mx-auto flex max-w-7xl flex-col px-6 pb-16 ${hideTopBar ? "pt-10 lg:pt-14 min-h-[calc(100svh-64px)] lg:min-h-[calc(100svh-72px)]" : "min-h-svh pt-6"}`}
+      >
+        {/* top bar - ховаємо коли є зовнішній TopNav */}
+        {!hideTopBar && (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-ink shadow-lg">
+                <span className="absolute left-0 top-0 h-1/2 w-full bg-cobalt/90" />
+                <span className="absolute bottom-0 left-0 h-1/2 w-full bg-sun/90" />
+                <span className="relative font-display text-sm font-bold text-white mix-blend-difference">11</span>
+              </div>
+              <div className="leading-tight">
+                <p className="font-display text-xs font-bold uppercase tracking-widest">Мої предмети</p>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-ink-soft">
+                  Великодолинська школа №2 · 2026/27
+                </p>
+              </div>
             </div>
-            <div className="leading-tight">
-              <p className="font-display text-xs font-bold uppercase tracking-widest">Мої предмети</p>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-ink-soft">
-                Великодолинська школа №2 · 2026/27
-              </p>
+            <div className="flex items-center gap-2">
+              <ClassSelect />
+              <AdminButton />
+              <AirAlertPill />
+              <div className="hidden lg:block">
+                <LiveClock />
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <ClassSelect />
-            <AdminButton />
-            <AirAlertPill />
-            <div className="hidden lg:block">
-              <LiveClock />
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* main */}
         <div className="grid flex-1 items-center gap-14 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:py-8">
@@ -254,21 +262,44 @@ export default function Hero() {
             </p>
 
             <div className="anim-fade-up mt-9 flex flex-wrap items-center gap-4" style={{ animationDelay: "0.4s" }}>
-              <a
-                href="#predmety"
-                className="group flex items-center gap-3 rounded-full bg-ink px-7 py-4 font-display text-xs font-bold uppercase tracking-widest text-cream shadow-[0_20px_40px_-15px_rgba(23,20,12,0.6)] transition-all duration-300 hover:-translate-y-1 hover:bg-cobalt hover:shadow-[0_24px_45px_-15px_rgba(39,67,217,0.6)]"
-              >
-                Дивитися всі {bookSubjects.length}
-                <ArrowDown className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
-              </a>
-              {!isWeekend() && (
-                <a
-                  href="#rozklad"
-                  className="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur-none sm:backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt"
-                >
-                  <CalendarDays className="h-4 w-4 text-cobalt" />
-                  Розклад на {todayShort()}
-                </a>
+              {onNavigate ? (
+                <>
+                  <button
+                    onClick={() => onNavigate("subjects")}
+                    className="group flex items-center gap-3 rounded-full bg-ink px-7 py-4 font-display text-xs font-bold uppercase tracking-widest text-cream shadow-[0_20px_40px_-15px_rgba(23,20,12,0.6)] transition-all duration-300 hover:-translate-y-1 hover:bg-cobalt hover:shadow-[0_24px_45px_-15px_rgba(39,67,217,0.6)]"
+                  >
+                    Дивитися всі {bookSubjects.length}
+                    <ArrowDown className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
+                  </button>
+                  {!isWeekend() && (
+                    <button
+                      onClick={() => onNavigate("schedule")}
+                      className="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur-none sm:backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt"
+                    >
+                      <CalendarDays className="h-4 w-4 text-cobalt" />
+                      Розклад на {todayShort()}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <a
+                    href="#predmety"
+                    className="group flex items-center gap-3 rounded-full bg-ink px-7 py-4 font-display text-xs font-bold uppercase tracking-widest text-cream shadow-[0_20px_40px_-15px_rgba(23,20,12,0.6)] transition-all duration-300 hover:-translate-y-1 hover:bg-cobalt hover:shadow-[0_24px_45px_-15px_rgba(39,67,217,0.6)]"
+                  >
+                    Дивитися всі {bookSubjects.length}
+                    <ArrowDown className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
+                  </a>
+                  {!isWeekend() && (
+                    <a
+                      href="#rozklad"
+                      className="group flex items-center gap-2.5 rounded-full border border-ink/15 bg-white/70 px-6 py-4 font-display text-xs font-bold uppercase tracking-widest text-ink backdrop-blur-none sm:backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-cobalt/40 hover:text-cobalt"
+                    >
+                      <CalendarDays className="h-4 w-4 text-cobalt" />
+                      Розклад на {todayShort()}
+                    </a>
+                  )}
+                </>
               )}
               <div className="flex items-center gap-2 text-[13px] font-semibold leading-snug text-ink-soft sm:text-sm">
                 <Sparkles className="h-4 w-4 shrink-0 text-sun" />

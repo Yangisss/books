@@ -56,13 +56,26 @@
         padding-bottom: 0;
       }
       @media (max-width: 639px) {
-        body { padding-bottom: 56px; } /* місце під нижню панель */
         .float-card { display: none !important; }
         .marquee-wrap { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
       }
-      .nav-link.active {
+      .site-tab.active {
         background: #17140c;
         color: #f6f3ea;
+        box-shadow: 0 10px 24px -12px rgba(23,20,12,0.6);
+      }
+      .site-tab:not(.active) {
+        color: #6b6555;
+      }
+      .site-tab:not(.active):hover {
+        background: rgba(23,20,12,0.05);
+        color: #17140c;
+      }
+      @media (max-width: 1023px) {
+        .site-tab:not(.active) {
+          border: 1px solid rgba(23,20,12,0.1);
+          background: rgba(255,255,255,0.7);
+        }
       }
       /* «11-А» — мітка, вона не ламатися на дві частини */
       [data-cls-num] { white-space: nowrap; }
@@ -280,34 +293,67 @@
         </div>
       </header>
 
-      <!-- Єдина навігація по сайту: унизу на телефоні, зверху на десктопі -->
-      <nav id="site-nav" class="fixed bottom-0 left-0 right-0 z-50 border-t border-ink/10 bg-cream/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] sm:sticky sm:top-0 sm:bottom-auto sm:border-b sm:border-t-0">
-        <div class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 py-2">
-          <a href="#" data-nav="top" class="nav-link group hidden items-center gap-2 shrink-0 sm:inline-flex">
-            <div class="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl bg-ink shadow">
+      <!-- Нова навігація: зверху, зручні вкладки замість шторки знизу -->
+      <nav id="site-nav" class="sticky top-0 z-40 w-full border-b border-ink/10 bg-cream/90 backdrop-blur-xl supports-[backdrop-filter]:bg-cream/75">
+        <div class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2.5 sm:px-6 sm:py-3">
+          <button data-site-tab="home" class="group flex items-center gap-2.5 text-left">
+            <div class="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-ink shadow-md transition-transform group-hover:scale-105 sm:h-10 sm:w-10 sm:rounded-2xl">
               <span class="absolute left-0 top-0 h-1/2 w-full bg-cobalt/90"></span>
               <span class="absolute bottom-0 left-0 h-1/2 w-full bg-sun/90"></span>
               <span class="relative font-display text-[11px] font-bold text-white mix-blend-difference">11</span>
             </div>
-            <span class="font-display text-[11px] font-bold uppercase tracking-widest">Мої предмети</span>
-          </a>
-          <div class="flex items-center justify-around w-full sm:w-auto sm:gap-1.5 overflow-x-auto no-scrollbar">
-            <a href="#trygoga" data-nav="trygoga" class="nav-link flex-1 sm:flex-none shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full px-3 sm:px-3.5 py-1.5 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
-              <svg class="icon h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
-              <span>Тривога</span>
-            </a>
-            <a href="#rozklad" data-nav="rozklad" class="nav-link flex-1 sm:flex-none shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full px-3 sm:px-3.5 py-1.5 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
-              <svg class="icon h-3.5 w-3.5"><use href="#i-calendar"></use></svg>
-              <span>Розклад</span>
-            </a>
-            <a href="#predmety" data-nav="predmety" class="nav-link flex-1 sm:flex-none shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full px-3 sm:px-3.5 py-1.5 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
-              <svg class="icon h-3.5 w-3.5"><use href="#i-book-open"></use></svg>
-              <span>Предмети</span>
-            </a>
-            <a href="#" data-nav="top" class="nav-link flex-1 sm:hidden shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
+            <span class="hidden sm:block leading-tight">
+              <span class="block font-display text-[11px] font-extrabold uppercase tracking-widest">Мої предмети</span>
+              <span class="block text-[10px] font-semibold uppercase tracking-widest text-ink-soft">11-А · Школа №2</span>
+            </span>
+            <span class="font-display text-[12px] font-extrabold uppercase tracking-widest sm:hidden">11-А</span>
+          </button>
+
+          <!-- Десктоп вкладки — по центру, у пігулці -->
+          <div class="hidden lg:flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/60 p-1 shadow-sm backdrop-blur">
+            <button data-site-tab="home" class="site-tab flex items-center gap-1.5 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest transition-all">
               <svg class="icon h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-              <span>Вгору</span>
-            </a>
+              Головна
+            </button>
+            <button data-site-tab="trygoga" class="site-tab flex items-center gap-1.5 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest transition-all">
+              <svg class="icon h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+              Тривога
+              <span data-alert-dot class="hidden relative ml-0.5 h-2 w-2"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span><span class="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span></span>
+            </button>
+            <button data-site-tab="rozklad" class="site-tab flex items-center gap-1.5 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest transition-all">
+              <svg class="icon h-3.5 w-3.5"><use href="#i-calendar"></use></svg>
+              Розклад
+            </button>
+            <button data-site-tab="predmety" class="site-tab flex items-center gap-1.5 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest transition-all">
+              <svg class="icon h-3.5 w-3.5"><use href="#i-book-open"></use></svg>
+              Предмети
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="hidden sm:inline-flex items-center gap-1 rounded-full bg-white/60 border border-ink/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-ink-soft">2026/27</span>
+            <a id="site-nav-clock" class="hidden lg:flex items-center gap-2 rounded-full border border-ink/10 bg-white/70 px-3.5 py-2 text-[11px] font-bold tabular-nums tracking-widest shadow-sm"></a>
+          </div>
+        </div>
+        <!-- Мобільні вкладки — окремий ряд, великі зручні пігулки -->
+        <div class="border-t border-ink/5 bg-cream/60 backdrop-blur lg:hidden">
+          <div class="no-scrollbar flex items-center gap-1.5 overflow-x-auto px-2 py-2">
+            <button data-site-tab="home" class="site-tab shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2.5 font-display text-[11px] font-bold uppercase tracking-widest transition-all" style="min-height:40px">
+              <svg class="icon h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              Головна
+            </button>
+            <button data-site-tab="trygoga" class="site-tab shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2.5 font-display text-[11px] font-bold uppercase tracking-widest transition-all" style="min-height:40px">
+              <svg class="icon h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+              Тривога
+            </button>
+            <button data-site-tab="rozklad" class="site-tab shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2.5 font-display text-[11px] font-bold uppercase tracking-widest transition-all" style="min-height:40px">
+              <svg class="icon h-4 w-4"><use href="#i-calendar"></use></svg>
+              Розклад
+            </button>
+            <button data-site-tab="predmety" class="site-tab shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2.5 font-display text-[11px] font-bold uppercase tracking-widest transition-all" style="min-height:40px">
+              <svg class="icon h-4 w-4"><use href="#i-book-open"></use></svg>
+              Предмети
+            </button>
           </div>
         </div>
       </nav>
@@ -1882,45 +1928,110 @@
       }, { threshold: 0.12 });
       document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
 
-      // ---- Scroll spy підсвічування активної вкладки навігації ----
-      (function navSpy() {
-        const sections = ["trygoga", "rozklad", "predmety"];
-        const links = Array.from(document.querySelectorAll(".nav-link"));
+      // ---- Нова навігація: вкладки зверху замість шторки знизу ----
+      (function siteTabs() {
+        const TAB_KEY = "vdsh2-site-tab";
+        const tabs = ["home", "trygoga", "rozklad", "predmety"];
+        const map = { home: "home", trygoga: "trygoga", rozklad: "rozklad", predmety: "predmety", alerts: "trygoga", schedule: "rozklad", subjects: "predmety" };
+        const header = document.querySelector("header");
+        if (header && !header.id) header.id = "home";
+        const els = {
+          home: document.getElementById("home"),
+          trygoga: document.getElementById("trygoga"),
+          rozklad: document.getElementById("rozklad"),
+          predmety: document.getElementById("predmety"),
+        };
+        const buttons = Array.from(document.querySelectorAll("[data-site-tab]"));
+        const clockEl = document.getElementById("site-nav-clock");
+
+        function getInitial() {
+          try {
+            const h = location.hash.replace("#", "");
+            if (map[h]) return map[h];
+            const saved = localStorage.getItem(TAB_KEY);
+            if (saved && tabs.includes(saved)) return saved;
+          } catch {}
+          return "home";
+        }
+        let active = getInitial();
+
         function setActive(id) {
-          links.forEach((a) => a.classList.toggle("active", a.getAttribute("data-nav") === id));
-        }
-        function current() {
-          const top = window.scrollY + window.innerHeight / 3;
-          if (window.scrollY < 180) return "top";
-          let cur = "predmety";
-          for (const id of sections) {
-            const el = document.getElementById(id);
-            if (el && el.offsetTop <= top) cur = id;
-          }
-          return cur;
-        }
-        function tick() { setActive(current()); }
-        window.addEventListener("scroll", tick, { passive: true });
-        window.addEventListener("load", tick);
-        // плавна прокрутка по якорю
-        links.forEach((a) => {
-          a.addEventListener("click", (e) => {
-            const href = a.getAttribute("href");
-            if (href && href.startsWith("#")) {
-              const target = href === "#" ? null : document.getElementById(href.slice(1));
-              e.preventDefault();
-              if (target) {
-                const isMobile = window.innerWidth < 640;
-                const offset = isMobile ? 16 : 72; // на телефоні панель знизу, на десктопі — зверху
-                const y = target.getBoundingClientRect().top + window.scrollY - offset;
-                window.scrollTo({ top: y, behavior: "smooth" });
-              } else {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }
+          active = id;
+          try { localStorage.setItem(TAB_KEY, id); } catch {}
+          buttons.forEach((b) => {
+            const tid = b.getAttribute("data-site-tab");
+            const norm = map[tid] || tid;
+            b.classList.toggle("active", norm === id);
+          });
+          Object.entries(els).forEach(([k, el]) => {
+            if (!el) return;
+            if (k === id) {
+              el.classList.remove("hidden");
+              el.classList.add("anim-fade-up");
+              // тригеримо reveal для анімацій всередині
+              el.querySelectorAll(".reveal").forEach((r) => {
+                r.classList.add("is-visible");
+              });
+            } else {
+              el.classList.add("hidden");
+              el.classList.remove("anim-fade-up");
             }
           });
+          // хедер для airbar — показуємо тільки якщо тривога активна, але сам airbar керується іншим скриптом
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          if (id === "home") {
+            history.replaceState(null, "", location.pathname);
+          } else {
+            history.replaceState(null, "", "#" + id);
+          }
+        }
+
+        buttons.forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const raw = btn.getAttribute("data-site-tab");
+            const id = map[raw] || raw;
+            if (tabs.includes(id)) setActive(id);
+          });
         });
-        tick();
+
+        // годинник у навігації
+        if (clockEl) {
+          const tickClock = () => {
+            const now = new Date();
+            clockEl.textContent = now.toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
+          };
+          tickClock();
+          setInterval(tickClock, 1000);
+        }
+
+        // глобальні кнопки всередині Hero (Дивитися всі, Розклад на ...) — переключають вкладки
+        document.addEventListener("click", (e) => {
+          const a = e.target.closest('a[href^="#"]');
+          if (!a) return;
+          const href = a.getAttribute("href");
+          if (!href) return;
+          const id = map[href.replace("#", "")];
+          if (id && tabs.includes(id)) {
+            e.preventDefault();
+            setActive(id);
+          }
+        });
+
+        setActive(active);
+
+        // підсвітка крапки тривоги в навігації
+        const dot = document.querySelector("[data-alert-dot]");
+        if (dot) {
+          const check = () => {
+            const bar = document.getElementById("airbar");
+            const isDanger = bar && !bar.classList.contains("hidden");
+            dot.classList.toggle("hidden", !isDanger);
+            dot.classList.toggle("flex", !!isDanger);
+          };
+          setInterval(check, 1000);
+          check();
+        }
       })();
     </script>
 
