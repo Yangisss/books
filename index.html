@@ -53,7 +53,22 @@
         text-rendering: optimizeLegibility;
         overflow-x: hidden;
         overflow-x: clip;
+        padding-bottom: 0;
       }
+      @media (max-width: 639px) {
+        body { padding-bottom: 64px; } /* місце під нижню панель */
+        .float-card { display: none !important; } /* літаючі картки у Hero ховаємо на телефоні (менше скролу) */
+        /* маркі ущільнюємо */
+        .marquee-wrap { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+      }
+      .nav-link.active {
+        background: #17140c;
+        color: #f6f3ea;
+      }
+      .mnav.active {
+        color: #2743d9;
+      }
+      .mnav.active svg { stroke: currentColor; }
       /* «11-А» — мітка, вона не ламатися на дві частини */
       [data-cls-num] { white-space: nowrap; }
       /* читалка: м'яке перелистування та підказки */
@@ -264,11 +279,61 @@
             </div>
           </div>
 
-          <div class="relative -mx-6 overflow-hidden bg-ink py-3.5 shadow-[0_20px_50px_-20px_rgba(23,20,12,0.5)] sm:rotate-[-1.4deg]">
+          <div class="marquee-wrap relative -mx-6 overflow-hidden bg-ink py-2.5 sm:py-3.5 shadow-[0_20px_50px_-20px_rgba(23,20,12,0.5)] sm:rotate-[-1.4deg]">
             <div id="marquee" class="flex w-max animate-marquee items-center gap-8 whitespace-nowrap"></div>
           </div>
         </div>
       </header>
+
+      <!-- Швидка навігація по сайту (sticky, щоб не гортати вниз) -->
+      <nav id="site-nav" class="sticky top-0 z-40 border-b border-ink/10 bg-cream/85 backdrop-blur-md">
+        <div class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 py-2">
+          <a href="#" class="group flex items-center gap-2 shrink-0">
+            <div class="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl bg-ink shadow">
+              <span class="absolute left-0 top-0 h-1/2 w-full bg-cobalt/90"></span>
+              <span class="absolute bottom-0 left-0 h-1/2 w-full bg-sun/90"></span>
+              <span class="relative font-display text-[11px] font-bold text-white mix-blend-difference">11</span>
+            </div>
+            <span class="hidden font-display text-[11px] font-bold uppercase tracking-widest sm:inline">Мої предмети</span>
+          </a>
+          <div class="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar">
+            <a href="#trygoga" data-nav="trygoga" class="nav-link shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 sm:px-3.5 py-1.5 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
+              <svg class="icon h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+              <span>Тривога</span>
+            </a>
+            <a href="#rozklad" data-nav="rozklad" class="nav-link shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 sm:px-3.5 py-1.5 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
+              <svg class="icon h-3.5 w-3.5"><use href="#i-calendar"></use></svg>
+              <span>Розклад</span>
+            </a>
+            <a href="#predmety" data-nav="predmety" class="nav-link shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 sm:px-3.5 py-1.5 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
+              <svg class="icon h-3.5 w-3.5"><use href="#i-book-open"></use></svg>
+              <span>Предмети</span>
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Нижня панель навігації (тільки на телефоні) -->
+      <nav id="mobile-bottom-nav" class="sm:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-ink/10 bg-cream/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]">
+        <div class="grid grid-cols-4">
+          <a href="#" data-mnav="top" class="mnav flex flex-col items-center gap-0.5 py-2.5 text-ink-soft transition-colors">
+            <svg class="icon h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span class="font-display text-[9px] font-bold uppercase tracking-widest">Головна</span>
+          </a>
+          <a href="#trygoga" data-mnav="trygoga" class="mnav flex flex-col items-center gap-0.5 py-2.5 text-ink-soft transition-colors">
+            <svg class="icon h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+            <span class="font-display text-[9px] font-bold uppercase tracking-widest">Тривога</span>
+          </a>
+          <a href="#rozklad" data-mnav="rozklad" class="mnav flex flex-col items-center gap-0.5 py-2.5 text-ink-soft transition-colors">
+            <svg class="icon h-5 w-5"><use href="#i-calendar"></use></svg>
+            <span class="font-display text-[9px] font-bold uppercase tracking-widest">Розклад</span>
+          </a>
+          <a href="#predmety" data-mnav="predmety" class="mnav flex flex-col items-center gap-0.5 py-2.5 text-ink-soft transition-colors">
+            <svg class="icon h-5 w-5"><use href="#i-book-open"></use></svg>
+            <span class="font-display text-[9px] font-bold uppercase tracking-widest">Предмети</span>
+          </a>
+        </div>
+      </nav>
 
       <!-- Смуга повітряної тривоги (з'являється автоматично при небезпеці) -->
       <div id="airbar" class="hidden relative overflow-hidden bg-emerald-600 py-2.5 sm:py-3 px-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] text-white shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)]">
@@ -383,7 +448,7 @@
           </p>
         </section>
 
-        <section id="rozklad" class="relative mx-auto max-w-7xl px-6 pb-10 pt-20">
+        <section id="rozklad" class="relative mx-auto max-w-7xl px-4 sm:px-6 pb-10 pt-14 sm:pt-20">
           <div class="reveal flex flex-wrap items-end justify-between gap-6">
             <div>
               <p class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-cobalt">
@@ -400,7 +465,7 @@
           <div id="schedule-body" class="mt-8 space-y-6"></div>
         </section>
 
-        <section id="predmety" class="relative mx-auto max-w-7xl px-6 pb-28 pt-20">
+        <section id="predmety" class="relative mx-auto max-w-7xl px-4 sm:px-6 pb-20 sm:pb-28 pt-14 sm:pt-20">
           <div id="section-head" class="reveal flex flex-wrap items-end justify-between gap-6">
             <div>
               <p class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-cobalt">
@@ -1846,6 +1911,51 @@
         });
       }, { threshold: 0.12 });
       document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+
+      // ---- Scroll spy підсвічування активної вкладки навігації ----
+      (function navSpy() {
+        const sections = ["trygoga", "rozklad", "predmety"];
+        const topLinks = Array.from(document.querySelectorAll(".nav-link"));
+        const botLinks = Array.from(document.querySelectorAll(".mnav"));
+        function setActive(id) {
+          topLinks.forEach((a) => a.classList.toggle("active", a.getAttribute("data-nav") === id));
+          botLinks.forEach((a) => {
+            const k = a.getAttribute("data-mnav");
+            a.classList.toggle("active", k === id);
+          });
+        }
+        function current() {
+          const top = window.scrollY + 120;
+          if (window.scrollY < 200) return "top";
+          let cur = "predmety";
+          for (const id of sections) {
+            const el = document.getElementById(id);
+            if (el && el.offsetTop <= top) cur = id;
+          }
+          return cur;
+        }
+        function tick() { setActive(current()); }
+        window.addEventListener("scroll", tick, { passive: true });
+        window.addEventListener("load", tick);
+        // плавна прокрутка по якорю
+        [...topLinks, ...botLinks].forEach((a) => {
+          a.addEventListener("click", (e) => {
+            const href = a.getAttribute("href");
+            if (href && href.startsWith("#")) {
+              const target = href === "#" ? null : document.getElementById(href.slice(1));
+              if (target) {
+                e.preventDefault();
+                const y = target.getBoundingClientRect().top + window.scrollY - 64;
+                window.scrollTo({ top: y, behavior: "smooth" });
+              } else if (href === "#") {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
+            }
+          });
+        });
+        tick();
+      })();
     </script>
 
     <!-- ===========================================================
