@@ -423,29 +423,53 @@
               <span class="text-base transition-transform group-hover:scale-110">🗺️</span>
               <span id="toggle-map-text">Відкрити карту тривог</span>
             </button>
-            <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-soft/70">Інтерактивна онлайн-карта України</span>
+            <div class="flex items-center gap-2 text-[11px] font-bold">
+              <a href="https://neptun.in.ua/" target="_blank" rel="noopener noreferrer" class="text-cobalt hover:underline">NEPTUN ↗</a>
+              <span class="text-ink-soft/40">·</span>
+              <a href="https://alerts.in.ua/" target="_blank" rel="noopener noreferrer" class="text-cobalt hover:underline">alerts.in.ua ↗</a>
+              <span class="text-ink-soft/40">·</span>
+              <a href="https://map.ukrainealarm.com/" target="_blank" rel="noopener noreferrer" class="text-cobalt hover:underline">єТривога ↗</a>
+            </div>
           </div>
 
-          <div id="air-map-container" class="hidden mt-3 overflow-hidden rounded-[1.75rem] border border-ink/10 bg-paper p-3 shadow-md transition-all duration-300">
-            <div class="flex items-center justify-between pb-2.5 mb-2 border-b border-ink/10 px-1">
+          <div id="air-map-container" class="hidden mt-3 overflow-hidden rounded-[1.75rem] border border-ink/10 bg-paper p-3 sm:p-4 shadow-md transition-all duration-300">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-ink/10 px-1">
               <div class="flex items-center gap-2">
                 <span class="text-base">🗺️</span>
-                <span class="font-display text-xs font-bold uppercase tracking-wider text-ink">Онлайн-карта повітряних тривог</span>
+                <span class="font-display text-xs font-bold uppercase tracking-wider text-ink">Онлайн-карта повітряних тривог України</span>
                 <span class="relative flex h-2 w-2">
                   <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
                   <span class="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
                 </span>
-                <span class="text-[9.5px] font-bold uppercase tracking-wider text-ink-soft">наживо</span>
+                <span class="text-[9.5px] font-bold uppercase tracking-wider text-red-600">наживо</span>
               </div>
-              <button id="close-map-btn" type="button" class="inline-flex items-center gap-1 rounded-xl border border-ink/10 bg-cream/70 px-2.5 py-1 text-[11px] font-bold text-ink-soft hover:text-ink hover:bg-cream transition-all" aria-label="Закрити карту">
-                <span>✕</span> <span>Закрити</span>
-              </button>
+              <div class="flex items-center gap-1.5">
+                <button id="refresh-map-btn" type="button" class="inline-flex items-center gap-1 rounded-xl border border-ink/10 bg-cream/70 px-2.5 py-1 text-[11px] font-bold text-ink-soft hover:text-ink hover:bg-cream transition-all" title="Перезавантажити карту">
+                  <span>🔄</span> <span class="hidden sm:inline">Оновити</span>
+                </button>
+                <a href="https://neptun.in.ua/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-xl border border-ink/10 bg-cream/70 px-2.5 py-1 text-[11px] font-bold text-cobalt hover:bg-cream transition-all" title="Відкрити карту у повноекранному режимі">
+                  <span>⤢</span> <span class="hidden sm:inline">Повний екран</span>
+                </a>
+                <button id="close-map-btn" type="button" class="inline-flex items-center gap-1 rounded-xl border border-ink/10 bg-cream/70 px-2.5 py-1 text-[11px] font-bold text-ink-soft hover:text-ink hover:bg-cream transition-all" aria-label="Закрити карту">
+                  <span>✕</span> <span>Закрити</span>
+                </button>
+              </div>
             </div>
-            <div class="relative w-full overflow-hidden rounded-2xl bg-slate-950" style="height:400px">
-              <iframe id="air-map-frame" src="" data-src="https://neptun.in.ua/embed/map?lang=uk" class="w-full h-full border-0 rounded-2xl" title="Карта повітряних тривог України — NEPTUN" loading="lazy"></iframe>
+
+            <!-- Рамка з картою -->
+            <div class="relative w-full overflow-hidden rounded-2xl bg-slate-950 shadow-inner" style="height: 480px; min-height: 380px;">
+              <iframe id="air-map-frame" src="about:blank" data-src="https://neptun.in.ua/embed/map?lang=uk" class="w-full h-full border-0 rounded-2xl" title="Карта повітряних тривог України — NEPTUN" allow="geolocation; fullscreen" loading="lazy"></iframe>
             </div>
-            <div class="mt-2.5 flex items-center justify-between px-1 text-[10px] text-ink-soft">
-              <a href="https://neptun.in.ua/" target="_blank" rel="noopener noreferrer" class="hover:underline text-cobalt font-bold">Джерело: NEPTUN ↗</a>
+
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] text-ink-soft">
+              <div class="flex items-center gap-2">
+                <span>Прямі посилання:</span>
+                <a href="https://neptun.in.ua/" target="_blank" rel="noopener noreferrer" class="font-bold text-cobalt hover:underline">NEPTUN ↗</a>
+                <span class="text-ink-soft/40">·</span>
+                <a href="https://alerts.in.ua/" target="_blank" rel="noopener noreferrer" class="font-bold text-cobalt hover:underline">alerts.in.ua ↗</a>
+                <span class="text-ink-soft/40">·</span>
+                <a href="https://map.ukrainealarm.com/" target="_blank" rel="noopener noreferrer" class="font-bold text-cobalt hover:underline">єТривога ↗</a>
+              </div>
               <button id="close-map-bottom-btn" type="button" class="font-bold text-ink-soft hover:text-ink">Згорнути карту ▲</button>
             </div>
           </div>
@@ -2447,9 +2471,7 @@
         const counts = new Map();
         threatList.forEach((t) => {
           const lbl = threatLabel(t.type);
-          const loc = t.locality || t.district || "";
-          const key = loc ? `${lbl} (${loc})` : lbl;
-          counts.set(key, (counts.get(key) || 0) + 1);
+          counts.set(lbl, (counts.get(lbl) || 0) + 1);
         });
         return Array.from(counts.entries()).map(([name, count]) => {
           return count > 1 ? `${count} × ${name}` : name;
@@ -2477,8 +2499,7 @@
 
           if (isDronesOnly) {
             // ЖОВТИЙ СТАТУС: ДРОНОВА НЕБЕЗПЕКА
-            const dList = groupThreatLabels(drones).join(", ");
-            const reason = `Зафіксовано ${dList || "групу ударних БпЛА (Шахедів)"} курсом на Одеський район.`;
+            const reason = "Зафіксовано рух ударних БпЛА (Шахедів) курсом на Одеський район.";
 
             return {
               code: "drone",
@@ -2497,9 +2518,8 @@
           }
 
           // ЧЕРВОНИЙ СТАТУС: ПОВІТРЯНА ТРИВОГА (ракети, балістика, комбінований удар, сирена)
-          const mList = groupThreatLabels(missiles.length ? missiles : odesaThreats).join(", ");
           const reason = missiles.length
-            ? `Загроза ударів: ${mList}. Небезпека для Одеського району!`
+            ? "Ракетна загроза / небезпека ударів для Одеського району!"
             : (hasMissileMsg ? "Ракетна небезпека / загроза застосування балістичного озброєння." : "Офіційний сигнал повітряної тривоги ДСНС.");
 
           return {
@@ -2522,7 +2542,6 @@
         if (inOblast) {
           const isDroneOb = (drones.length > 0 || hasDroneMsg) && (missiles.length === 0 && !hasMissileMsg);
           if (isDroneOb) {
-            const dList = groupThreatLabels(drones).join(", ");
             return {
               code: "drone",
               tone: "warn", // ЖОВТИЙ
@@ -2530,7 +2549,7 @@
               title: "Дронова небезпека · Одеська область",
               shortTitle: "Дронова небезпека",
               badge: "Дронова небезпека",
-              reason: `Дронова небезпека в Одеській області (${dList || "Шахеди"}). Загроза для Одеського району.`,
+              reason: "Дронова небезпека в Одеській області — летять ударні БпЛА (Шахеди). Загроза для Одеського району.",
               sub: "Оголошено сигнал через ударні дрони (Шахеди). Перебувайте в безпечному місці, подалі від вікон.",
               strong: "Увага: дронова небезпека",
               soft: "До школи зараз не йти. Не перебувайте на відкритій місцевості.",
@@ -2538,7 +2557,6 @@
               threats: drones.length ? drones : odesaThreats,
             };
           } else {
-            const mList = groupThreatLabels(missiles.length ? missiles : odesaThreats).join(", ");
             return {
               code: "air",
               tone: "danger", // ЧЕРВОНИЙ
@@ -2546,7 +2564,7 @@
               title: "Повітряна тривога · Одеська область",
               shortTitle: "Повітряна тривога",
               badge: "Повітряна тривога",
-              reason: missiles.length ? `Ракетна загроза (${mList}) в Одеській області.` : "Офіційний сигнал повітряної тривоги в Одеській області.",
+              reason: missiles.length ? "Ракетна небезпека в межах Одеської області." : "Офіційний сигнал повітряної тривоги в Одеській області.",
               sub: "У межах області оголошено тривогу. Лунає сирена — негайно переходьте в укриття!",
               strong: "До школи НЕ йти — в укриття!",
               soft: "Прямуйте до сховища або дотримуйтесь правила двох стін.",
@@ -2559,11 +2577,16 @@
         // 3. ТРИВОГИ В РАЙОНІ ТА ОБЛАСТІ НЕМАЄ:
         // ВАЖЛИВО: КОЛІР ЗАВЖДИ ЗЕЛЕНИЙ!
         // Навіть якщо в небі щось літає (розвідники, літаки, віддалені цілі), сайт НЕ ставить жовтий колір!
-        const hasSurveillance = odesaThreats.length > 0;
-        const grouped = groupThreatLabels(odesaThreats);
-        const skyInfo = hasSurveillance
-          ? `У небі фіксуються цілі (${grouped.join(", ")}), але тривоги в Одесі немає.`
-          : "У межах Одещини та Одеського району спокійно. Зафіксованих цілей немає.";
+        let skyInfo = "У межах Одещини та Одеського району спокійно. Зафіксованих цілей немає.";
+        if (drones.length > 0 && missiles.length > 0) {
+          skyInfo = "У небі фіксуються ворожі ракети та ударні БпЛА (Шахеди), але тривоги в Одесі немає. Стежте за повідомленнями.";
+        } else if (missiles.length > 0) {
+          skyInfo = "У небі фіксуються швидкісні/ракетні цілі в напрямку регіону, але тривоги в Одесі немає.";
+        } else if (drones.length > 0) {
+          skyInfo = "У небі фіксуються ударні БпЛА (Шахеди), але тривоги в Одесі немає. Стежте за оновленнями.";
+        } else if (odesaThreats.length > 0) {
+          skyInfo = "У небі фіксуються розвідувальні БпЛА або спостереження, тривоги в Одесі немає.";
+        }
 
         return {
           code: "clear",
@@ -2757,8 +2780,17 @@
         const statOblast = state.oblast
           ? miniStat("Одеська область", "загалом", (v.kind === "drone" ? "ДРОНИ" : "ТРИВОГА"), "warn", started ? "з " + fmtTime(started) : "часткова тривога")
           : miniStat("Одеська область", "загалом", "ТИХО", "ok", "тривоги в області немає");
+        let threatsSummary = "небо чисте";
+        if (state.threats.length > 0) {
+          const droneCount = state.threats.filter(t => t.type === "uav").length;
+          const missileCount = state.threats.filter(t => t.type === "missile" || t.type === "ballistic" || t.type === "kab").length;
+          if (droneCount > 0 && missileCount > 0) threatsSummary = "ракети та Шахеди";
+          else if (missileCount > 0) threatsSummary = "ракетна загроза";
+          else if (droneCount > 0) threatsSummary = "летять БпЛА / Шахеди";
+          else threatsSummary = "розвідка БпЛА";
+        }
         const statThreats = state.threats.length
-          ? miniStat("Повітряні цілі", "БпЛА, ракети поруч", String(state.threats.length), (v.tone === "danger" ? "danger" : (v.tone === "warn" ? "warn" : "ok")), groupThreatLabels(state.threats).slice(0, 2).join(", "))
+          ? miniStat("Повітряні цілі", "БпЛА, ракети поруч", String(state.threats.length), (v.tone === "danger" ? "danger" : (v.tone === "warn" ? "warn" : "ok")), threatsSummary)
           : miniStat("Повітряні цілі", "БпЛА, ракети поруч", "0", "ok", "небо чисте");
 
         const verdictBox =
@@ -3105,20 +3137,28 @@
       });
 
       // Map interactive toggle
+      const MAP_EMBED_URL = "https://neptun.in.ua/embed/map?lang=uk";
       const toggleMapBtn = document.getElementById("toggle-map-btn");
       const mapContainer = document.getElementById("air-map-container");
       const mapFrame = document.getElementById("air-map-frame");
       const toggleMapText = document.getElementById("toggle-map-text");
       const closeMapBtn = document.getElementById("close-map-btn");
       const closeMapBottomBtn = document.getElementById("close-map-bottom-btn");
+      const refreshMapBtn = document.getElementById("refresh-map-btn");
+
+      function loadMapIframe() {
+        if (!mapFrame) return;
+        const cur = mapFrame.getAttribute("src") || "";
+        if (!cur || cur === "about:blank" || !cur.includes("neptun.in.ua")) {
+          mapFrame.setAttribute("src", MAP_EMBED_URL);
+        }
+      }
 
       function openMap() {
         if (!mapContainer) return;
         mapContainer.classList.remove("hidden");
-        if (mapFrame && !mapFrame.src && mapFrame.getAttribute("data-src")) {
-          mapFrame.src = mapFrame.getAttribute("data-src");
-        }
-        if (toggleMapText) toggleMapText.textContent = "Закрити карту тривог";
+        loadMapIframe();
+        if (toggleMapText) toggleMapText.textContent = "Згорнути карту тривог";
       }
 
       function closeMap() {
@@ -3138,6 +3178,14 @@
       }
       if (closeMapBtn) closeMapBtn.addEventListener("click", closeMap);
       if (closeMapBottomBtn) closeMapBottomBtn.addEventListener("click", closeMap);
+      if (refreshMapBtn && mapFrame) {
+        refreshMapBtn.addEventListener("click", () => {
+          mapFrame.setAttribute("src", "about:blank");
+          setTimeout(() => {
+            mapFrame.setAttribute("src", MAP_EMBED_URL);
+          }, 120);
+        });
+      }
 
       // ---- networking ----
       function applyData(alerts, threats, messages, serverTime, source) {
