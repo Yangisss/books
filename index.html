@@ -56,19 +56,14 @@
         padding-bottom: 0;
       }
       @media (max-width: 639px) {
-        body { padding-bottom: 64px; } /* місце під нижню панель */
-        .float-card { display: none !important; } /* літаючі картки у Hero ховаємо на телефоні (менше скролу) */
-        /* маркі ущільнюємо */
+        body { padding-bottom: 56px; } /* місце під нижню панель */
+        .float-card { display: none !important; }
         .marquee-wrap { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
       }
       .nav-link.active {
         background: #17140c;
         color: #f6f3ea;
       }
-      .mnav.active {
-        color: #2743d9;
-      }
-      .mnav.active svg { stroke: currentColor; }
       /* «11-А» — мітка, вона не ламатися на дві частини */
       [data-cls-num] { white-space: nowrap; }
       /* читалка: м'яке перелистування та підказки */
@@ -285,53 +280,35 @@
         </div>
       </header>
 
-      <!-- Швидка навігація по сайту (sticky, щоб не гортати вниз) -->
-      <nav id="site-nav" class="sticky top-0 z-40 border-b border-ink/10 bg-cream/85 backdrop-blur-md">
+      <!-- Єдина навігація по сайту: унизу на телефоні, зверху на десктопі -->
+      <nav id="site-nav" class="fixed bottom-0 left-0 right-0 z-50 border-t border-ink/10 bg-cream/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] sm:sticky sm:top-0 sm:bottom-auto sm:border-b sm:border-t-0">
         <div class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 py-2">
-          <a href="#" class="group flex items-center gap-2 shrink-0">
+          <a href="#" data-nav="top" class="nav-link group hidden items-center gap-2 shrink-0 sm:inline-flex">
             <div class="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl bg-ink shadow">
               <span class="absolute left-0 top-0 h-1/2 w-full bg-cobalt/90"></span>
               <span class="absolute bottom-0 left-0 h-1/2 w-full bg-sun/90"></span>
               <span class="relative font-display text-[11px] font-bold text-white mix-blend-difference">11</span>
             </div>
-            <span class="hidden font-display text-[11px] font-bold uppercase tracking-widest sm:inline">Мої предмети</span>
+            <span class="font-display text-[11px] font-bold uppercase tracking-widest">Мої предмети</span>
           </a>
-          <div class="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar">
-            <a href="#trygoga" data-nav="trygoga" class="nav-link shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 sm:px-3.5 py-1.5 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
+          <div class="flex items-center justify-around w-full sm:w-auto sm:gap-1.5 overflow-x-auto no-scrollbar">
+            <a href="#trygoga" data-nav="trygoga" class="nav-link flex-1 sm:flex-none shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full px-3 sm:px-3.5 py-1.5 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
               <svg class="icon h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
               <span>Тривога</span>
             </a>
-            <a href="#rozklad" data-nav="rozklad" class="nav-link shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 sm:px-3.5 py-1.5 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
+            <a href="#rozklad" data-nav="rozklad" class="nav-link flex-1 sm:flex-none shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full px-3 sm:px-3.5 py-1.5 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
               <svg class="icon h-3.5 w-3.5"><use href="#i-calendar"></use></svg>
               <span>Розклад</span>
             </a>
-            <a href="#predmety" data-nav="predmety" class="nav-link shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 sm:px-3.5 py-1.5 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
+            <a href="#predmety" data-nav="predmety" class="nav-link flex-1 sm:flex-none shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full px-3 sm:px-3.5 py-1.5 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
               <svg class="icon h-3.5 w-3.5"><use href="#i-book-open"></use></svg>
               <span>Предмети</span>
             </a>
+            <a href="#" data-nav="top" class="nav-link flex-1 sm:hidden shrink-0 inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 font-display text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-ink/5">
+              <svg class="icon h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              <span>Вгору</span>
+            </a>
           </div>
-        </div>
-      </nav>
-
-      <!-- Нижня панель навігації (тільки на телефоні) -->
-      <nav id="mobile-bottom-nav" class="sm:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-ink/10 bg-cream/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]">
-        <div class="grid grid-cols-4">
-          <a href="#" data-mnav="top" class="mnav flex flex-col items-center gap-0.5 py-2.5 text-ink-soft transition-colors">
-            <svg class="icon h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-            <span class="font-display text-[9px] font-bold uppercase tracking-widest">Головна</span>
-          </a>
-          <a href="#trygoga" data-mnav="trygoga" class="mnav flex flex-col items-center gap-0.5 py-2.5 text-ink-soft transition-colors">
-            <svg class="icon h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
-            <span class="font-display text-[9px] font-bold uppercase tracking-widest">Тривога</span>
-          </a>
-          <a href="#rozklad" data-mnav="rozklad" class="mnav flex flex-col items-center gap-0.5 py-2.5 text-ink-soft transition-colors">
-            <svg class="icon h-5 w-5"><use href="#i-calendar"></use></svg>
-            <span class="font-display text-[9px] font-bold uppercase tracking-widest">Розклад</span>
-          </a>
-          <a href="#predmety" data-mnav="predmety" class="mnav flex flex-col items-center gap-0.5 py-2.5 text-ink-soft transition-colors">
-            <svg class="icon h-5 w-5"><use href="#i-book-open"></use></svg>
-            <span class="font-display text-[9px] font-bold uppercase tracking-widest">Предмети</span>
-          </a>
         </div>
       </nav>
 
@@ -496,11 +473,11 @@
               <span class="flex-1 bg-sun"></span>
             </span>
           </div>
-          <h2 class="mt-6 font-display text-3xl font-extrabold uppercase tracking-tight sm:text-5xl">
-            Вчись. <span class="font-accent normal-case italic tracking-normal text-sun">Питай.</span> Твори.
+          <h2 class="mt-6 font-display text-2xl sm:text-4xl font-extrabold uppercase tracking-tight">
+            До зустрічі <span class="text-sun">на уроках</span>
           </h2>
           <p class="mt-4 max-w-md text-sm leading-relaxed text-cream/60">
-            Чотирнадцять предметів — це не навантаження, а чотирнадцять вікон у світ. Гарного навчального року!
+            Усі підручники, розклад і актуальна інформація про повітряну тривогу в одному місці.
           </p>
           <p class="mt-6 max-w-md text-[11px] font-semibold uppercase tracking-widest text-cream/40">
             смт Великодолинське · <span id="footer-school">Великодолинська загальна школа №2</span> · 2026 / 2027 навчальний рік
@@ -987,15 +964,7 @@
       }
 
       function quoteTile() {
-        return `
-          <aside class="anim-fade-up relative flex min-h-[11rem] sm:min-h-[12rem] flex-col justify-between overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-ink/10 bg-paper p-5 text-ink shadow-[0_18px_40px_-28px_rgba(23,20,12,0.3)] lg:col-span-2">
-            <div class="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-sun/15 blur-2xl"></div>
-            ${svg("i-quote", "icon h-5 w-5 text-sun/70")}
-            <div>
-              <p class="font-accent text-base italic leading-snug text-ink/80">«Книга вчить, як на світі жить»</p>
-              <p class="mt-2 font-display text-[10px] font-semibold uppercase tracking-[0.25em] text-ink-soft/60">українське прислів'я</p>
-            </div>
-          </aside>`;
+        return ""; // без цитат і крилатих висловів — лише по справі
       }
 
       function renderFilters() {
@@ -1915,18 +1884,13 @@
       // ---- Scroll spy підсвічування активної вкладки навігації ----
       (function navSpy() {
         const sections = ["trygoga", "rozklad", "predmety"];
-        const topLinks = Array.from(document.querySelectorAll(".nav-link"));
-        const botLinks = Array.from(document.querySelectorAll(".mnav"));
+        const links = Array.from(document.querySelectorAll(".nav-link"));
         function setActive(id) {
-          topLinks.forEach((a) => a.classList.toggle("active", a.getAttribute("data-nav") === id));
-          botLinks.forEach((a) => {
-            const k = a.getAttribute("data-mnav");
-            a.classList.toggle("active", k === id);
-          });
+          links.forEach((a) => a.classList.toggle("active", a.getAttribute("data-nav") === id));
         }
         function current() {
-          const top = window.scrollY + 120;
-          if (window.scrollY < 200) return "top";
+          const top = window.scrollY + window.innerHeight / 3;
+          if (window.scrollY < 180) return "top";
           let cur = "predmety";
           for (const id of sections) {
             const el = document.getElementById(id);
@@ -1938,17 +1902,18 @@
         window.addEventListener("scroll", tick, { passive: true });
         window.addEventListener("load", tick);
         // плавна прокрутка по якорю
-        [...topLinks, ...botLinks].forEach((a) => {
+        links.forEach((a) => {
           a.addEventListener("click", (e) => {
             const href = a.getAttribute("href");
             if (href && href.startsWith("#")) {
               const target = href === "#" ? null : document.getElementById(href.slice(1));
+              e.preventDefault();
               if (target) {
-                e.preventDefault();
-                const y = target.getBoundingClientRect().top + window.scrollY - 64;
+                const isMobile = window.innerWidth < 640;
+                const offset = isMobile ? 16 : 72; // на телефоні панель знизу, на десктопі — зверху
+                const y = target.getBoundingClientRect().top + window.scrollY - offset;
                 window.scrollTo({ top: y, behavior: "smooth" });
-              } else if (href === "#") {
-                e.preventDefault();
+              } else {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }
             }
