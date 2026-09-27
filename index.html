@@ -53,6 +53,29 @@
         text-rendering: optimizeLegibility;
         overflow-x: hidden;
         overflow-x: clip;
+        padding-bottom: 0;
+      }
+      @media (max-width: 639px) {
+        .float-card { display: none !important; }
+        .marquee-wrap { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+      }
+      .site-tab.active {
+        background: #17140c;
+        color: #f6f3ea;
+        box-shadow: 0 10px 24px -12px rgba(23,20,12,0.6);
+      }
+      .site-tab:not(.active) {
+        color: #6b6555;
+      }
+      .site-tab:not(.active):hover {
+        background: rgba(23,20,12,0.05);
+        color: #17140c;
+      }
+      @media (max-width: 1023px) {
+        .site-tab:not(.active) {
+          border: 1px solid rgba(23,20,12,0.1);
+          background: rgba(255,255,255,0.7);
+        }
       }
       /* «11-А» — мітка, вона не ламатися на дві частини */
       [data-cls-num] { white-space: nowrap; }
@@ -140,6 +163,10 @@
       .no-scrollbar { scrollbar-width: none; }
       #day-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
       #day-chips button { flex-shrink: 0; }
+      #trygoga, #trygoga * { min-width: 0; }
+      #trygoga .break-words { overflow-wrap: anywhere; word-break: break-word; }
+      #air-tabs-wrap { -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+      #air-tabs-wrap::-webkit-scrollbar { display: none; }
       @media (min-width: 640px) {
         #day-chips { flex-wrap: wrap; overflow: visible; }
       }
@@ -181,6 +208,14 @@
                 <span id="cls-hint" class="hidden text-[10px] font-bold uppercase tracking-wider text-ink-soft/70 md:inline"></span>
               </span>
               <button id="admin-btn" title="" class="flex items-center gap-1 rounded-full border border-ink/10 bg-white/70 px-3.5 py-2 font-display text-[10px] font-bold uppercase tracking-widest text-ink-soft shadow-sm backdrop-blur-none sm:backdrop-blur transition-all hover:border-ink/30 hover:text-ink focus:outline-none focus:ring-2 focus:ring-cobalt/40"></button>
+              <!-- Повітряна тривога (вставлено) -->
+              <a id="airpill" href="#trygoga" title="Стан повітряної тривоги в Одесі" class="hidden items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3.5 py-2 font-display text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all duration-300 backdrop-blur-none sm:backdrop-blur">
+                <span class="relative flex h-2 w-2">
+                  <span id="airpill-pulse" class="hidden absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 bg-emerald-500"></span>
+                  <span id="airpill-dot" class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                </span>
+                <span id="airpill-text">Тихо</span>
+              </a>
               <div id="live-clock" class="hidden items-center gap-2.5 rounded-full border border-ink/10 bg-white/70 px-4 py-2 shadow-sm backdrop-blur-none sm:backdrop-blur lg:flex"></div>
             </div>
           </div>
@@ -255,14 +290,192 @@
             </div>
           </div>
 
-          <div class="relative -mx-6 overflow-hidden bg-ink py-3.5 shadow-[0_20px_50px_-20px_rgba(23,20,12,0.5)] sm:rotate-[-1.4deg]">
+          <div class="marquee-wrap relative -mx-6 overflow-hidden bg-ink py-2.5 sm:py-3.5 shadow-[0_20px_50px_-20px_rgba(23,20,12,0.5)] sm:rotate-[-1.4deg]">
             <div id="marquee" class="flex w-max animate-marquee items-center gap-8 whitespace-nowrap"></div>
           </div>
         </div>
       </header>
 
+      <!-- Нова навігація: зверху, зручні вкладки замість шторки знизу -->
+      <nav id="site-nav" class="sticky top-0 z-40 w-full border-b border-ink/10 bg-cream/90 backdrop-blur-xl supports-[backdrop-filter]:bg-cream/75">
+        <div class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2.5 sm:px-6 sm:py-3">
+          <button data-site-tab="home" class="group flex items-center gap-2.5 text-left">
+            <div class="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-ink shadow-md transition-transform group-hover:scale-105 sm:h-10 sm:w-10 sm:rounded-2xl">
+              <span class="absolute left-0 top-0 h-1/2 w-full bg-cobalt/90"></span>
+              <span class="absolute bottom-0 left-0 h-1/2 w-full bg-sun/90"></span>
+              <span class="relative font-display text-[11px] font-bold text-white mix-blend-difference">11</span>
+            </div>
+            <span class="hidden sm:block leading-tight">
+              <span class="block font-display text-[11px] font-extrabold uppercase tracking-widest">Мої предмети</span>
+              <span class="block text-[10px] font-semibold uppercase tracking-widest text-ink-soft">11-А · Школа №2</span>
+            </span>
+            <span class="font-display text-[12px] font-extrabold uppercase tracking-widest sm:hidden">11-А</span>
+          </button>
+
+          <!-- Десктоп вкладки — по центру, у пігулці -->
+          <div class="hidden lg:flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/60 p-1 shadow-sm backdrop-blur">
+            <button data-site-tab="home" class="site-tab flex items-center gap-1.5 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest transition-all">
+              <svg class="icon h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              Головна
+            </button>
+            <button data-site-tab="trygoga" class="site-tab flex items-center gap-1.5 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest transition-all">
+              <svg class="icon h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+              Тривога
+              <span data-alert-dot class="hidden relative ml-0.5 h-2 w-2"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span><span class="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span></span>
+            </button>
+            <button data-site-tab="rozklad" class="site-tab flex items-center gap-1.5 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest transition-all">
+              <svg class="icon h-3.5 w-3.5"><use href="#i-calendar"></use></svg>
+              Розклад
+            </button>
+            <button data-site-tab="predmety" class="site-tab flex items-center gap-1.5 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest transition-all">
+              <svg class="icon h-3.5 w-3.5"><use href="#i-book-open"></use></svg>
+              Предмети
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="hidden sm:inline-flex items-center gap-1 rounded-full bg-white/60 border border-ink/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-ink-soft">2026/27</span>
+            <a id="site-nav-clock" class="hidden lg:flex items-center gap-2 rounded-full border border-ink/10 bg-white/70 px-3.5 py-2 text-[11px] font-bold tabular-nums tracking-widest shadow-sm"></a>
+          </div>
+        </div>
+        <!-- Мобільні вкладки — окремий ряд, великі зручні пігулки -->
+        <div class="border-t border-ink/5 bg-cream/60 backdrop-blur lg:hidden">
+          <div class="no-scrollbar flex items-center gap-1.5 overflow-x-auto px-2 py-2">
+            <button data-site-tab="home" class="site-tab shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2.5 font-display text-[11px] font-bold uppercase tracking-widest transition-all" style="min-height:40px">
+              <svg class="icon h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              Головна
+            </button>
+            <button data-site-tab="trygoga" class="site-tab shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2.5 font-display text-[11px] font-bold uppercase tracking-widest transition-all" style="min-height:40px">
+              <svg class="icon h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+              Тривога
+            </button>
+            <button data-site-tab="rozklad" class="site-tab shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2.5 font-display text-[11px] font-bold uppercase tracking-widest transition-all" style="min-height:40px">
+              <svg class="icon h-4 w-4"><use href="#i-calendar"></use></svg>
+              Розклад
+            </button>
+            <button data-site-tab="predmety" class="site-tab shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2.5 font-display text-[11px] font-bold uppercase tracking-widest transition-all" style="min-height:40px">
+              <svg class="icon h-4 w-4"><use href="#i-book-open"></use></svg>
+              Предмети
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Смуга повітряної тривоги (з'являється автоматично при небезпеці) -->
+      <div id="airbar" class="hidden relative overflow-hidden bg-emerald-600 py-2.5 sm:py-3 px-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.25em] text-white shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)]">
+        <div id="airbar-stripes" class="pointer-events-none absolute inset-0"></div>
+        <div class="relative mx-auto flex max-w-7xl items-center justify-center gap-3 px-6">
+          <span class="relative flex h-2.5 w-2.5">
+            <span id="airbar-pulse" class="absolute inline-flex h-full w-full animate-ping rounded-full opacity-80 bg-white"></span>
+            <span id="airbar-dot" class="relative inline-flex h-2.5 w-2.5 rounded-full bg-white"></span>
+          </span>
+          <span id="airbar-text" class="truncate">Тривоги в Одесі немає</span>
+          <span id="airbar-since" class="hidden rounded-full bg-white/15 px-2 py-0.5 text-[10px] sm:inline-block"></span>
+          <a href="#trygoga" class="ml-2 inline-flex items-center gap-1 underline decoration-dotted underline-offset-4">деталі</a>
+        </div>
+      </div>
+
       <main>
-        <section id="rozklad" class="relative mx-auto max-w-7xl px-6 pb-10 pt-20">
+        <!-- Секція повітряної тривоги (вставлено) -->
+        <section id="trygoga" class="relative mx-auto max-w-7xl px-4 sm:px-6 pb-20 sm:pb-16 pt-14 sm:pt-20 min-w-0">
+          <div class="reveal flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <p id="trygoga-sub" class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-red-600">
+                <svg class="icon h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a8 8 0 0116 0c0 7-8 11-8 11S4 18 4 11z"></path><path d="M12 7v4"></path><path d="M12 15h.01"></path></svg>
+                Повітряна тривога · Одеса та Одеський район
+              </p>
+              <h2 class="mt-3 font-display text-4xl font-extrabold uppercase tracking-tight sm:text-5xl">
+                Йти на урок <span class="font-accent normal-case italic tracking-normal text-ink/70">чи ні?</span>
+              </h2>
+              <p class="mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft">
+                Дані в реальному часі з відкритих джерел (NEPTUN — офіційні тривоги ДСНС і моніторинг БпЛА/ракет).
+                Сторінка оновлюється сама. Центр Одеси та школа у Великодолинському належать до Одеського району — сирена лунає одночасно.
+              </p>
+            </div>
+            <a href="https://neptun.in.ua/" target="_blank" rel="noreferrer noopener" class="group inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white/70 px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest text-ink-soft backdrop-blur transition-all hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink">
+              Джерело: NEPTUN
+              <svg class="icon h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"><use href="#i-external"></use></svg>
+            </a>
+          </div>
+
+          <!-- Головна картка статусу -->
+          <div id="air-card" class="anim-fade-up relative mt-8 overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-paper to-paper p-4 sm:p-7 shadow-[0_18px_50px_-30px_rgba(23,20,12,0.6)]">
+            <div id="air-card-glow" class="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-400 blur-3xl opacity-40"></div>
+            <div class="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div class="flex items-start gap-5">
+                <div class="relative shrink-0">
+                  <span id="air-card-pulse" class="hidden absolute inset-0 animate-ping rounded-full bg-emerald-500/40"></span>
+                  <span class="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg" id="air-card-icon">
+                    <svg class="icon h-8 w-8"><use href="#i-shield"></use></svg>
+                  </span>
+                </div>
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span id="air-badge" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500 px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-white">
+                      <span class="h-1.5 w-1.5 rounded-full bg-white"></span>
+                      Безпечно
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 rounded-full border border-ink/10 bg-white/70 px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft">
+                      <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"></path><circle cx="12" cy="9" r="2.5"></circle></svg>
+                      Одеса · центр
+                    </span>
+                    <span id="air-conn" class="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-emerald-700">
+                      <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h2"></path><path d="M6 12c0-3 3-6 6-6s6 3 6 6"></path><path d="M10 12a2 2 0 014 0"></path><circle cx="12" cy="18" r="1"></circle></svg>
+                      підключення…
+                    </span>
+                  </div>
+                  <h3 id="air-title" class="mt-3 font-display text-2xl font-extrabold uppercase tracking-tight sm:text-3xl">Тривоги в Одесі немає</h3>
+                  <p id="air-sub" class="mt-2 max-w-2xl text-[15px] leading-relaxed text-ink-soft">Підключення до джерела тривог…</p>
+                </div>
+              </div>
+              <div class="flex shrink-0 flex-col gap-3 sm:flex-row lg:flex-col w-full sm:w-auto">
+                <div class="flex-1 rounded-2xl border border-ink/10 bg-paper px-4 py-3 text-left sm:text-right">
+                  <p class="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft">Вердикт для уроку</p>
+                  <p id="air-verdict-strong" class="mt-1 font-display text-base font-extrabold leading-tight">—</p>
+                  <p id="air-verdict-soft" class="mt-1 text-xs text-ink-soft">—</p>
+                </div>
+                <div id="air-since-wrap" class="hidden flex-1 rounded-2xl border border-ink/10 bg-paper px-4 py-3 text-left sm:text-right">
+                  <p class="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft">Тривога триває</p>
+                  <p id="air-since-big" class="mt-1 font-display text-base font-extrabold tabular-nums leading-tight">—</p>
+                  <p id="air-since-small" class="mt-1 text-xs text-ink-soft">—</p>
+                </div>
+                <p id="air-last-ok" class="text-left sm:text-right text-[10px] font-semibold uppercase tracking-widest text-ink-soft/70"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Внутрішні таби секції тривоги: на телефоні липнуть до верху, на десктопі — під основною навігацією.
+               Жодної прокрутки при натисканні — просто міняють вміст на місці. -->
+          <div class="reveal mt-8 sticky top-0 sm:top-[48px] z-20 -mx-1 -mt-1 pt-1 overflow-x-auto no-scrollbar sm:mx-0 sm:mt-8 sm:sticky sm:top-2 sm:z-30" id="air-tabs-wrap">
+            <div class="inline-flex min-w-full sm:min-w-0 gap-1 rounded-full border border-ink/10 bg-cream/95 p-1 shadow-sm backdrop-blur sm:bg-white/70 sm:shadow-none sm:backdrop-blur-none sm:backdrop-blur" id="air-tabs">
+              <button data-atab="now" class="air-tab shrink-0 flex items-center gap-1.5 rounded-full bg-ink px-3.5 sm:px-4 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-cream transition-all duration-300">
+                <svg class="icon h-3.5 w-3.5"><use href="#i-shield"></use></svg><span class="sm:inline">Зараз</span>
+              </button>
+              <button data-atab="threats" class="air-tab shrink-0 flex items-center gap-1.5 rounded-full px-3.5 sm:px-4 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-ink-soft transition-all duration-300 hover:text-ink">
+                <svg class="icon h-3.5 w-3.5"><use href="#i-alert"></use></svg><span class="sm:inline">Загрози</span>
+              </button>
+              <button data-atab="news" class="air-tab shrink-0 flex items-center gap-1.5 rounded-full px-3.5 sm:px-4 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-ink-soft transition-all duration-300 hover:text-ink">
+                <svg class="icon h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-4 18-5-8-9-2z"></path></svg><span class="sm:inline">Новини</span>
+              </button>
+              <button data-atab="history" class="air-tab shrink-0 flex items-center gap-1.5 rounded-full px-3.5 sm:px-4 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-ink-soft transition-all duration-300 hover:text-ink">
+                <svg class="icon h-3.5 w-3.5"><use href="#i-clock-history"></use></svg><span class="sm:inline">Історія</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="air-panes" class="mt-4 pt-2 sm:mt-6 sm:pt-0 min-w-0">
+            <div id="air-pane-now" class="space-y-4"></div>
+            <div id="air-pane-threats" class="hidden"></div>
+            <div id="air-pane-news" class="hidden"></div>
+            <div id="air-pane-history" class="hidden"></div>
+          </div>
+
+          <p class="mt-8 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-soft/60">
+            Інформація подана для зручності. Головний сигнал — офіційні сирени та повідомлення ДСНС.
+          </p>
+        </section>
+
+        <section id="rozklad" class="relative mx-auto max-w-7xl px-4 sm:px-6 pb-10 pt-14 sm:pt-20">
           <div class="reveal flex flex-wrap items-end justify-between gap-6">
             <div>
               <p class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-cobalt">
@@ -279,7 +492,7 @@
           <div id="schedule-body" class="mt-8 space-y-6"></div>
         </section>
 
-        <section id="predmety" class="relative mx-auto max-w-7xl px-6 pb-28 pt-20">
+        <section id="predmety" class="relative mx-auto max-w-7xl px-4 sm:px-6 pb-20 sm:pb-28 pt-14 sm:pt-20">
           <div id="section-head" class="reveal flex flex-wrap items-end justify-between gap-6">
             <div>
               <p class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.25em] text-cobalt">
@@ -310,11 +523,11 @@
               <span class="flex-1 bg-sun"></span>
             </span>
           </div>
-          <h2 class="mt-6 font-display text-3xl font-extrabold uppercase tracking-tight sm:text-5xl">
-            Вчись. <span class="font-accent normal-case italic tracking-normal text-sun">Питай.</span> Твори.
+          <h2 class="mt-6 font-display text-2xl sm:text-4xl font-extrabold uppercase tracking-tight">
+            До зустрічі <span class="text-sun">на уроках</span>
           </h2>
           <p class="mt-4 max-w-md text-sm leading-relaxed text-cream/60">
-            Чотирнадцять предметів — це не навантаження, а чотирнадцять вікон у світ. Гарного навчального року!
+            Усі підручники, розклад і актуальна інформація про повітряну тривогу в одному місці.
           </p>
           <p class="mt-6 max-w-md text-[11px] font-semibold uppercase tracking-widest text-cream/40">
             смт Великодолинське · <span id="footer-school">Великодолинська загальна школа №2</span> · 2026 / 2027 навчальний рік
@@ -366,6 +579,15 @@
       <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></symbol>
       <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3"></path><path d="m7.5 10.5 4.5 4.5 4.5-4.5"></path><path d="M4 19h16"></path></symbol>
       <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></symbol>
+      <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></symbol>
+      <symbol id="i-wifi-off" viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22"></line><path d="M8.5 16.5a5 5 0 0 1 7 0"></path><path d="M2 8.82a15 15 0 0 1 4.17-2.65"></path><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"></path><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"></path><path d="M5 13a10 10 0 0 1 5.24-2.76"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></symbol>
+      <symbol id="i-radio" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"></path><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"></path><circle cx="12" cy="12" r="2"></circle><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"></path><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"></path></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></symbol>
+      <symbol id="i-clock-history" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline><path d="M3 12a9 9 0 0 0 9 9"></path></symbol>
+      <symbol id="i-megaphone" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13v-2z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path></symbol>
     </svg>
 
     <script>
@@ -792,15 +1014,7 @@
       }
 
       function quoteTile() {
-        return `
-          <aside class="anim-fade-up relative flex min-h-[15rem] flex-col justify-between overflow-hidden rounded-[1.75rem] bg-ink p-6 text-cream shadow-[0_30px_60px_-25px_rgba(23,20,12,0.6)] sm:min-h-[16rem] lg:col-span-2">
-            <div class="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-sun/20 blur-2xl"></div>
-            ${svg("i-quote", "icon h-7 w-7 text-sun")}
-            <div>
-              <p class="font-accent text-lg italic leading-snug text-cream/95">«Освіта — найпотужніша зброя, якою можна змінити світ»</p>
-              <p class="mt-3 font-display text-[10px] font-semibold uppercase tracking-[0.25em] text-cream/50">Нельсон Мандела</p>
-            </div>
-          </aside>`;
+        return ""; // без цитат і крилатих висловів — лише по справі
       }
 
       function renderFilters() {
@@ -1787,6 +2001,745 @@
         });
       }, { threshold: 0.12 });
       document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+
+      // ---- Нова навігація: вкладки зверху замість шторки знизу ----
+      (function siteTabs() {
+        const TAB_KEY = "vdsh2-site-tab";
+        const tabs = ["home", "trygoga", "rozklad", "predmety"];
+        const map = { home: "home", trygoga: "trygoga", rozklad: "rozklad", predmety: "predmety", alerts: "trygoga", schedule: "rozklad", subjects: "predmety" };
+        const header = document.querySelector("header");
+        if (header && !header.id) header.id = "home";
+        const els = {
+          home: document.getElementById("home"),
+          trygoga: document.getElementById("trygoga"),
+          rozklad: document.getElementById("rozklad"),
+          predmety: document.getElementById("predmety"),
+        };
+        const buttons = Array.from(document.querySelectorAll("[data-site-tab]"));
+        const clockEl = document.getElementById("site-nav-clock");
+
+        function getInitial() {
+          try {
+            const h = location.hash.replace("#", "");
+            if (map[h]) return map[h];
+            const saved = localStorage.getItem(TAB_KEY);
+            if (saved && tabs.includes(saved)) return saved;
+          } catch {}
+          return "home";
+        }
+        let active = getInitial();
+
+        function setActive(id) {
+          active = id;
+          try { localStorage.setItem(TAB_KEY, id); } catch {}
+          buttons.forEach((b) => {
+            const tid = b.getAttribute("data-site-tab");
+            const norm = map[tid] || tid;
+            b.classList.toggle("active", norm === id);
+          });
+          Object.entries(els).forEach(([k, el]) => {
+            if (!el) return;
+            if (k === id) {
+              el.classList.remove("hidden");
+              el.classList.add("anim-fade-up");
+              // тригеримо reveal для анімацій всередині
+              el.querySelectorAll(".reveal").forEach((r) => {
+                r.classList.add("is-visible");
+              });
+            } else {
+              el.classList.add("hidden");
+              el.classList.remove("anim-fade-up");
+            }
+          });
+          // хедер для airbar — показуємо тільки якщо тривога активна, але сам airbar керується іншим скриптом
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          if (id === "home") {
+            history.replaceState(null, "", location.pathname);
+          } else {
+            history.replaceState(null, "", "#" + id);
+          }
+        }
+
+        buttons.forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const raw = btn.getAttribute("data-site-tab");
+            const id = map[raw] || raw;
+            if (tabs.includes(id)) setActive(id);
+          });
+        });
+
+        // годинник у навігації
+        if (clockEl) {
+          const tickClock = () => {
+            const now = new Date();
+            clockEl.textContent = now.toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
+          };
+          tickClock();
+          setInterval(tickClock, 1000);
+        }
+
+        // глобальні кнопки всередині Hero (Дивитися всі, Розклад на ...) — переключають вкладки
+        document.addEventListener("click", (e) => {
+          const a = e.target.closest('a[href^="#"]');
+          if (!a) return;
+          const href = a.getAttribute("href");
+          if (!href) return;
+          const id = map[href.replace("#", "")];
+          if (id && tabs.includes(id)) {
+            e.preventDefault();
+            setActive(id);
+          }
+        });
+
+        setActive(active);
+
+        // підсвітка крапки тривоги в навігації
+        const dot = document.querySelector("[data-alert-dot]");
+        if (dot) {
+          const check = () => {
+            const bar = document.getElementById("airbar");
+            const isDanger = bar && !bar.classList.contains("hidden");
+            dot.classList.toggle("hidden", !isDanger);
+            dot.classList.toggle("flex", !!isDanger);
+          };
+          setInterval(check, 1000);
+          check();
+        }
+      })();
+    </script>
+
+    <!-- ===========================================================
+         Повітряна тривога (Одеса · центр / Одеський район)
+         Джерело: NEPTUN (непотрiбно ключа, CORS вiдкритий), фолбек — ubilling
+         =========================================================== -->
+    <script>
+    (function () {
+      "use strict";
+      const NEPTUN = "https://neptun.in.ua";
+      const UBILLING = "https://ubilling.net.ua/aerialalerts/";
+      const WATCH = {
+        raionKey: "odeska:odeskyi",
+        oblastKey: "odeska",
+      };
+      const HIST_KEY = "vdsh2-air-history-v1";
+      const HIST_MAX = 40;
+      const POLL_MS = 15000;
+
+      const el = (id) => document.getElementById(id);
+      const pill = el("airpill");
+      const pillDot = el("airpill-dot");
+      const pillPulse = el("airpill-pulse");
+      const pillText = el("airpill-text");
+      const airbar = el("airbar");
+      const airbarText = el("airbar-text");
+      const airbarSince = el("airbar-since");
+      const airbarDot = el("airbar-dot");
+      const airbarPulse = el("airbar-pulse");
+      const airbarStripes = el("airbar-stripes");
+
+      const card = el("air-card");
+      const cardGlow = el("air-card-glow");
+      const cardIconBox = el("air-card-icon");
+      const cardPulse = el("air-card-pulse");
+      const cardBadge = el("air-badge");
+      const cardConn = el("air-conn");
+      const cardTitle = el("air-title");
+      const cardSub = el("air-sub");
+      const vStrong = el("air-verdict-strong");
+      const vSoft = el("air-verdict-soft");
+      const sinceWrap = el("air-since-wrap");
+      const sinceBig = el("air-since-big");
+      const sinceSmall = el("air-since-small");
+      const lastOk = el("air-last-ok");
+
+      const paneNow = el("air-pane-now");
+      const paneThreats = el("air-pane-threats");
+      const paneNews = el("air-pane-news");
+      const paneHistory = el("air-pane-history");
+
+      if (!pill || !card) return;
+      pill.classList.remove("hidden");
+      pill.classList.add("inline-flex");
+
+      const state = {
+        connected: "offline",
+        lastOkAt: null,
+        raion: null,
+        oblast: null,
+        threats: [],
+        messages: [],
+        history: loadHistory(),
+      };
+
+      function loadHistory() {
+        try {
+          const raw = localStorage.getItem(HIST_KEY);
+          if (!raw) return [];
+          const arr = JSON.parse(raw);
+          const cutoff = Date.now() - 24 * 3600 * 1000;
+          return arr.filter((e) => e && typeof e.at === "number" && e.at > cutoff).slice(-HIST_MAX);
+        } catch { return []; }
+      }
+      function saveHistory() {
+        try { localStorage.setItem(HIST_KEY, JSON.stringify(state.history.slice(-HIST_MAX))); } catch {}
+      }
+      function fmtTime(iso) {
+        if (!iso) return "—";
+        try { return new Date(iso).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" }); } catch { return "—"; }
+      }
+      function dur(iso, now) {
+        if (!iso) return "";
+        const d = Math.max(0, (now || Date.now()) - new Date(iso).getTime());
+        const m = Math.floor(d / 60000);
+        if (m < 1) return "щойно";
+        if (m < 60) return m + " " + pl(m, "хвилину", "хвилини", "хвилин");
+        const h = Math.floor(m / 60);
+        const mm = m % 60;
+        return h + " " + pl(h, "годину", "години", "годин") + (mm ? " " + mm + " хв" : "");
+      }
+      function pl(n, one, two, five) {
+        const m10 = n % 10, m100 = n % 100;
+        if (m10 === 1 && m100 !== 11) return one;
+        if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return two;
+        return five;
+      }
+      function escHtml(s) {
+        return String(s == null ? "" : s)
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      }
+      function isOdesaThreat(t) {
+        if (!t || t.advisory) return false;
+        const r = (t.region || "").toLowerCase();
+        const d = (t.district || "").toLowerCase();
+        const l = (t.locality || "").toLowerCase();
+        if (r.includes("одес")) return true;
+        if (d.includes("одес")) return true;
+        if (/одес|чорномор|южне|білгор/.test(l)) return true;
+        if (t.areaOnly && (r.includes("микола") || r.includes("херсон"))) return true;
+        return false;
+      }
+      function matchAlert(list, key) {
+        if (!Array.isArray(list)) return null;
+        return list.find((r) => r && r.key === key) || null;
+      }
+      function threatLabel(type) {
+        const map = {
+          uav: "БпЛА / Шахед",
+          recon: "Розвідка БпЛА",
+          missile: "Крилата ракета",
+          ballistic: "Балістика",
+          kab: "КАБ",
+          mig31k: "МіГ-31К (зліт)",
+          unknown: "Невідома загроза",
+        };
+        return map[type] || "Невідома загроза";
+      }
+      function verdict() {
+        const inRaion = !!state.raion;
+        const inOblast = !!state.oblast;
+        const hard = state.threats.filter((t) => !t.advisory && (t.type === "ballistic" || t.type === "missile" || t.type === "kab"));
+        const soft = state.threats.filter((t) => !t.advisory && (t.type === "uav" || t.type === "mig31k" || t.type === "unknown"));
+        if (inRaion) return { code: "raion", tone: "danger", title: "Тривога в Одеському районі",
+          sub: "Повітряна тривога лунає у центрі Одеси та у Великодолинському — йти в укриття.",
+          goto: "no", strong: "До школи НЕ йти", soft: "Прямуй в укриття або лишайся вдома. Слухай офіційні сигнали." };
+        if (hard.length) return { code: "active", tone: "danger", title: "Загроза в напрямку Одещини",
+          sub: "Фіксуються ракети / балістика / КАБи — не йди до школи, слідкуй за тривогою.",
+          goto: "no", strong: "До школи НЕ йти", soft: "Прямуй в укриття або лишайся вдома." };
+        if (inOblast) return { code: "oblast", tone: "warn", title: "Тривога в Одеській області",
+          sub: "У межах області оголошено тривоги — до школи зараз краще не виходити.",
+          goto: "wait", strong: "Поки що не виходь", soft: "Зачекай відбою." };
+        if (soft.length) return { code: "watching", tone: "watch", title: "Небо напружене — стежимо",
+          sub: "Фіксуються БпЛА або МіГ-31К — тривоги в районі ще немає, але будь напоготові.",
+          goto: "wait", strong: "Не виходь завчасно", soft: "Стеж за оновленнями." };
+        return { code: "clear", tone: "ok", title: "Тривоги в Одесі немає",
+          sub: "Можна збиратися до школи. Якщо щось зміниться — сторінка оновиться сама.",
+          goto: "yes", strong: "Можна йти на урок", soft: "Проте телефон тримай поруч." };
+      }
+
+      const TONES = {
+        ok:     { barBg:"bg-emerald-600", cardBorder:"border-emerald-500/20", cardGrad:"from-emerald-500/10 via-paper to-paper",
+                  badge:"bg-emerald-500 text-white", dot:"bg-emerald-500", glow:"#10b981",
+                  pillBorder:"border-emerald-500/25", pillBg:"bg-emerald-500/10", pillText:"text-emerald-800",
+                  pillLabel:"Тихо" },
+        watch:  { barBg:"bg-sun text-ink", cardBorder:"border-sun/50", cardGrad:"from-sun/20 via-paper to-paper",
+                  badge:"bg-sun text-ink", dot:"bg-sun", glow:"#f2b705",
+                  pillBorder:"border-sun/50", pillBg:"bg-sun/20", pillText:"text-ink",
+                  pillLabel:"Стежимо" },
+        warn:   { barBg:"bg-amber-500 text-ink", cardBorder:"border-amber-500/40", cardGrad:"from-amber-400/20 via-paper to-paper",
+                  badge:"bg-amber-500 text-ink", dot:"bg-amber-500", glow:"#f59e0b",
+                  pillBorder:"border-amber-500/30", pillBg:"bg-amber-400/20", pillText:"text-amber-800",
+                  pillLabel:"Увага" },
+        danger: { barBg:"bg-red-600 text-white", cardBorder:"border-red-500/40", cardGrad:"from-red-500/15 via-paper to-paper",
+                  badge:"bg-red-600 text-white", dot:"bg-red-600", glow:"#ef4444",
+                  pillBorder:"border-red-500/30", pillBg:"bg-red-500/15", pillText:"text-red-700",
+                  pillLabel:"Тривога" },
+      };
+
+      function apply() {
+        const v = verdict();
+        const t = TONES[v.tone];
+        const started = state.raion?.since || state.oblast?.since;
+        const now = Date.now();
+        const stale = state.lastOkAt !== null && now - state.lastOkAt > 90000;
+
+        // pill
+        pill.className = "inline-flex items-center gap-2 rounded-full border px-3.5 py-2 font-display text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all duration-300 backdrop-blur-none sm:backdrop-blur " + t.pillBorder + " " + t.pillBg + " " + t.pillText;
+        pillDot.className = "relative inline-flex h-2 w-2 rounded-full " + t.dot;
+        if (v.tone === "ok") {
+          pillPulse.classList.add("hidden");
+        } else {
+          pillPulse.classList.remove("hidden");
+          pillPulse.className = "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 " + t.dot;
+        }
+        pillText.textContent = v.goto === "no" ? "Тривога · в укриття" : v.goto === "wait" ? "Стежимо · зачекай" : "Тривоги немає";
+
+        // bar (лише не-ok)
+        if (v.tone === "ok") {
+          airbar.classList.add("hidden");
+        } else {
+          airbar.classList.remove("hidden");
+          airbar.className = "relative overflow-hidden " + t.barBg + " py-3 font-display text-[11px] font-bold uppercase tracking-[0.25em] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)]";
+          airbarStripes.className = v.tone === "danger"
+            ? "pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_16px,rgba(255,255,255,0.12)_16px,rgba(255,255,255,0.12)_32px)]"
+            : "pointer-events-none absolute inset-0";
+          airbarDot.className = "relative inline-flex h-2.5 w-2.5 rounded-full bg-white";
+          airbarPulse.className = "absolute inline-flex h-full w-full animate-ping rounded-full opacity-80 bg-white";
+          airbarText.textContent = v.title;
+          if (started) {
+            airbarSince.classList.remove("hidden");
+            airbarSince.textContent = "триває " + dur(started, now);
+          } else {
+            airbarSince.classList.add("hidden");
+          }
+        }
+
+        // card
+        card.className = "anim-fade-up relative mt-8 overflow-hidden rounded-[1.75rem] border p-7 shadow-[0_18px_50px_-30px_rgba(23,20,12,0.6)] " + t.cardBorder + " " + t.cardGrad;
+        cardGlow.style.backgroundColor = t.glow;
+        cardBadge.className = "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest " + t.badge;
+        cardBadge.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-white"></span>' + ({
+          danger: "Небезпечно", warn: "Увага", watch: "Моніторимо", ok: "Безпечно"
+        })[v.tone];
+        cardIconBox.className = "relative flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-lg " + t.badge.split(" ")[0];
+        cardIconBox.innerHTML = v.tone === "ok"
+          ? '<svg class="icon h-8 w-8"><use href="#i-shield"></use></svg>'
+          : v.tone === "watch"
+            ? '<svg class="icon h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
+            : v.tone === "warn"
+              ? '<svg class="icon h-8 w-8"><use href="#i-shield"></use></svg>'
+              : '<svg class="icon h-8 w-8"><use href="#i-alert"></use></svg>';
+        if (v.tone === "ok") { cardPulse.classList.add("hidden"); } else {
+          cardPulse.classList.remove("hidden");
+          cardPulse.className = "absolute inset-0 animate-ping rounded-full " + (v.tone === "danger" ? "bg-red-600/40" : v.tone === "warn" ? "bg-amber-500/40" : "bg-sun/50");
+        }
+        cardTitle.textContent = v.title;
+        cardSub.textContent = v.sub;
+
+        // connection badge — оновлюємо акуратно, з id, щоб не смикати картку щосекунди
+        let connClass = "inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest ";
+        let connIcon = "#i-radio", connText = "реальний час", connColor = "border-emerald-500/30 bg-emerald-500/10 text-emerald-700";
+        if (state.connected === "polling") {
+          connIcon = "#i-wifi"; connText = "оновлення 15с"; connColor = "border-ink/15 bg-white/70 text-ink-soft";
+        } else if (state.connected === "offline") {
+          connIcon = "#i-wifi-off"; connText = "немає зв'язку"; connColor = "border-red-500/30 bg-red-500/10 text-red-700";
+        }
+        let connEl = document.getElementById("air-conn");
+        if (!connEl) {
+          connEl = document.createElement("span");
+          connEl.id = "air-conn";
+          cardBadge.insertAdjacentElement("afterend", connEl);
+        }
+        connEl.className = connClass + connColor;
+        connEl.innerHTML = '<svg class="h-3 w-3 icon"><use href="' + connIcon + '"></use></svg>' + connText;
+
+        vStrong.textContent = v.strong;
+        vSoft.textContent = v.soft;
+        if (started) {
+          sinceWrap.classList.remove("hidden");
+          sinceBig.textContent = dur(started, now);
+          sinceSmall.textContent = "з " + new Date(started).toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
+        } else {
+          sinceWrap.classList.add("hidden");
+        }
+        if (state.lastOkAt) {
+          lastOk.textContent = "оновлено " + new Date(state.lastOkAt).toLocaleTimeString("uk-UA", { hour:"2-digit", minute:"2-digit", second:"2-digit" });
+        } else {
+          lastOk.textContent = stale ? "дані застаріли — перевір з'єднання" : "підключення…";
+        }
+
+        // оновлюємо панелі ТІЛЬКИ коли змінилися дані; щосекунди — лише таймери
+        tickPanes(now);
+        if (state._panesDirty) {
+          state._panesDirty = false;
+          renderPanes();
+        }
+        // спостереження для анімації reveal (одноразово)
+        if (!state._revealObserved) {
+          state._revealObserved = true;
+          const io = new IntersectionObserver((ents) => {
+            ents.forEach((en) => { if (en.isIntersecting) { en.target.classList.add("is-visible"); io.unobserve(en.target); } });
+          }, { threshold: 0.1 });
+          card.parentElement.querySelectorAll(".reveal").forEach((e) => io.observe(e));
+        }
+      }
+
+      function miniStat(label, sub, big, tone, small) {
+        const colors = {
+          ok: "text-emerald-700",
+          warn: "text-amber-600",
+          danger: "text-red-600",
+        };
+        const glow = { ok:"#10b981", warn:"#f59e0b", danger:"#ef4444" };
+        return '<div class="relative overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-ink/10 bg-paper p-4 sm:p-6">' +
+          '<span class="absolute -right-6 -top-6 h-24 w-24 rounded-full blur-2xl opacity-40" style="background:' + glow[tone] + '"></span>' +
+          '<div class="relative"><p class="font-display text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-soft">' + escHtml(label) + '</p>' +
+          '<p class="mt-0.5 text-[11px] font-semibold text-ink-soft/80">' + escHtml(sub) + '</p>' +
+          '<p class="mt-3 sm:mt-4 font-display text-2xl sm:text-3xl font-extrabold uppercase tracking-tight ' + colors[tone] + '">' + escHtml(big) + '</p>' +
+          '<p class="mt-2 text-xs font-semibold text-ink-soft">' + escHtml(small) + '</p></div></div>';
+      }
+
+      // порівняння масиву повідомлень/загроз за id+текстом, щоб не перерендерювати без змін
+      function sameArr(a, b) {
+        if (!a || !b) return false;
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) {
+          const x = a[i], y = b[i];
+          if ((x && x.id) !== (y && y.id) || (x && x.date) !== (y && y.date) || (x && x.text) !== (y && y.text)) return false;
+        }
+        return true;
+      }
+      function markDirtyIfChanged(nextRaion, nextOblast, nextThreats, nextMessages, nextConnected) {
+        const rKey = (nextRaion && nextRaion.since) || "0";
+        const oKey = (nextOblast && nextOblast.since) || "0";
+        const oldR = (state.raion && state.raion.since) || "0";
+        const oldO = (state.oblast && state.oblast.since) || "0";
+        const changed =
+          (!!state.raion !== !!nextRaion) || (!!state.oblast !== !!nextOblast) ||
+          rKey !== oldR || oKey !== oldO ||
+          state.connected !== nextConnected ||
+          !sameArr(state.threats, nextThreats) ||
+          !sameArr(state.messages, nextMessages);
+        if (changed) state._panesDirty = true;
+      }
+
+      /** щосекундне оновлення (лише текст/таймери), без innerHTML — не смикає DOM */
+      function tickPanes(now) {
+        const started = state.raion?.since || state.oblast?.since;
+        // таймер на головній картці оновлюється вище (sinceBig.textContent), тому тут нічого робити не треба.
+        // якщо панель «Зараз» ще не відрендерена — змусимо повний рендер
+        if (!paneNow.dataset.rendered) state._panesDirty = true;
+      }
+
+      function renderPanes() {
+        const v = verdict();
+        const started = state.raion?.since || state.oblast?.since;
+        const now = Date.now();
+
+        // Now pane — для телефонів 1 колонка, для десктопа 3
+        const statRaion = state.raion
+          ? miniStat("Одеський район", "центр Одеси · Великодолинське", "ТРИВОГА", "danger", started ? "триває " + dur(started, now) : "тривога")
+          : miniStat("Одеський район", "центр Одеси · Великодолинське", "тихо", "ok", "тривоги немає");
+        const statOblast = state.oblast
+          ? miniStat("Одеська область", "загалом", "частково", "warn", started ? "з " + fmtTime(started) : "часткова тривога")
+          : miniStat("Одеська область", "загалом", "тихо", "ok", "тривоги по області немає");
+        const statThreats = state.threats.length
+          ? miniStat("Повітряні цілі", "БпЛА, ракети, МіГи поруч", String(state.threats.length), "warn", "стеж за повітрям")
+          : miniStat("Повітряні цілі", "БпЛА, ракети, МіГи поруч", "0", "ok", "зафіксованих цілей немає");
+
+        const verdictBox =
+          '<div class="relative overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-ink/10 bg-paper p-4 sm:p-6 lg:col-span-3">' +
+          '<div class="flex flex-col sm:flex-row items-start gap-3">' +
+          '<span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white ' +
+            (v.tone === "danger" ? "bg-red-600" : v.tone === "warn" ? "bg-amber-500" : v.tone === "watch" ? "bg-sun text-ink" : "bg-emerald-500") + '">' +
+            (v.goto === "yes" ? '<svg class="icon h-5 w-5"><use href="#i-check"></use></svg>' : '<svg class="icon h-5 w-5"><use href="#i-alert"></use></svg>') +
+          '</span>' +
+          '<div><p class="font-display text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-soft">Рішення на сьогодні</p>' +
+          '<p class="mt-1 font-display text-lg font-bold leading-snug">' + escHtml(v.strong) + '.</p>' +
+          '<p class="mt-2 text-sm leading-relaxed text-ink-soft">Пам\'ятай: сторінка — помічник, а не офіційне джерело. Головне — сигнал сирени, повідомлення ДСНС та вчителі.</p>' +
+          '</div></div></div>';
+
+        paneNow.innerHTML = '<div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">' + statRaion + statOblast + statThreats + verdictBox + '</div>';
+
+        // Threats pane
+        if (!state.threats.length) {
+          paneThreats.innerHTML = '<div class="flex flex-col items-center gap-3 rounded-[1.75rem] border border-ink/10 bg-paper p-10 text-center">' +
+            '<svg class="icon h-10 w-10 text-emerald-500"><use href="#i-check"></use></svg>' +
+            '<p class="font-display text-lg font-bold">Повітряних цілей поруч не видно</p>' +
+            '<p class="max-w-md text-sm text-ink-soft">У межах Одещини зараз не фіксуються БпЛА, ракети чи вильоти МіГ-31К.</p></div>';
+        } else {
+          paneThreats.innerHTML = '<div class="grid gap-3 sm:grid-cols-2">' + state.threats.map((t) => {
+            const danger = t.type === "ballistic" || t.type === "missile" || t.type === "kab";
+            const bg = danger ? "border-red-500/30 bg-red-500/5" : "border-ink/10 bg-paper";
+            const iconBg = danger ? "bg-red-600" : t.type === "mig31k" ? "bg-night" : t.type === "uav" ? "bg-sun text-ink" : "bg-cobalt";
+            const title = t.locality || t.district || t.region || "Невідома локація";
+            const sub = t.explanationShort || (t.district ? (t.district + ", " + t.region) : t.region) || "";
+            const conf = t.confidenceLevel === "high" ? "впевнено" : t.confidenceLevel === "medium" ? "імовірно" : "не точно";
+            const extra = (t.velocity && t.velocity.speedKmh) ? (' — ~' + Math.round(t.velocity.speedKmh) + ' км/год') : '';
+            return '<article class="flex items-start gap-4 rounded-3xl border p-5 ' + bg + '">' +
+              '<span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white ' + iconBg + '">' +
+                threatIcon(t.type) + '</span>' +
+              '<div class="min-w-0 flex-1">' +
+                '<p class="font-display text-[10px] font-bold uppercase tracking-widest text-ink-soft">' + escHtml(threatLabel(t.type)) +
+                  (t.confidenceLevel ? '<span class="ml-2 rounded-full bg-ink/10 px-1.5 py-0.5 text-[9px]">' + conf + '</span>' : '') + '</p>' +
+                '<h4 class="mt-1 font-display text-base font-bold">' + escHtml(title) + '</h4>' +
+                '<p class="mt-1 text-sm text-ink-soft">' + escHtml(sub) + '</p>' +
+                (t.updatedAt ? '<p class="mt-2 text-[11px] font-semibold uppercase tracking-widest text-ink-soft/70">оновлено ' + fmtTime(t.updatedAt) + extra + '</p>' : '') +
+              '</div></article>';
+          }).join("") + '</div>';
+        }
+
+        // News pane — ЛИШЕ Одеса/Одеський район/Великодолинське/Чорноморськ/Південне
+        // (щоб не тягло Миколаїв/Херсон і не змішувалось)
+        const odesaRe = /одес|великодолинськ|чорноморськ|чорноморськ|южне|південн|теплодар|біляївк|овідіопол|іллічівськ|сухий лиман|тайрове|крижанівка|фонтанка|ліски/;
+        const odesaMsgs = state.messages.filter((m) => odesaRe.test((m && m.text) || ""));
+        if (!odesaMsgs.length) {
+          paneNews.innerHTML = '<div class="rounded-[1.75rem] border border-ink/10 bg-paper p-6 sm:p-8 text-center">' +
+            '<svg class="icon mx-auto h-8 w-8 text-ink-soft/50"><use href="#i-megaphone"></use></svg>' +
+            '<p class="mt-3 font-display text-base font-bold text-ink-soft">Новин по Одесі наразі немає</p>' +
+            '<p class="mx-auto mt-1 max-w-sm text-[13px] leading-relaxed text-ink-soft/80">Щойно в офіційних або моніторингових каналах з\'являться повідомлення про Одесу чи Одеський район — вони з\'являться тут.</p></div>';
+        } else {
+          paneNews.innerHTML = '<ul class="space-y-2 sm:space-y-3">' + odesaMsgs.map((m, i) =>
+            '<li class="anim-fade-up rounded-2xl sm:rounded-3xl border border-ink/10 bg-paper p-4 sm:p-5" style="animation-delay:' + (i*50) + 'ms;word-break:break-word;overflow-wrap:anywhere">' +
+              '<div class="flex flex-wrap items-center justify-between gap-2">' +
+                '<p class="font-display text-[10px] font-bold uppercase tracking-widest text-cobalt break-all">' + escHtml(m.channel || "моніторинг") + '</p>' +
+                '<p class="text-[11px] font-semibold tabular-nums text-ink-soft">' + (m.date ? new Date(m.date).toLocaleTimeString("uk-UA", { hour:"2-digit", minute:"2-digit" }) : "") + '</p>' +
+              '</div>' +
+              '<p class="mt-2 whitespace-pre-wrap text-[13.5px] sm:text-[14px] leading-relaxed text-ink">' + escHtml(m.text || "") + '</p>' +
+            '</li>'
+          ).join("") + '</ul>';
+        }
+
+        // History pane
+        if (!state.history.length) {
+          paneHistory.innerHTML = '<div class="rounded-[1.75rem] border border-ink/10 bg-paper p-8 text-center">' +
+            '<svg class="icon mx-auto h-8 w-8 text-ink-soft/50"><use href="#i-clock-history"></use></svg>' +
+            '<p class="mt-3 font-display text-base font-bold text-ink-soft">Історія накопичується</p>' +
+            '<p class="mx-auto mt-1 max-w-md text-sm text-ink-soft/80">Щойно статус тривоги зміниться — тут з\'являться записи. Історія зберігається у твоєму браузері 24 години.</p></div>';
+        } else {
+          const rows = buildHistoryRows();
+          paneHistory.innerHTML = '<div class="relative overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-ink/10 bg-paper p-4 sm:p-6">' +
+            '<ol class="relative space-y-3 sm:space-y-4 border-l-2 border-dashed border-ink/15 pl-4 sm:pl-5 min-w-0">' + rows.map((r) => {
+              const d = new Date(r.at);
+              const dot = r.kind === "start" ? "bg-red-600" : r.kind === "end" ? "bg-emerald-500" : r.kind === "threat" ? "bg-sun" : "bg-ink/30";
+              const icon = r.kind === "start" ? "🔴 " : r.kind === "end" ? "🟢 " : r.kind === "threat" ? "🟡 " : "⚪️ ";
+              return '<li class="relative min-w-0"><span class="absolute -left-[23px] sm:-left-[27px] top-1.5 h-3 w-3 rounded-full ring-4 ring-paper ' + dot + '"></span>' +
+                '<div class="flex flex-wrap items-baseline justify-between gap-2 min-w-0">' +
+                  '<p class="font-display text-sm font-bold break-words">' + icon + escHtml(r.label) + '</p>' +
+                  '<p class="font-display text-xs font-semibold tabular-nums text-ink-soft">' +
+                    d.toLocaleDateString("uk-UA", { day:"2-digit", month:"2-digit" }) + " · " +
+                    d.toLocaleTimeString("uk-UA", { hour:"2-digit", minute:"2-digit" }) +
+                  '</p>' +
+                '</div></li>';
+            }).join("") + '</ol></div>';
+        }
+        paneNow.dataset.rendered = "1";
+      }
+
+      function buildHistoryRows() {
+        const h = [...state.history].reverse();
+        const rows = [];
+        let prev = null;
+        for (const e of h) {
+          const cur = { r: !!e.alertRaion, o: !!e.alertOblast, t: e.threatCount > 0 };
+          if (!prev) {
+            if (cur.r) rows.push({ at:e.at, kind:"start", label:"Тривога в Одеському районі" });
+            else if (cur.o) rows.push({ at:e.at, kind:"start", label:"Тривога в Одеській області" });
+            else if (cur.t) rows.push({ at:e.at, kind:"threat", label:"Загрози в напрямку області" });
+            else rows.push({ at:e.at, kind:"clear", label:"Тривоги немає" });
+          } else {
+            if (cur.r && !prev.r) rows.push({ at:e.at, kind:"start", label:"Тривога в Одеському районі" });
+            else if (!cur.r && cur.o && !prev.o) rows.push({ at:e.at, kind:"start", label:"Тривога в області" });
+            else if (!cur.r && !cur.o && (prev.r || prev.o)) rows.push({ at:e.at, kind:"end", label:"Відбій тривоги" });
+            if (cur.t && !prev.t && !cur.r && !cur.o) rows.push({ at:e.at, kind:"threat", label:"Загрози в напрямку області" });
+            if (!cur.t && !cur.r && !cur.o && (prev.t || prev.r || prev.o)) rows.push({ at:e.at, kind:"clear", label:"Небо чисте" });
+          }
+          prev = cur;
+        }
+        return rows.slice(0, 20);
+      }
+
+      function threatIcon(type) {
+        if (type === "uav" || type === "recon") {
+          return '<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"></circle><circle cx="18" cy="6" r="2.5"></circle><circle cx="6" cy="18" r="2.5"></circle><circle cx="18" cy="18" r="2.5"></circle><path d="M8 8l8 8M8 16l8-8"></path><circle cx="12" cy="12" r="1.2" fill="currentColor"></circle></svg>';
+        }
+        if (type === "missile" || type === "ballistic") {
+          return '<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6-2 2-4-4-1-1-5 5H6l-2-2 7-7 3 1z"></path><path d="M10 12l-4 4 2 2 4-4"></path></svg>';
+        }
+        if (type === "kab") {
+          return '<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13a7 7 0 0114 0c0 3-1 4-2 5H7c-1-1-2-2-2-5z"></path></svg>';
+        }
+        if (type === "mig31k") return '<svg class="icon h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"></path></svg>';
+        return '<svg class="icon h-5 w-5"><use href="#i-alert"></use></svg>';
+      }
+
+      // Tabs
+      document.querySelectorAll(".air-tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-atab");
+          document.querySelectorAll(".air-tab").forEach((b) => {
+            b.classList.remove("bg-ink", "text-cream", "shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]");
+            b.classList.add("text-ink-soft");
+          });
+          btn.classList.add("bg-ink", "text-cream", "shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]");
+          btn.classList.remove("text-ink-soft");
+          ["now", "threats", "news", "history"].forEach((n) => {
+            const p = document.getElementById("air-pane-" + n);
+            if (p) p.classList.toggle("hidden", n !== id);
+          });
+          // ніякої прокрутки: просто міняємо панелі, щоб екран не стрибав
+        });
+      });
+
+      // ---- networking ----
+      function applyData(alerts, threats, messages, serverTime, source) {
+        const nextRaion = matchAlert(alerts.raions, WATCH.raionKey);
+        const nextOblast = matchAlert(alerts.oblasts, WATCH.oblastKey);
+        const nextThreats = (threats || []).filter(isOdesaThreat).slice(0, 8);
+        const nextMessages = messages || state.messages;
+        markDirtyIfChanged(nextRaion, nextOblast, nextThreats, nextMessages, source);
+
+        const prevKey = (!!state.raion) + "|" + (!!state.oblast) + "|" + ((state.threats.some((t)=>!t.advisory)) ? "t" : "");
+        state.raion = nextRaion;
+        state.oblast = nextOblast;
+        state.threats = nextThreats;
+        state.messages = nextMessages;
+        state.lastOkAt = Date.now();
+        state.connected = source;
+
+        const nextKey = (!!state.raion) + "|" + (!!state.oblast) + "|" + (state.threats.some((t)=>!t.advisory) ? "t" : "");
+        if (prevKey !== nextKey) {
+          state.history.push({
+            at: Date.now(),
+            alertRaion: !!state.raion,
+            alertOblast: !!state.oblast,
+            threatCount: state.threats.filter((t)=>!t.advisory).length,
+          });
+          state.history._lastKey = nextKey;
+          saveHistory();
+          state._panesDirty = true;
+        }
+        apply();
+      }
+
+      async function fetchJson(url, ms) {
+        const c = new AbortController();
+        const tid = setTimeout(() => c.abort(), ms || 8000);
+        try {
+          const r = await fetch(url, { signal: c.signal, cache: "no-store" });
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return await r.json();
+        } finally { clearTimeout(tid); }
+      }
+      async function ubillFallback() {
+        try {
+          const j = await fetchJson(UBILLING, 7000);
+          const ob = j && j.states && j.states["Одеська область"];
+          return {
+            raions: [],
+            oblasts: ob && ob.alertnow
+              ? [{ key: WATCH.oblastKey, name: "Одеська область", oblast: "", since: ob.changed }]
+              : [],
+          };
+        } catch { return null; }
+      }
+
+      let ws = null;
+      let snapshot = { raions: [], oblasts: [], threats: [] };
+      function startWs() {
+        try {
+          ws = new WebSocket("wss://neptun.in.ua/api/v1/stream");
+          ws.onopen = () => {};
+          ws.onmessage = (e) => {
+            try {
+              const env = JSON.parse(e.data);
+              if (env.type === "snapshot") {
+                const d = env.data || {};
+                snapshot.raions = (d.alerts && d.alerts.raions) || [];
+                snapshot.oblasts = (d.alerts && d.alerts.oblasts) || [];
+                snapshot.threats = d.threats || snapshot.threats;
+                applyData({ raions: snapshot.raions, oblasts: snapshot.oblasts }, snapshot.threats, null, d.serverTime, "live");
+              } else if (env.type === "alerts") {
+                const d = env.data || {};
+                snapshot.raions = d.raions || [];
+                snapshot.oblasts = d.oblasts || [];
+                applyData({ raions: snapshot.raions, oblasts: snapshot.oblasts }, snapshot.threats, null, null, "live");
+              } else if (env.type === "upsert") {
+                const t = env.data;
+                if (!t) return;
+                const rest = snapshot.threats.filter((x) => x.id !== t.id);
+                if (t.status !== "resolved") rest.push(t);
+                snapshot.threats = rest;
+                applyData({ raions: snapshot.raions, oblasts: snapshot.oblasts }, snapshot.threats, null, null, "live");
+              } else if (env.type === "remove") {
+                const id = (env.data || {}).id;
+                snapshot.threats = snapshot.threats.filter((x) => x.id !== id);
+                applyData({ raions: snapshot.raions, oblasts: snapshot.oblasts }, snapshot.threats, null, null, "live");
+              }
+            } catch {}
+          };
+          ws.onerror = () => {};
+          ws.onclose = () => { ws = null; setTimeout(startWs, 3500); };
+        } catch {
+          // no ws
+        }
+      }
+      startWs();
+
+      async function poll() {
+        try {
+          const [a, t, m] = await Promise.allSettled([
+            fetchJson(NEPTUN + "/api/v1/alerts"),
+            fetchJson(NEPTUN + "/api/v1/threats"),
+            fetchJson(NEPTUN + "/api/v1/messages"),
+          ]);
+          let alerts;
+          let serverTime = null;
+          if (a.status === "fulfilled") {
+            alerts = { raions: (a.value && a.value.raions) || [], oblasts: (a.value && a.value.oblasts) || [] };
+            serverTime = a.value && a.value.serverTime;
+          } else {
+            const fb = await ubillFallback();
+            if (!fb) throw new Error("alerts down");
+            alerts = fb;
+          }
+          const threats = t.status === "fulfilled" ? (t.value && t.value.threats) || [] : [];
+          const odesaRe = /одес|великодолинськ|чорноморськ|южне|південн|теплодар|біляївк|овідіопол|сухий лиман|тайрове|крижанівка|фонтанка|ліски/i;
+          const messages = m.status === "fulfilled"
+            ? (((m.value && m.value.messages) || []).filter((x) => odesaRe.test(x.text || "")).slice(0, 8))
+            : state.messages;
+          applyData(alerts, threats, messages, serverTime, ws && ws.readyState === 1 ? "live" : "polling");
+        } catch {
+          if (state.lastOkAt && Date.now() - state.lastOkAt > 90000) {
+            state.connected = "offline";
+            apply();
+          }
+        }
+      }
+      poll();
+      setInterval(poll, POLL_MS);
+      setInterval(async () => {
+        try {
+          const m = await fetchJson(NEPTUN + "/api/v1/messages", 6000);
+          // суворий фільтр — лише Одеса / Одеський район
+          const odesaRe = /одес|великодолинськ|чорноморськ|южне|південн|теплодар|біляївк|овідіопол|сухий лиман|тайрове|крижанівка|фонтанка|ліски/i;
+          const rel = ((m && m.messages) || []).filter((x) => odesaRe.test(x.text || "")).slice(0, 8);
+          if (rel.length && !sameArr(state.messages, rel)) {
+            state.messages = rel;
+            state._panesDirty = true;
+            apply();
+          }
+        } catch {}
+      }, 25000);
+      // таймер для секундних оновлень (без повного перерендеру панелей)
+      setInterval(() => {
+        // тригер «apply» тільки щоб оновити lastOk/since таймер в хедері картки, без renderPanes
+        apply();
+      }, 1000);
+
+      apply();
+    })();
     </script>
   </body>
 </html>
