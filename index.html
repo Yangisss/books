@@ -2087,7 +2087,6 @@
           const cutoff = Date.now() - 48 * 3600 * 1000;
           const mapped = arr
             .filter((e) => e && typeof e.at === "number" && e.at > cutoff)
-            // відфільтровуємо спам
             .filter((e) => e.type || e.alertRaion || e.alertOblast || e.kind === "start" || e.kind === "end")
             .map((e) => {
               if (e.title) return e;
@@ -2109,31 +2108,44 @@
 
       function sanitizeHistory(arr) {
         if (!Array.isArray(arr)) return [];
-        const result = [];
+        // 1. Видаляємо секундні бліпи (коли статус стрибнув менше ніж за 90 секунд)
+        const filtered = [];
         for (let i = 0; i < arr.length; i++) {
           const item = arr[i];
           if (!item || typeof item.at !== "number") continue;
-
-          // Виправлення розсинхрону: якщо відбій каже "Тривала X хв", а час початку стоїть такий самий як відбій
-          const prev = result[result.length - 1];
-          if (prev && item.type === "clear" && prev.type !== "clear") {
-            const match = String(item.duration || "").match(/(\d+)\s*(?:хв|хвилин)/);
-            const durMins = match ? parseInt(match[1], 10) : 0;
-            // Якщо час початку збігається з відбоєм (різниця < 1 хв), але тривала > 1 хв:
-            if (durMins >= 1 && Math.abs(item.at - prev.at) < 60000) {
-              prev.at = item.at - durMins * 60000;
-            } else if (durMins === 0 && Math.abs(item.at - prev.at) < 60000) {
-              // Фальшивий бліп з нульовою тривалістю в одну й ту ж хвилину — видаляємо
-              result.pop();
-              continue;
-            }
-          }
-
-          // Не допускати дублювання однакових подій підряд менше ніж за 2 хв
-          if (prev && prev.type === item.type && Math.abs(item.at - prev.at) < 120000) {
+          const prev = filtered[filtered.length - 1];
+          if (prev && Math.abs(item.at - prev.at) < 90000) {
+            filtered.pop();
             continue;
           }
+          filtered.push(item);
+        }
 
+        // 2. Правильне зіставлення тривоги та відбою
+        const result = [];
+        for (let i = 0; i < filtered.length; i++) {
+          const item = filtered[i];
+          const prev = result[result.length - 1];
+
+          if (item.type === "clear" && (!prev || prev.type === "clear")) {
+            // Відбій без попереднього початку: відновлюємо початок на основі тривалості
+            const match = String(item.duration || "").match(/(\d+)\s*(?:хв|хвилин)/);
+            const durMins = match ? parseInt(match[1], 10) : 0;
+            if (durMins >= 1) {
+              result.push({
+                at: item.at - durMins * 60000,
+                kind: "warn",
+                type: "drone",
+                title: "Дронова небезпека",
+                reason: "Зафіксовано ударні БпЛА в напрямку Одеського району.",
+                duration: "",
+                targets: []
+              });
+            }
+          } else if (prev && prev.type === item.type) {
+            // Пропускаємо два однакових записи підряд
+            continue;
+          }
           result.push(item);
         }
         return result;
@@ -2584,6 +2596,10 @@
         } else {
           const rows = [...state.history].reverse().slice(0, 30);
           paneHistory.innerHTML = '<div class="relative overflow-hidden rounded-[1.5rem] sm:rounded-[1.75rem] border border-ink/10 bg-paper p-4 sm:p-6">' +
+            '<div class="flex items-center justify-between pb-3 border-b border-ink/10 mb-4">' +
+              '<span class="font-display text-xs font-bold uppercase tracking-widest text-ink-soft">Журнал сигналів (' + state.history.length + ')</span>' +
+              '<button id="clear-hist-btn" class="rounded-lg border border-ink/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-soft hover:text-red-600 hover:border-red-500/30 transition-all">Очистити історію</button>' +
+            '</div>' +
             '<ol class="relative space-y-4 border-l-2 border-dashed border-ink/15 pl-4 sm:pl-5 min-w-0">' + rows.map((r) => {
               const d = new Date(r.at);
               const isDanger = r.kind === "danger" || r.type === "air";
@@ -2606,6 +2622,15 @@
                 (r.threats && r.threats.length ? '<div class="mt-2 flex flex-wrap gap-1.5">' + r.threats.map(tg => '<span class="rounded-md border border-ink/10 bg-cream/70 px-2 py-0.5 text-[10px] font-semibold text-ink-soft">' + escHtml(tg) + '</span>').join("") + '</div>' : '') +
               '</li>';
             }).join("") + '</ol></div>';
+
+          const clrBtn = document.getElementById("clear-hist-btn");
+          if (clrBtn) {
+            clrBtn.onclick = () => {
+              state.history = [];
+              try { localStorage.removeItem(HIST_KEY); } catch {}
+              renderPanes();
+            };
+          }
         }
 
         paneNow.dataset.rendered = "1";
@@ -2644,8 +2669,14 @@
 
       // ---- networking ----
       function applyData(alerts, threats, messages, serverTime, source) {
-        const nextRaion = matchRaionAlert(alerts?.raions);
-        const nextOblast = matchOblastAlert(alerts?.oblasts);
+        let nextRaion = state.raion;
+        let nextOblast = state.oblast;
+        if (alerts && (alerts.raions !== undefined || alerts.oblasts !== undefined)) {
+          nextRaion = matchRaionAlert(alerts.raions);
+          nextOblast = matchOblastAlert(alerts.oblasts);
+          snapshot.raions = alerts.raions || [];
+          snapshot.oblasts = alerts.oblasts || [];
+        }
         const nextThreats = (threats || []).filter(isOdesaThreat).slice(0, 8);
         const nextMessages = messages || state.messages;
         markDirtyIfChanged(nextRaion, nextOblast, nextThreats, nextMessages, source);
@@ -2797,10 +2828,14 @@
               const env = JSON.parse(e.data);
               if (env.type === "snapshot") {
                 const d = env.data || {};
-                snapshot.raions = (d.alerts && d.alerts.raions) || [];
-                snapshot.oblasts = (d.alerts && d.alerts.oblasts) || [];
-                snapshot.threats = d.threats || snapshot.threats;
-                applyData({ raions: snapshot.raions, oblasts: snapshot.oblasts }, snapshot.threats, null, d.serverTime, "live");
+                if (d.threats) snapshot.threats = d.threats;
+                if (d.alerts && (d.alerts.raions || d.alerts.oblasts)) {
+                  snapshot.raions = d.alerts.raions || [];
+                  snapshot.oblasts = d.alerts.oblasts || [];
+                  applyData({ raions: snapshot.raions, oblasts: snapshot.oblasts }, snapshot.threats, null, d.serverTime, "live");
+                } else {
+                  applyData(null, snapshot.threats, null, d.serverTime, "live");
+                }
               } else if (env.type === "alerts") {
                 const d = env.data || {};
                 snapshot.raions = d.raions || [];
@@ -2812,11 +2847,11 @@
                 const rest = snapshot.threats.filter((x) => x.id !== t.id);
                 if (t.status !== "resolved") rest.push(t);
                 snapshot.threats = rest;
-                applyData({ raions: snapshot.raions, oblasts: snapshot.oblasts }, snapshot.threats, null, null, "live");
+                applyData(null, snapshot.threats, null, null, "live");
               } else if (env.type === "remove") {
                 const id = (env.data || {}).id;
                 snapshot.threats = snapshot.threats.filter((x) => x.id !== id);
-                applyData({ raions: snapshot.raions, oblasts: snapshot.oblasts }, snapshot.threats, null, null, "live");
+                applyData(null, snapshot.threats, null, null, "live");
               }
             } catch {}
           };
@@ -2841,11 +2876,15 @@
           if (a.status === "fulfilled") {
             alerts = { raions: (a.value && a.value.raions) || [], oblasts: (a.value && a.value.oblasts) || [] };
             serverTime = a.value && a.value.serverTime;
+            snapshot.raions = alerts.raions;
+            snapshot.oblasts = alerts.oblasts;
           } else {
             const fb = await ubillFallback();
             if (!fb) throw new Error("alerts down");
             alerts = fb;
             sourceName = "UBilling";
+            snapshot.raions = alerts.raions;
+            snapshot.oblasts = alerts.oblasts;
           }
           state.sourceName = (ws && ws.readyState === 1) ? "NEPTUN (live)" : sourceName;
           const threats = t.status === "fulfilled" ? (t.value && t.value.threats) || [] : [];
