@@ -2085,13 +2085,12 @@
           if (!raw) return [];
           const arr = JSON.parse(raw);
           const cutoff = Date.now() - 48 * 3600 * 1000;
-          return arr
+          const mapped = arr
             .filter((e) => e && typeof e.at === "number" && e.at > cutoff)
-            // відфільтровуємо старий спам, коли тривоги не було, а просто літав дрон
+            // відфільтровуємо спам
             .filter((e) => e.type || e.alertRaion || e.alertOblast || e.kind === "start" || e.kind === "end")
             .map((e) => {
               if (e.title) return e;
-              // конвертуємо старий формат
               const isR = !!e.alertRaion;
               const isO = !!e.alertOblast;
               return {
@@ -2103,9 +2102,41 @@
                 duration: "",
                 targets: []
               };
-            })
-            .slice(-HIST_MAX);
+            });
+          return sanitizeHistory(mapped).slice(-HIST_MAX);
         } catch { return []; }
+      }
+
+      function sanitizeHistory(arr) {
+        if (!Array.isArray(arr)) return [];
+        const result = [];
+        for (let i = 0; i < arr.length; i++) {
+          const item = arr[i];
+          if (!item || typeof item.at !== "number") continue;
+
+          // Виправлення розсинхрону: якщо відбій каже "Тривала X хв", а час початку стоїть такий самий як відбій
+          const prev = result[result.length - 1];
+          if (prev && item.type === "clear" && prev.type !== "clear") {
+            const match = String(item.duration || "").match(/(\d+)\s*(?:хв|хвилин)/);
+            const durMins = match ? parseInt(match[1], 10) : 0;
+            // Якщо час початку збігається з відбоєм (різниця < 1 хв), але тривала > 1 хв:
+            if (durMins >= 1 && Math.abs(item.at - prev.at) < 60000) {
+              prev.at = item.at - durMins * 60000;
+            } else if (durMins === 0 && Math.abs(item.at - prev.at) < 60000) {
+              // Фальшивий бліп з нульовою тривалістю в одну й ту ж хвилину — видаляємо
+              result.pop();
+              continue;
+            }
+          }
+
+          // Не допускати дублювання однакових подій підряд менше ніж за 2 хв
+          if (prev && prev.type === item.type && Math.abs(item.at - prev.at) < 120000) {
+            continue;
+          }
+
+          result.push(item);
+        }
+        return result;
       }
       function saveHistory() {
         try { localStorage.setItem(HIST_KEY, JSON.stringify(state.history.slice(-HIST_MAX))); } catch {}
@@ -2629,46 +2660,100 @@
         // Перевірка зміни статусу тривоги для історії:
         const v = verdict();
         const currentKind = v.kind; // "air" | "drone" | "oblast" | "clear"
+        const now = Date.now();
+
+        // Офіційний час початку поточної тривоги (якщо є)
+        const officialStartIso = state.raion?.since || state.oblast?.since;
+        const officialStartMs = officialStartIso ? new Date(officialStartIso).getTime() : null;
 
         if (state._lastKind !== undefined && state._lastKind !== currentKind) {
-          // Якщо тривога завершилась
+          // Якщо тривога завершилась (ВІДБІЙ)
           if (currentKind === "clear") {
-            const startAt = state._alertStartedAt || (Date.now() - 60000);
-            const durationStr = dur(startAt, Date.now());
-            state.history.push({
-              at: Date.now(),
-              kind: "ok",
-              type: "clear",
-              title: "Відбій тривоги",
-              reason: "Небезпека минула. Офіційний відбій для Одеси та Одеського району.",
-              duration: durationStr ? "Тривала " + durationStr : "",
-              targets: []
-            });
+            const lastActive = [...state.history].reverse().find((h) => h.type !== "clear");
+            const startAt = officialStartMs || state._alertStartedAt || (lastActive ? lastActive.at : null);
+
+            let durationStr = "";
+            if (startAt && startAt <= now) {
+              const diffMs = now - startAt;
+              const diffMins = Math.floor(diffMs / 60000);
+              if (diffMins >= 1) {
+                durationStr = "Тривала " + dur(startAt, now);
+              } else {
+                durationStr = "Тривала менше 1 хв";
+              }
+            }
+
+            // Перевірка на фальшивий бліп або дублювання відбою
+            const lastEntry = state.history[state.history.length - 1];
+            const isDuplicateClear = lastEntry && lastEntry.type === "clear" && Math.abs(now - lastEntry.at) < 120000;
+
+            if (!isDuplicateClear) {
+              // Якщо попередня тривога тривала менше 40 сек і без офіційного since — це був мережевий бліп
+              if (lastActive && Math.abs(now - lastActive.at) < 40000 && !officialStartMs) {
+                state.history = state.history.filter((x) => x !== lastActive);
+              } else {
+                state.history.push({
+                  at: now,
+                  kind: "ok",
+                  type: "clear",
+                  title: "Відбій тривоги",
+                  reason: "Небезпека минула. Офіційний відбій для Одеси та Одеського району.",
+                  duration: durationStr,
+                  targets: []
+                });
+              }
+            }
             state._alertStartedAt = null;
           } else {
-            // Почалася тривога (або змінився тип)
-            if (!state._alertStartedAt) {
-              const startIso = state.raion?.since || state.oblast?.since;
-              state._alertStartedAt = startIso ? new Date(startIso).getTime() : Date.now();
-            }
+            // ПОЧАЛАСЯ ТРИВОГА (або змінився рівень: наприклад з дронів на балістику)
+            const realAlertStart = officialStartMs || now;
+            state._alertStartedAt = realAlertStart;
+
             const threatNames = (v.threats || []).map((t) => threatLabel(t.type) + (t.locality ? " · " + t.locality : ""));
-            state.history.push({
-              at: Date.now(),
-              kind: v.tone,
-              type: v.kind,
-              title: v.kind === "drone" ? "Дронова небезпека" : (v.kind === "air" ? "Повітряна тривога" : "Тривога в області"),
-              reason: v.reason,
-              duration: "",
-              targets: threatNames
-            });
+            const lastEntry = state.history[state.history.length - 1];
+            const isDuplicate = lastEntry && lastEntry.type === v.kind && Math.abs(realAlertStart - lastEntry.at) < 180000;
+
+            if (!isDuplicate) {
+              state.history.push({
+                at: realAlertStart, // ТОЧНИЙ реальний час початку тривоги (since), а не Date.now()!
+                kind: v.tone,
+                type: v.kind,
+                title: v.kind === "drone" ? "Дронова небезпека" : (v.kind === "air" ? "Повітряна тривога" : "Тривога в області"),
+                reason: v.reason,
+                duration: "",
+                targets: threatNames
+              });
+            }
           }
+          state.history = sanitizeHistory(state.history);
           saveHistory();
           state._panesDirty = true;
         } else if (state._lastKind === undefined) {
-          // Ініціалізація першого запуску
+          // ПЕРШИЙ ЗАПУСК СТОРІНКИ
           if (currentKind !== "clear") {
-            const startIso = state.raion?.since || state.oblast?.since;
-            state._alertStartedAt = startIso ? new Date(startIso).getTime() : Date.now();
+            const realAlertStart = officialStartMs || now;
+            state._alertStartedAt = realAlertStart;
+
+            const lastEntry = state.history[state.history.length - 1];
+            const alreadyLogged = state.history.some(
+              (h) => h.type === v.kind && Math.abs(h.at - realAlertStart) < 300000
+            );
+
+            if (!alreadyLogged && (!lastEntry || lastEntry.type !== v.kind)) {
+              const threatNames = (v.threats || []).map((t) => threatLabel(t.type) + (t.locality ? " · " + t.locality : ""));
+              state.history.push({
+                at: realAlertStart, // реальний час початку!
+                kind: v.tone,
+                type: v.kind,
+                title: v.kind === "drone" ? "Дронова небезпека" : (v.kind === "air" ? "Повітряна тривога" : "Тривога в області"),
+                reason: v.reason,
+                duration: "",
+                targets: threatNames
+              });
+              state.history = sanitizeHistory(state.history);
+              saveHistory();
+              state._panesDirty = true;
+            }
           }
         }
         state._lastKind = currentKind;
