@@ -415,18 +415,24 @@ function BellBoard({ now, clsLabel, bells }: { now: Date; clsLabel: string; bell
     t = `Сьогодні ${now.getDay() === 6 ? "субота" : "неділя"} — вихідний`;
     subTxt = "Дзвінків немає, гарного відпочинку";
   } else if (liveIdx >= 0) {
+    const elapsed = nowMin - toMin(bells[liveIdx].start);
+    const remaining = toMin(bells[liveIdx].end) - nowMin;
     t = `Триває ${liveIdx + 1}-й урок`;
-    subTxt = `до ${bells[liveIdx].end} · залишилось ${toMin(bells[liveIdx].end) - nowMin} хв`;
+    subTxt = `Урок триває вже ${elapsed} хв (з ${bells[liveIdx].start}) · до кінця уроку залишилось ${remaining} хв (до ${bells[liveIdx].end})`;
   } else if (brkIdx >= 0) {
-    const gap = toMin(bells[brkIdx + 1].start) - toMin(bells[brkIdx].end);
-    t = `Перерва ${gap} хв`;
-    subTxt = `${brkIdx + 1}-й урок завершився · ${brkIdx + 2}-й о ${bells[brkIdx + 1].start} — через ${toMin(bells[brkIdx + 1].start) - nowMin} хв`;
+    const prevB = bells[brkIdx];
+    const nextB = bells[brkIdx + 1];
+    const gap = toMin(nextB.start) - toMin(prevB.end);
+    const elapsed = nowMin - toMin(prevB.end);
+    const remaining = toMin(nextB.start) - nowMin;
+    t = `Зараз перерва (${gap} хв)`;
+    subTxt = `Минуло ${elapsed} хв · до початку ${brkIdx + 2}-го уроку залишилось ${remaining} хв (дзвінок о ${nextB.start})`;
   } else if (nowMin < toMin(bells[0].start)) {
-    t = "Ще до першого дзвінка";
-    subTxt = `перший урок о ${bells[0].start} · через ${toMin(bells[0].start) - nowMin} хв`;
+    t = "До початку першого уроку";
+    subTxt = `Перший урок о ${bells[0].start} · залишилось чекати ${toMin(bells[0].start) - nowMin} хв`;
   } else {
     t = "Уроки на сьогодні завершено";
-    subTxt = `останній дзвінок — ${bells[bells.length - 1].end}`;
+    subTxt = `Останній дзвінок — ${bells[bells.length - 1].end} · гарного вечора!`;
   }
 
   return (
@@ -484,28 +490,33 @@ function BellBoard({ now, clsLabel, bells }: { now: Date; clsLabel: string; bell
                     </span>
                   </p>
                   {status === "now" ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-ink">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-wider text-ink shadow-sm">
                       <span className="relative flex h-1.5 w-1.5">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60" />
                         <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink" />
                       </span>
-                      триває · {en - nowMin} хв
+                      Йде урок · залишилось {en - nowMin} хв
                     </span>
                   ) : status === "done" ? (
                     <span className="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">дзвінок був</span>
                   ) : null}
                 </div>
                 {i < bells.length - 1 && (
-                  <div className="flex items-center gap-3 py-0.5 sm:pl-[3.4rem]">
+                  <div className="flex items-center gap-2 sm:gap-3 py-1 sm:pl-[3.4rem]">
                     <span className="h-px flex-1 border-t border-dashed border-ink/20" />
-                    <span
+                    <div
                       className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest",
-                        onBreak ? "border border-cobalt/40 bg-cobalt/10 text-cobalt" : "text-ink-soft/70"
+                        "inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl px-3 py-1 font-display text-[10px] font-bold uppercase tracking-wider",
+                        onBreak ? "border border-cobalt/40 bg-cobalt/10 text-cobalt shadow-sm" : "border border-ink/5 bg-ink/[0.02] text-ink-soft/75"
                       )}
                     >
-                      перерва · {gap} хв{onBreak ? ` · ${toMin(bells[i + 1].start) - nowMin} хв` : ""}
-                    </span>
+                      <span>☕ Перерва: {gap} хв</span>
+                      {onBreak && (
+                        <span className="rounded-full bg-cobalt text-white px-2 py-0.5 text-[9px] font-extrabold normal-case tracking-normal">
+                          Залишилось {toMin(bells[i + 1].start) - nowMin} хв
+                        </span>
+                      )}
+                    </div>
                     <span className="h-px flex-1 border-t border-dashed border-ink/20" />
                   </div>
                 )}

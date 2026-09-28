@@ -1111,20 +1111,29 @@
         if (!weekday) {
           const wd = now.getDay() === 6 ? "субота" : "неділя";
           t = `Сьогодні ${wd} — вихідний`;
-          sub = "Дзвінків немає, гарного відпочинку";
+          sub = "Дзвінків немає, гарного відпочинку!";
         } else if (liveIdx >= 0) {
+          const b = bells[liveIdx];
+          const st = toMin(b.start);
+          const en = toMin(b.end);
+          const elapsed = nowMin - st;
+          const remaining = en - nowMin;
           t = `Триває ${liveIdx + 1}-й урок`;
-          sub = `до ${bells[liveIdx].end} · залишилось ${fmtMin(toMin(bells[liveIdx].end) - nowMin)}`;
+          sub = `Урок триває вже ${fmtMin(elapsed)} (з ${b.start}) · до кінця уроку залишилось ${fmtMin(remaining)} (до ${b.end})`;
         } else if (brkIdx >= 0) {
-          const gap = toMin(bells[brkIdx + 1].start) - toMin(bells[brkIdx].end);
-          t = `Перерва ${gap} хв`;
-          sub = `${brkIdx + 1}-й урок завершився · ${brkIdx + 2}-й о ${bells[brkIdx + 1].start} — через ${fmtMin(toMin(bells[brkIdx + 1].start) - nowMin)}`;
+          const prevB = bells[brkIdx];
+          const nextB = bells[brkIdx + 1];
+          const gap = toMin(nextB.start) - toMin(prevB.end);
+          const elapsed = nowMin - toMin(prevB.end);
+          const remaining = toMin(nextB.start) - nowMin;
+          t = `Зараз перерва (${gap} хв)`;
+          sub = `Минуло ${fmtMin(elapsed)} · до початку ${brkIdx + 2}-го уроку залишилось ${fmtMin(remaining)} (дзвінок о ${nextB.start})`;
         } else if (nowMin < toMin(bells[0].start)) {
-          t = "Ще до першого дзвінка";
-          sub = `перший урок о ${bells[0].start} · через ${fmtMin(toMin(bells[0].start) - nowMin)}`;
+          t = "До початку першого уроку";
+          sub = `Перший дзвінок о ${bells[0].start} · залишилось чекати ${fmtMin(toMin(bells[0].start) - nowMin)}`;
         } else {
           t = "Уроки на сьогодні завершено";
-          sub = `останній дзвінок — ${bells[bells.length - 1].end}`;
+          sub = `Останній дзвінок пролунав о ${bells[bells.length - 1].end} · гарного вечора!`;
         }
         const head = `
           <div class="${animCls} relative flex flex-col justify-between gap-5 overflow-hidden rounded-[1.75rem] bg-ink p-6 text-cream shadow-[0_30px_60px_-25px_rgba(23,20,12,0.6)] sm:flex-row sm:items-center">
@@ -1146,8 +1155,9 @@
           const rowCls = status === "now"
             ? "border-sun/70 bg-sun/10 shadow-[0_18px_45px_-22px_rgba(242,183,5,0.75)]"
             : status === "done" ? "border-ink/10 bg-paper opacity-55" : "border-ink/10 bg-paper";
+          const remaining = en - nowMin;
           const tag = status === "now"
-            ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-ink"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink"></span></span>триває · ${fmtMin(en - nowMin)}</span>`
+            ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-sun px-3 py-1 font-display text-[9.5px] font-bold uppercase tracking-wider text-ink shadow-sm"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink"></span></span>Йде урок · залишилось ${fmtMin(remaining)}</span>`
             : status === "done" ? `<span class="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">дзвінок був</span>` : "";
           return `
             <div class="${animCls} flex items-center gap-3 rounded-3xl border p-3.5 sm:gap-4 sm:p-4 ${rowCls}" ${animCls ? `style="animation-delay:${i * 40}ms"` : ""}>
@@ -1160,12 +1170,16 @@
             </div>` + (i < bells.length - 1 ? (() => {
               const gap = toMin(bells[i + 1].start) - en;
               const onBreak = i === brkIdx;
+              const remainingBreak = toMin(bells[i + 1].start) - nowMin;
               return `
-            <div class="flex items-center gap-3 py-0.5 sm:pl-[3.4rem]">
+            <div class="flex items-center gap-2 sm:gap-3 py-1 sm:pl-[3.4rem]">
               <span class="h-px flex-1 border-t border-dashed border-ink/20"></span>
-              <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest ${
-                onBreak ? "border border-cobalt/40 bg-cobalt/10 text-cobalt" : "text-ink-soft/70"
-              }">перерва · ${gap} хв${onBreak ? ` · ${fmtMin(toMin(bells[i + 1].start) - nowMin)}` : ""}</span>
+              <div class="inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl px-3 py-1 font-display text-[10.5px] font-bold uppercase tracking-wider ${
+                onBreak ? "border border-cobalt/40 bg-cobalt/10 text-cobalt shadow-sm" : "border border-ink/5 bg-ink/[0.02] text-ink-soft/75"
+              }">
+                <span>☕ Перерва: ${gap} хв</span>
+                ${onBreak ? `<span class="rounded-full bg-cobalt text-white px-2.5 py-0.5 text-[9.5px] font-extrabold normal-case tracking-normal shadow-xs">Залишилось ${fmtMin(remainingBreak)}</span>` : ""}
+              </div>
               <span class="h-px flex-1 border-t border-dashed border-ink/20"></span>
             </div>`;
             })() : "");
@@ -1218,6 +1232,18 @@
         const booksInDay = [...new Set(day.lessons.map((l) => l.s))].reduce((a, id) => a + (counts[id] || 0), 0);
         const bpl = (n) => `${n} ${plural(n, "підручник", "підручники", "підручників")}`;
 
+        /* Чи триває зараз перерва між уроками на сьогодні */
+        let activeBreakIdx = -1;
+        if (isToday && ongoingIdx === -1 && nextIdx > 0) {
+          const prevL = day.lessons[nextIdx - 1];
+          const prevB = bellOf(prevL, nextIdx - 1);
+          const nextL = day.lessons[nextIdx];
+          const nextB = bellOf(nextL, nextIdx);
+          if (nowMin >= toMin(prevB.end) && nowMin < toMin(nextB.start)) {
+            activeBreakIdx = nextIdx - 1;
+          }
+        }
+
         /* смужка: що зараз / що далі + скільки книжок */
         let sTitle, sSub, sBtn = null;
         summaryAction = null;
@@ -1234,20 +1260,40 @@
         } else if (isToday && ongoingIdx >= 0) {
           const l = day.lessons[ongoingIdx];
           const s = subjectById[l.s];
+          const b = bellOf(l, ongoingIdx);
+          const elapsed = nowMin - toMin(b.start);
+          const remaining = toMin(b.end) - nowMin;
           sTitle = `Триває ${slotOf(l, ongoingIdx)}-й урок — ${s ? (l.label || s.name) : ""}`;
-          sSub = `до ${bellOf(l, ongoingIdx).end} · залишилось ${fmtMin(toMin(bellOf(l, ongoingIdx).end) - nowMin)}`;
+          sSub = `Урок триває вже ${fmtMin(elapsed)} (з ${b.start}) · до кінця уроку залишилось ${fmtMin(remaining)} (до ${b.end})`;
           if (s && !s.noBooks) {
             sBtn = "Книги до уроку";
             summaryAction = { kind: "open", id: l.s };
+          }
+        } else if (isToday && activeBreakIdx >= 0) {
+          const prevL = day.lessons[activeBreakIdx];
+          const nextL = day.lessons[activeBreakIdx + 1];
+          const prevB = bellOf(prevL, activeBreakIdx);
+          const nextB = bellOf(nextL, activeBreakIdx + 1);
+          const nextS = subjectById[nextL.s];
+          const gap = toMin(nextB.start) - toMin(prevB.end);
+          const elapsed = nowMin - toMin(prevB.end);
+          const remaining = toMin(nextB.start) - nowMin;
+          sTitle = `Зараз перерва (${gap} хв)`;
+          sSub = `Минуло ${fmtMin(elapsed)} · до початку ${slotOf(nextL, activeBreakIdx + 1)}-го уроку (${nextL.label || (nextS && nextS.name) || ""}) залишилось ${fmtMin(remaining)} (о ${nextB.start})`;
+          if (nextS && !nextS.noBooks) {
+            sBtn = "Підручник на наступний урок";
+            summaryAction = { kind: "open", id: nextL.s };
           }
         } else if (isToday && nextIdx >= 0) {
           const first = nextIdx === 0;
           const l = day.lessons[nextIdx];
           const s = subjectById[l.s];
-          sTitle = first ? `Перший урок о ${bells[0].start} — ${l.label || s.name}` : `Наступний урок — ${l.label || s.name}`;
+          const b = bellOf(l, nextIdx);
+          const remaining = toMin(b.start) - nowMin;
+          sTitle = first ? `Перший урок о ${b.start} — ${l.label || s.name}` : `Наступний урок — ${l.label || s.name}`;
           sSub = first
-            ? `До дзвінка ${fmtMin(toMin(bells[0].start) - nowMin)} · у розкладі ${day.lessons.length} уроків`
-            : `${slotOf(l, nextIdx)}-й урок · ${bellOf(l, nextIdx).start} · через ${fmtMin(toMin(bellOf(l, nextIdx).start) - nowMin)}`;
+            ? `До початку першого уроку залишилось ${fmtMin(remaining)} · у розкладі ${day.lessons.length} уроків`
+            : `${slotOf(l, nextIdx)}-й урок о ${b.start} · до дзвінка залишилось ${fmtMin(remaining)}`;
           if (!s.noBooks) {
             sBtn = first ? "Книги до першого уроку" : "Готуємо підручник";
             summaryAction = { kind: "open", id: l.s };
@@ -1295,11 +1341,12 @@
               ? "border-ink/10 bg-paper opacity-55"
               : "border-ink/10 bg-paper hover:-translate-y-0.5 hover:border-ink/25 hover:shadow-[0_18px_40px_-24px_rgba(23,20,12,0.4)]";
           const stripe = status === "now" ? "#f2b705" : s.accent;
+          const remaining = toMin(b.end) - nowMin;
           const pill =
             status === "now"
-              ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-ink"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink"></span></span>зараз · ${fmtMin(toMin(b.end) - nowMin)}</span>`
+              ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-sun px-2.5 py-1 font-display text-[9.5px] font-bold uppercase tracking-wider text-ink shadow-sm"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink/60"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-ink"></span></span>Йде урок · залишилось ${fmtMin(remaining)}</span>`
               : status === "next"
-                ? `<span class="rounded-full border border-cobalt/40 bg-cobalt/10 px-2.5 py-1 font-display text-[9px] font-bold uppercase tracking-widest text-cobalt">наступний · через ${fmtMin(toMin(b.start) - nowMin)}</span>`
+                ? `<span class="rounded-full border border-cobalt/40 bg-cobalt/10 px-2.5 py-1 font-display text-[9.5px] font-bold uppercase tracking-wider text-cobalt">наступний · через ${fmtMin(toMin(b.start) - nowMin)}</span>`
                 : status === "done"
                   ? `<span class="font-display text-[9px] font-bold uppercase tracking-widest text-ink-soft/60">завершено</span>`
                   : "";
@@ -1308,7 +1355,8 @@
             : count > 0
             ? `<span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider" style="border-color:${s.accent}55;color:${s.accent};background-color:${s.accent}12">${svg("i-book-marked", "icon h-3.5 w-3.5")} ${bpl(count)}</span>`
             : `<span class="inline-flex items-center gap-1.5 rounded-full border border-dashed border-ink/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-soft/70">${svg("i-book-marked", "icon h-3.5 w-3.5")} додати книгу</span>`;
-          return `
+
+          const lessonCard = `
             <div ${s.noBooks ? "" : `data-open="${l.s}"`} ${animate ? `style="animation-delay:${i * 50}ms"` : ""} class="group ${animCls} relative flex flex-col gap-3 overflow-hidden rounded-3xl border p-4 pl-5 transition-all duration-300 sm:flex-row sm:items-center sm:gap-4 ${rowCls}${s.noBooks ? "" : " cursor-pointer"}">
               <span class="absolute inset-y-0 left-0 w-1.5" style="background-color:${stripe}"></span>
               <div class="flex items-center gap-3 sm:w-[8.5rem] sm:shrink-0 sm:flex-col sm:items-start sm:gap-0.5">
@@ -1324,6 +1372,27 @@
               </div>
               <div class="flex flex-wrap items-center gap-2.5">${pill}${books}${svg("i-arrow-up-right", "icon hidden h-4 w-4 text-ink/40 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:block")}</div>
             </div>`;
+
+          const breakDivider = i < day.lessons.length - 1 ? (() => {
+            const nextL = day.lessons[i + 1];
+            const nextB = bellOf(nextL, i + 1);
+            const gap = toMin(nextB.start) - toMin(b.end);
+            const onBreak = isToday && activeBreakIdx === i;
+            const remainingBreak = toMin(nextB.start) - nowMin;
+            return `
+            <div class="flex items-center gap-2 sm:gap-3 py-1 sm:pl-6">
+              <span class="h-px flex-1 border-t border-dashed border-ink/20"></span>
+              <div class="inline-flex flex-wrap items-center justify-center gap-2 rounded-2xl px-3 py-1 font-display text-[10.5px] font-bold uppercase tracking-wider ${
+                onBreak ? "border border-cobalt/40 bg-cobalt/10 text-cobalt shadow-sm" : "border border-ink/5 bg-ink/[0.02] text-ink-soft/75"
+              }">
+                <span>☕ Перерва: ${gap} хв</span>
+                ${onBreak ? `<span class="rounded-full bg-cobalt text-white px-2.5 py-0.5 text-[9.5px] font-extrabold normal-case tracking-normal shadow-xs">Залишилось ${fmtMin(remainingBreak)}</span>` : ""}
+              </div>
+              <span class="h-px flex-1 border-t border-dashed border-ink/20"></span>
+            </div>`;
+          })() : "";
+
+          return lessonCard + breakDivider;
         }).join("");
 
         document.getElementById("schedule-body").innerHTML = summaryHTML + `<div class="space-y-3">${rows}</div>`;
