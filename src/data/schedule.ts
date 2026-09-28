@@ -10,7 +10,7 @@ export interface Bell {
 }
 
 /** Дзвінки за розкладом школи (дистанційне навчання): перерви 15 хв, після 7-го уроку — 5 хв */
-export const bells: Bell[] = [
+export const bellsDistant: Bell[] = [
   { start: "08:30", end: "09:10" },
   { start: "09:25", end: "10:05" },
   { start: "10:20", end: "11:00" },
@@ -20,6 +20,20 @@ export const bells: Bell[] = [
   { start: "14:00", end: "14:40" },
   { start: "14:45", end: "15:25" },
 ];
+
+/** Дзвінки для очного навчання (з фото розкладу школи) */
+export const bellsInPerson: Bell[] = [
+  { start: "08:30", end: "09:10" }, // перерва 10 хв
+  { start: "09:20", end: "10:00" }, // перерва 15 хв
+  { start: "10:15", end: "10:55" }, // перерва 15 хв
+  { start: "11:10", end: "11:50" }, // перерва 15 хв
+  { start: "12:05", end: "12:45" }, // перерва 15 хв
+  { start: "13:00", end: "13:40" }, // перерва 10 хв
+  { start: "13:50", end: "14:30" }, // перерва 5 хв
+  { start: "14:35", end: "15:15" },
+];
+
+export const bells: Bell[] = bellsInPerson;
 
 export interface Lesson {
   subjectId: string;

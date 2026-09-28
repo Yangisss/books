@@ -171,6 +171,20 @@
         #day-chips { flex-wrap: wrap; overflow: visible; }
       }
       button, a { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+      /* Гарантована чітка видимість тексту на активних кнопках, табах та фільтрах на мобільних */
+      .air-tab.bg-ink,
+      [data-tg-flt].bg-ink,
+      [data-sched-mode].bg-ink,
+      button.bg-ink {
+        color: #ffffff !important;
+        background-color: #17140c !important;
+      }
+      .air-tab.bg-ink *,
+      [data-tg-flt].bg-ink *,
+      [data-sched-mode].bg-ink * {
+        color: #ffffff !important;
+        stroke: #ffffff !important;
+      }
       select.cls-select {
         appearance: none; -webkit-appearance: none;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%2317140c' stroke-width='1.8'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
@@ -477,8 +491,8 @@
           <!-- Внутрішні таби секції тривоги: 4 рівні колонки без прокручування та без липкості при скролі -->
           <div class="reveal mt-6 sm:mt-8 w-full" id="air-tabs-wrap">
             <div class="grid grid-cols-4 gap-1 w-full rounded-2xl sm:rounded-full border border-ink/10 bg-white/70 p-1 shadow-sm" id="air-tabs">
-              <button data-atab="now" class="air-tab flex items-center justify-center gap-1 rounded-xl sm:rounded-full bg-ink px-1 sm:px-3 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-cream transition-all duration-200">
-                <svg class="icon h-3.5 w-3.5 shrink-0"><use href="#i-shield"></use></svg><span>Зараз</span>
+              <button data-atab="now" class="air-tab flex items-center justify-center gap-1 rounded-xl sm:rounded-full bg-ink px-1 sm:px-3 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-white transition-all duration-200" style="color:#ffffff !important; background-color:#17140c !important;">
+                <svg class="icon h-3.5 w-3.5 shrink-0" style="stroke:#ffffff !important;"><use href="#i-shield"></use></svg><span>Зараз</span>
               </button>
               <button data-atab="threats" class="air-tab flex items-center justify-center gap-1 rounded-xl sm:rounded-full px-1 sm:px-3 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-ink-soft transition-all duration-200 hover:text-ink">
                 <svg class="icon h-3.5 w-3.5 shrink-0"><use href="#i-alert"></use></svg><span>Загрози</span>
@@ -516,7 +530,10 @@
               </h2>
             </div>
           </div>
-          <div id="sched-tabs" class="reveal mt-8 inline-flex rounded-full border border-ink/10 bg-white/70 p-1 backdrop-blur-none sm:backdrop-blur"></div>
+          <div class="reveal mt-8 flex flex-wrap items-center justify-between gap-3">
+            <div id="sched-tabs" class="inline-flex rounded-full border border-ink/10 bg-white/70 p-1 backdrop-blur-none sm:backdrop-blur"></div>
+            <div id="sched-mode-toggle" class="inline-flex items-center rounded-full border border-ink/10 bg-white/70 p-1 backdrop-blur-none sm:backdrop-blur shadow-xs"></div>
+          </div>
           <div id="day-chips" class="reveal mt-5 flex flex-wrap gap-2.5" style="transition-delay: 120ms"></div>
           <div id="schedule-body" class="mt-8 space-y-6"></div>
         </section>
@@ -848,9 +865,8 @@
       /* ---------- Розклад уроків ----------
          subject "s" має збігатися з id предмета зі списку subjects —
          тож до кожного урока автоматично підтягується твоя полка підручників. */
-      /* Дзвінки за розкладом школи (для дистанційного навчання):
-         15 хв перерви, після 7 уроку — 5 хв */
-      const bells = [
+      /* Дзвінки за розкладом школи: дистанційне навчання (15 хв перерви, після 7-го — 5 хв) */
+      const BELLS_DISTANT = [
         { start: "08:30", end: "09:10" },
         { start: "09:25", end: "10:05" },
         { start: "10:20", end: "11:00" },
@@ -860,6 +876,30 @@
         { start: "14:00", end: "14:40" },
         { start: "14:45", end: "15:25" },
       ];
+
+      /* Дзвінки для очного навчання (з фото розкладу школи) */
+      const BELLS_INPERSON = [
+        { start: "08:30", end: "09:10" }, // перерва 10 хв
+        { start: "09:20", end: "10:00" }, // перерва 15 хв
+        { start: "10:15", end: "10:55" }, // перерва 15 хв
+        { start: "11:10", end: "11:50" }, // перерва 15 хв
+        { start: "12:05", end: "12:45" }, // перерва 15 хв
+        { start: "13:00", end: "13:40" }, // перерва 10 хв
+        { start: "13:50", end: "14:30" }, // перерва 5 хв
+        { start: "14:35", end: "15:15" },
+      ];
+
+      const SCHED_MODE_KEY = "vdsh2-sched-mode";
+      let schedMode = "inperson";
+      try {
+        const sm = localStorage.getItem(SCHED_MODE_KEY);
+        if (sm === "distant" || sm === "inperson") schedMode = sm;
+      } catch (e) {}
+
+      function getBells() {
+        return schedMode === "distant" ? BELLS_DISTANT : BELLS_INPERSON;
+      }
+      const bells = BELLS_INPERSON;
 
       const CLASSES = [{ id: "11a", label: "11-А" }];
 
@@ -909,8 +949,12 @@
       try { const v = localStorage.getItem(CLS_KEY); if (CLASSES.some((c) => c.id === v)) cls = v; } catch (e) {}
       const classLabel = () => (CLASSES.find((c) => c.id === cls) || CLASSES[0]).label;
 
-      /* Розклад по класах — правіть тут, коли прийде справжнє розкладення */
-      const scheduleByClass = { "11a": { bells, week } };
+      /* Розклад по класах — динамічно повертає актуальні дзвінки для обраного режиму */
+      const scheduleByClass = {
+        get "11a"() {
+          return { bells: getBells(), week };
+        }
+      };
 
       /* ---------- Режим власника: книги додає лише адмін ---------- */
       const ADMIN_KEY = "vdsh2-admin-key";
@@ -1091,20 +1135,39 @@
       function renderSchedTabs() {
         const tab = (id, label, icon) => {
           const on = schedTab === id;
-          return `<button data-tab="${id}" class="flex items-center gap-2 rounded-full px-4 py-2 font-display text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
-            on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "text-ink-soft hover:text-ink"
-          }">${svg(icon, "icon h-3.5 w-3.5")}${label}</button>`;
+          return `<button data-tab="${id}" class="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 font-display text-[10.5px] sm:text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
+            on ? "bg-ink text-white shadow-sm ring-1 ring-ink/20" : "text-ink-soft hover:text-ink"
+          }" style="${on ? "color:#ffffff !important; background-color:#17140c !important;" : ""}">${svg(icon, "icon h-3.5 w-3.5")}${label}</button>`;
         };
         document.getElementById("sched-tabs").innerHTML =
           tab("week", "Уроки дня", "i-calendar") + tab("bell", "Дзвінок", "i-clock");
+
+        const modeWrap = document.getElementById("sched-mode-toggle");
+        if (modeWrap) {
+          const isInperson = schedMode === "inperson";
+          modeWrap.innerHTML = `
+            <button data-sched-mode="inperson" class="flex items-center gap-1 rounded-full px-3 py-1 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider transition-all ${
+              isInperson ? "bg-ink text-white shadow-sm ring-1 ring-ink/20" : "text-ink-soft hover:text-ink bg-transparent"
+            }" style="${isInperson ? "color:#ffffff !important; background-color:#17140c !important;" : ""}">
+              <span>🏫 Очне</span>
+            </button>
+            <button data-sched-mode="distant" class="flex items-center gap-1 rounded-full px-3 py-1 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider transition-all ${
+              !isInperson ? "bg-ink text-white shadow-sm ring-1 ring-ink/20" : "text-ink-soft hover:text-ink bg-transparent"
+            }" style="${!isInperson ? "color:#ffffff !important; background-color:#17140c !important;" : ""}">
+              <span>💻 Дистант</span>
+            </button>
+          `;
+        }
       }
 
       function bellsHTML(animCls) {
+        const bells = getBells();
         const now = new Date();
         const weekday = dayIndexOf(now) !== null;
         const nowMin = now.getHours() * 60 + now.getMinutes();
         const brkIdx = weekday ? bells.findIndex((b, i) => i < bells.length - 1 && nowMin >= toMin(b.end) && nowMin < toMin(bells[i + 1].start)) : -1;
         const liveIdx = weekday ? bells.findIndex((b) => nowMin >= toMin(b.start) && nowMin < toMin(b.end)) : -1;
+        const modeLabel = schedMode === "inperson" ? "Очне навчання" : "Дистанційне навчання";
 
         /* шапка-смужка: що триває зараз */
         let t, sub;
@@ -1118,7 +1181,7 @@
           const en = toMin(b.end);
           const elapsed = nowMin - st;
           const remaining = en - nowMin;
-          t = `Триває ${liveIdx + 1}-й урок`;
+          t = `Триває ${liveIdx + 1}-й урок (${modeLabel})`;
           sub = `Урок триває вже ${fmtMin(elapsed)} (з ${b.start}) · до кінця уроку залишилось ${fmtMin(remaining)} (до ${b.end})`;
         } else if (brkIdx >= 0) {
           const prevB = bells[brkIdx];
@@ -1129,7 +1192,7 @@
           t = `Зараз перерва (${gap} хв)`;
           sub = `Минуло ${fmtMin(elapsed)} · до початку ${brkIdx + 2}-го уроку залишилось ${fmtMin(remaining)} (дзвінок о ${nextB.start})`;
         } else if (nowMin < toMin(bells[0].start)) {
-          t = "До початку першого уроку";
+          t = `До початку першого уроку (${modeLabel})`;
           sub = `Перший дзвінок о ${bells[0].start} · залишилось чекати ${fmtMin(toMin(bells[0].start) - nowMin)}`;
         } else {
           t = "Уроки на сьогодні завершено";
@@ -1141,12 +1204,12 @@
             <div class="relative flex items-start gap-4">
               <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-sun backdrop-blur-sm">${svg("i-clock", "icon h-6 w-6")}</span>
               <div>
-                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">Дзвінки · ${classLabel()} клас · 2026 / 27</p>
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">Дзвінки · ${classLabel()} клас · ${modeLabel}</p>
                 <p class="mt-1.5 font-display text-lg font-bold leading-snug">${t}</p>
                 <p class="mt-1 text-sm leading-relaxed text-cream/60">${sub}</p>
               </div>
             </div>
-            <div class="relative hidden items-center gap-1.5 rounded-full bg-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-cream/80 backdrop-blur-sm md:inline-flex">${svg("i-sigma", "icon h-3.5 w-3.5 text-sun")} 8 уроків · перерви 15 хв · після 7-го — 5 хв</div>
+            <div class="relative hidden items-center gap-1.5 rounded-full bg-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-cream/80 backdrop-blur-sm md:inline-flex">${svg("i-sigma", "icon h-3.5 w-3.5 text-sun")} 8 уроків · ${modeLabel} · ${schedMode === "inperson" ? "перерви 5–15 хв" : "перерви 15 хв"}</div>
           </div>`;
 
         const rows = bells.map((b, i) => {
@@ -1211,8 +1274,9 @@
         const sc = scheduleByClass[cls];
         if (!sc) { renderScheduleEmpty(animate); return; }
         const week = sc.week;
-        const bells = sc.bells;
+        const bells = getBells();
         const day = week[selectedDay];
+        const modeLabel = schedMode === "inperson" ? "Очне" : "Дистант";
 
         document.getElementById("schedule-accent").textContent = isToday ? "на сьогодні" : day.name.toLowerCase();
 
@@ -1221,8 +1285,8 @@
           const on = i === selectedDay;
           const dot = i === todayIdx ? '<span class="h-1.5 w-1.5 rounded-full bg-sun" title="сьогодні"></span>' : "";
           return `<button data-day="${i}" class="flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
-            on ? "bg-ink text-cream shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]" : "border border-ink/10 bg-white/70 text-ink-soft backdrop-blur-none sm:backdrop-blur hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink"
-          }">${dot}${d.name}<span class="rounded-full px-1.5 py-0.5 text-[10px] leading-none ${on ? "bg-sun text-ink" : "bg-ink/10 text-ink-soft"}">${d.lessons.length}</span></button>`;
+            on ? "bg-ink text-white shadow-sm ring-1 ring-ink/20" : "border border-ink/10 bg-white/70 text-ink-soft backdrop-blur-none sm:backdrop-blur hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink"
+          }" style="${on ? "color:#ffffff !important; background-color:#17140c !important;" : ""}">${dot}${d.name}<span class="rounded-full px-1.5 py-0.5 text-[10px] leading-none ${on ? "bg-sun text-ink" : "bg-ink/10 text-ink-soft"}">${d.lessons.length}</span></button>`;
         }).join("");
 
         const slotOf = (l, i) => l.n || i + 1;
@@ -1315,7 +1379,7 @@
             <div class="relative flex items-start gap-4">
               <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-sun backdrop-blur-sm">${svg(todayIdx === null ? "i-map-pin" : "i-calendar", "icon h-6 w-6")}</span>
               <div>
-                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">${isToday ? "Сьогодні" : day.name} · ${partOfDay}</p>
+                <p class="font-display text-[10px] font-semibold uppercase tracking-[0.22em] text-cream/50">${isToday ? "Сьогодні" : day.name} · ${partOfDay} · ${modeLabel}</p>
                 <p class="mt-1.5 font-display text-lg font-bold leading-snug">${sTitle}</p>
                 <p class="mt-1 text-sm leading-relaxed text-cream/60">${sSub}</p>
               </div>
@@ -1971,6 +2035,20 @@
         schedTab = btn.getAttribute("data-tab");
         renderSchedule({ animate: true });
       });
+
+      const modeToggle = document.getElementById("sched-mode-toggle");
+      if (modeToggle) {
+        modeToggle.addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-sched-mode]");
+          if (!btn) return;
+          const newMode = btn.getAttribute("data-sched-mode");
+          if (newMode && newMode !== schedMode) {
+            schedMode = newMode;
+            try { localStorage.setItem(SCHED_MODE_KEY, schedMode); } catch (err) {}
+            renderSchedule({ animate: true });
+          }
+        });
+      }
 
       document.getElementById("schedule-body").addEventListener("click", (e) => {
         const act = e.target.closest("[data-summary-action]");
@@ -2928,42 +3006,38 @@
         if (!newsWrap) {
           paneNews.innerHTML = `
             <div id="tg-news-wrap">
-              <div id="tg-channels-bar" class="mb-4">
-                <div class="flex items-center justify-between mb-2.5">
-                  <span class="font-display text-[10px] sm:text-xs font-bold uppercase tracking-widest text-ink-soft flex items-center gap-1.5">
-                    <svg class="h-3.5 w-3.5 text-cobalt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-4 18-5-8-9-2z"></path></svg>
-                    Офіційні канали Одеси в Telegram
+              <div id="tg-channels-bar" class="mb-2.5 rounded-2xl border border-ink/10 bg-paper/60 p-2 sm:p-2.5">
+                <div class="flex items-center justify-between pb-1 mb-1.5 border-b border-ink/10 px-0.5">
+                  <span class="font-display text-[10px] sm:text-xs font-bold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+                    <svg class="h-3 w-3 text-cobalt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-4 18-5-8-9-2z"></path></svg>
+                    Офіційні канали
                   </span>
-                  <span class="text-[10px] text-ink-soft/70">3 перевірені джерела</span>
+                  <span class="text-[9px] font-semibold text-ink-soft/70">прямі посилання</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+                <div class="grid grid-cols-3 gap-1.5 sm:gap-2">
                   ${ODESA_TG_CHANNELS.map(c => `
-                    <a href="${c.url}" target="_blank" rel="noopener noreferrer" class="group flex flex-col justify-between rounded-2xl border border-ink/10 bg-paper p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-cobalt/40 hover:shadow-sm">
-                      <div>
-                        <div class="flex items-center justify-between gap-1">
-                          <span class="text-xl">${c.icon}</span>
-                          <span class="rounded-full bg-ink/5 px-2 py-0.5 font-display text-[9px] font-bold text-ink-soft group-hover:text-cobalt">@${c.handle}</span>
-                        </div>
-                        <p class="mt-2 font-display text-sm font-bold text-ink leading-tight group-hover:text-cobalt">${c.name}</p>
-                        <p class="mt-1 text-xs text-ink-soft leading-snug">${c.desc}</p>
+                    <a href="${c.url}" target="_blank" rel="noopener noreferrer" class="group flex flex-col items-center justify-between rounded-xl border border-ink/10 bg-paper p-1.5 sm:p-2 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-cobalt/40 hover:bg-cream">
+                      <div class="w-full">
+                        <span class="text-sm sm:text-base">${c.icon}</span>
+                        <p class="mt-0.5 font-display text-[9.5px] sm:text-[11px] font-bold text-ink leading-tight group-hover:text-cobalt truncate" title="${c.name}">${c.badge || c.name}</p>
+                        <p class="text-[8px] text-ink-soft/70 truncate hidden sm:block">@${c.handle}</p>
                       </div>
-                      <div class="mt-3 flex items-center gap-1 text-[10px] font-bold text-cobalt">
-                        <span>Відкрити канал</span>
-                        <span class="transition-transform group-hover:translate-x-1">↗</span>
-                      </div>
+                      <span class="mt-1 inline-flex items-center gap-0.5 text-[8.5px] font-bold text-cobalt">
+                        <span>t.me ↗</span>
+                      </span>
                     </a>
                   `).join("")}
                 </div>
               </div>
 
-              <div id="tg-controls-bar" class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-ink/10 bg-paper p-2 sm:p-2.5 mb-3">
-                <div class="flex items-center gap-1 overflow-x-auto">
-                  <button data-tg-flt="all" class="px-2.5 sm:px-3 py-1 rounded-xl font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider transition-all ${flt === "all" ? "bg-ink text-cream shadow-sm" : "text-ink-soft hover:text-ink bg-transparent"}">Всі повідомлення</button>
-                  <button data-tg-flt="threats" class="px-2.5 sm:px-3 py-1 rounded-xl font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider transition-all ${flt === "threats" ? "bg-ink text-cream shadow-sm" : "text-ink-soft hover:text-ink bg-transparent"}">Загрози / ППО</button>
-                  <button data-tg-flt="official" class="px-2.5 sm:px-3 py-1 rounded-xl font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider transition-all ${flt === "official" ? "bg-ink text-cream shadow-sm" : "text-ink-soft hover:text-ink bg-transparent"}">Офіційні зведення</button>
+              <div id="tg-controls-bar" class="flex flex-wrap items-center justify-between gap-1.5 rounded-2xl border border-ink/10 bg-paper p-1.5 sm:p-2 mb-2.5">
+                <div class="grid grid-cols-3 gap-1 w-full sm:w-auto">
+                  <button data-tg-flt="all" class="px-2 py-1 rounded-xl font-display text-[9.5px] sm:text-[11px] font-bold uppercase tracking-wider text-center transition-all ${flt === "all" ? "bg-ink text-white shadow-sm ring-1 ring-ink/20" : "bg-paper text-ink hover:bg-cream border border-ink/10"}" style="${flt === "all" ? "color:#ffffff !important; background-color:#17140c !important;" : "color:#17140c !important; background-color:#fdfbf4 !important;"}">Всі</button>
+                  <button data-tg-flt="threats" class="px-2 py-1 rounded-xl font-display text-[9.5px] sm:text-[11px] font-bold uppercase tracking-wider text-center transition-all ${flt === "threats" ? "bg-ink text-white shadow-sm ring-1 ring-ink/20" : "bg-paper text-ink hover:bg-cream border border-ink/10"}" style="${flt === "threats" ? "color:#ffffff !important; background-color:#17140c !important;" : "color:#17140c !important; background-color:#fdfbf4 !important;"}">Загрози</button>
+                  <button data-tg-flt="official" class="px-2 py-1 rounded-xl font-display text-[9.5px] sm:text-[11px] font-bold uppercase tracking-wider text-center transition-all ${flt === "official" ? "bg-ink text-white shadow-sm ring-1 ring-ink/20" : "bg-paper text-ink hover:bg-cream border border-ink/10"}" style="${flt === "official" ? "color:#ffffff !important; background-color:#17140c !important;" : "color:#17140c !important; background-color:#fdfbf4 !important;"}">Зведення</button>
                 </div>
-                <button id="refresh-news-btn" class="inline-flex items-center gap-1.5 rounded-xl border border-ink/10 bg-cream/60 px-2.5 sm:px-3 py-1 font-display text-[10px] sm:text-[11px] font-bold text-ink hover:bg-cream transition-all">
-                  <svg id="refresh-news-icon" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                <button id="refresh-news-btn" class="ml-auto inline-flex items-center gap-1 rounded-xl border border-ink/10 bg-cream/70 px-2 py-1 font-display text-[9.5px] sm:text-[10.5px] font-bold text-ink hover:bg-cream transition-all">
+                  <svg id="refresh-news-icon" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
                   <span>Оновити</span>
                 </button>
               </div>
@@ -2975,7 +3049,9 @@
         } else {
           newsWrap.querySelectorAll("[data-tg-flt]").forEach((b) => {
             const active = b.getAttribute("data-tg-flt") === flt;
-            b.className = `px-2.5 sm:px-3 py-1 rounded-xl font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider transition-all ${active ? "bg-ink text-cream shadow-sm" : "text-ink-soft hover:text-ink bg-transparent"}`;
+            b.className = `px-2 py-1 rounded-xl font-display text-[9.5px] sm:text-[11px] font-bold uppercase tracking-wider text-center transition-all ${active ? "bg-ink text-white shadow-sm ring-1 ring-ink/20" : "bg-paper text-ink hover:bg-cream border border-ink/10"}`;
+            b.style.color = active ? "#ffffff" : "#17140c";
+            b.style.backgroundColor = active ? "#17140c" : "#fdfbf4";
           });
         }
 
