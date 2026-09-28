@@ -172,18 +172,26 @@
       }
       button, a { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
       /* Гарантована чітка видимість тексту на активних кнопках, табах та фільтрах на мобільних */
-      .air-tab.bg-ink,
+      .air-tab.is-active,
       [data-tg-flt].bg-ink,
       [data-sched-mode].bg-ink,
       button.bg-ink {
         color: #ffffff !important;
         background-color: #17140c !important;
       }
-      .air-tab.bg-ink *,
+      .air-tab.is-active *,
       [data-tg-flt].bg-ink *,
       [data-sched-mode].bg-ink * {
         color: #ffffff !important;
         stroke: #ffffff !important;
+      }
+      .air-tab:not(.is-active) {
+        color: #6b6555 !important;
+        background-color: transparent !important;
+      }
+      .air-tab:not(.is-active) * {
+        color: #6b6555 !important;
+        stroke: #6b6555 !important;
       }
       select.cls-select {
         appearance: none; -webkit-appearance: none;
@@ -491,8 +499,8 @@
           <!-- Внутрішні таби секції тривоги: 4 рівні колонки без прокручування та без липкості при скролі -->
           <div class="reveal mt-6 sm:mt-8 w-full" id="air-tabs-wrap">
             <div class="grid grid-cols-4 gap-1 w-full rounded-2xl sm:rounded-full border border-ink/10 bg-white/70 p-1 shadow-sm" id="air-tabs">
-              <button data-atab="now" class="air-tab flex items-center justify-center gap-1 rounded-xl sm:rounded-full bg-ink px-1 sm:px-3 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-white transition-all duration-200" style="color:#ffffff !important; background-color:#17140c !important;">
-                <svg class="icon h-3.5 w-3.5 shrink-0" style="stroke:#ffffff !important;"><use href="#i-shield"></use></svg><span>Зараз</span>
+              <button data-atab="now" class="air-tab is-active flex items-center justify-center gap-1 rounded-xl sm:rounded-full bg-ink px-1 sm:px-3 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-white transition-all duration-200">
+                <svg class="icon h-3.5 w-3.5 shrink-0"><use href="#i-shield"></use></svg><span>Зараз</span>
               </button>
               <button data-atab="threats" class="air-tab flex items-center justify-center gap-1 rounded-xl sm:rounded-full px-1 sm:px-3 py-2 font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-ink-soft transition-all duration-200 hover:text-ink">
                 <svg class="icon h-3.5 w-3.5 shrink-0"><use href="#i-alert"></use></svg><span>Загрози</span>
@@ -3265,19 +3273,27 @@
       }
 
       // Tabs
+      function setAirTab(id) {
+        document.querySelectorAll(".air-tab").forEach((b) => {
+          const isCurrent = b.getAttribute("data-atab") === id;
+          b.classList.toggle("is-active", isCurrent);
+          b.classList.toggle("bg-ink", isCurrent);
+          b.classList.toggle("text-white", isCurrent);
+          b.classList.toggle("shadow-sm", isCurrent);
+          b.classList.toggle("text-ink-soft", !isCurrent);
+          b.style.removeProperty("color");
+          b.style.removeProperty("background-color");
+        });
+        ["now", "threats", "news", "history"].forEach((n) => {
+          const p = document.getElementById("air-pane-" + n);
+          if (p) p.classList.toggle("hidden", n !== id);
+        });
+      }
+
       document.querySelectorAll(".air-tab").forEach((btn) => {
         btn.addEventListener("click", () => {
           const id = btn.getAttribute("data-atab");
-          document.querySelectorAll(".air-tab").forEach((b) => {
-            b.classList.remove("bg-ink", "text-cream", "shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]");
-            b.classList.add("text-ink-soft");
-          });
-          btn.classList.add("bg-ink", "text-cream", "shadow-[0_14px_30px_-12px_rgba(23,20,12,0.5)]");
-          btn.classList.remove("text-ink-soft");
-          ["now", "threats", "news", "history"].forEach((n) => {
-            const p = document.getElementById("air-pane-" + n);
-            if (p) p.classList.toggle("hidden", n !== id);
-          });
+          setAirTab(id);
         });
       });
 
